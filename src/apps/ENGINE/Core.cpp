@@ -59,14 +59,16 @@ void CORE::ResetCore()
 
 void CORE::CleanUp()
 {
-    Initialized = false;
-    bEngineIniProcessed = false;
-    ReleaseServices();
-    Compiler->Release();
-    Services_List.Release();
-    Services_List.Release();
-    delete State_file_name;
-    ReleaseThread();
+    if (Initialized) {
+        Initialized = false;
+        bEngineIniProcessed = false;
+        ReleaseServices();
+        Compiler->Release();
+        Services_List.Release();
+        Services_List.Release();
+        delete State_file_name;
+        ReleaseThread();
+    }
 }
 
 void CORE::InitBase()

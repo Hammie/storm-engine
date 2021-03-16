@@ -20,17 +20,19 @@ bool _loopMain();
 
 bool _loopMain()
 {
-    bool runResult = false;
-
-    __try
-    {
-        runResult = core.Run();
+    //__try
+    //{
+    try {
+        return core.Run();
     }
-    __except (CreateMiniDump(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER)
-    {
+    catch (const std::exception& e) {
+        spdlog::error("Error while running main loop: {}", e.what());
+        return false;
     }
-
-    return runResult;
+    //}
+    //__except (CreateMiniDump(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER)
+    //{
+    //}
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
