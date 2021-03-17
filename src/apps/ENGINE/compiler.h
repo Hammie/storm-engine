@@ -19,6 +19,8 @@
 #include "tclass_list.h"
 #include "token.h"
 
+#include "internal_functions.hpp"
+
 #define COMPILER_LOG_FILENAME "compile.log"
 #define COMPILER_ERRORLOG_FILENAME "error.log"
 #define BCODE_BUFFER_BLOCKSIZE 4096
@@ -221,7 +223,6 @@ class COMPILER : public VIRTUAL_COMPILER
     uint32_t GetIntFunctionCode(const char *func_name);
     DATA *BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t arguments);
 
-    uint32_t GetIntFunctionsNum();
     bool InitInternalFunctions();
 
     bool ProcessDebugExpression(const char *pExpression, DATA &Result);
@@ -283,7 +284,7 @@ class COMPILER : public VIRTUAL_COMPILER
     void DumpAttributes(ATTRIBUTES *pA, long level);
 
     bool IsIntFuncVarArgsNum(uint32_t code);
-    uint32_t GetInternalFunctionArgumentsNum(uint32_t code);
+
     bool CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t stack_offset, uint32_t vindex, bool s2s = false);
     void ProcessEvent(const char *event_name, MESSAGE *pMs);
 

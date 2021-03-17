@@ -1,6 +1,9 @@
 #include "compiler.h"
 #include "externs.h"
 #include "s_debug.h"
+
+#include "internal_functions.hpp"
+
 #include <cstdio>
 
 #define SKIP_COMMENT_TRACING
@@ -19,7 +22,6 @@
 
 extern FILE_SERVICE File_Service;
 // extern char * FuncNameTable[];
-extern INTFUNCDESC IntFuncTable[];
 extern S_DEBUG CDebug;
 extern uint32_t dwNumberScriptCommandsExecuted;
 
@@ -1235,7 +1237,7 @@ bool COMPILER::InitInternalFunctions()
 
     // register internal functions ------------
 
-    const uint32_t internal_functions_num = GetIntFunctionsNum();
+    const uint32_t internal_functions_num = IntFuncTable.size();
     for (uint32_t n = 0; n < internal_functions_num; n++)
     {
         fi.segment_id = INTERNAL_SEGMENT_ID;
