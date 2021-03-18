@@ -36,7 +36,7 @@ struct SEGMENT_DESC
     bool bUnload;
     //--------------
     char *pData;
-    char *pCode;
+    std::vector<char> pCode;
     uint32_t BCode_Program_size;
     uint32_t BCode_Buffer_size;
 

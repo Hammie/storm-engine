@@ -142,7 +142,7 @@ void COMPILER::Release()
     {
         delete SegmentTable[n].name;
         delete SegmentTable[n].pData;
-        delete SegmentTable[n].pCode;
+        SegmentTable[n].pCode.resize(0);
         if (SegmentTable[n].Files_list)
         {
             SegmentTable[n].Files_list->Release();
@@ -593,7 +593,7 @@ void COMPILER::FindErrorSource()
     uint32_t ip = 0;
     DebugSourceLine = 0;
     file_line_offset = 0;
-    char *pCodeBase = SegmentTable[segment_index].pCode;
+    char* pCodeBase = SegmentTable[segment_index].pCode.data();
     do
     {
         Token_type = static_cast<S_TOKEN_TYPE>(pCodeBase[ip]);
@@ -934,7 +934,7 @@ bool COMPILER::BC_LoadSegment(const char *file_name)
     SegmentTable[index].id = id;
     SegmentTable[index].bUnload = false;
     SegmentTable[index].pData = nullptr;
-    SegmentTable[index].pCode = nullptr;
+    SegmentTable[index].pCode.resize(0);
     SegmentTable[index].BCode_Program_size = 0;
     SegmentTable[index].BCode_Buffer_size = 0;
 
@@ -1013,7 +1013,7 @@ bool COMPILER::ProcessDebugExpression0(const char *pExpression, DATA &Result)
     Segment.id = RunningSegmentID;
     Segment.bUnload = false;
     Segment.pData = nullptr;
-    Segment.pCode = nullptr;
+    Segment.pCode.resize(0);
     Segment.BCode_Program_size = 0;
     Segment.BCode_Buffer_size = 0;
     Segment.Files_list = &DbgLocalSL;
@@ -1035,7 +1035,7 @@ bool COMPILER::ProcessDebugExpression0(const char *pExpression, DATA &Result)
 
     if (!bRes)
     {
-        delete Segment.pCode;
+        Segment.pCode.clear();
         bDebugExpressionRun = false;
         return false;
     }
@@ -1058,7 +1058,7 @@ bool COMPILER::ProcessDebugExpression0(const char *pExpression, DATA &Result)
 
     try
     {
-        bRes = BC_Execute(INVALID_FUNC_CODE, pResult, Segment.pCode);
+        bRes = BC_Execute(INVALID_FUNC_CODE, pResult, Segment.pCode.data());
     }
     // old_data_num = SStack.GetDataNum(); trace("new_data_num: %d",old_data_num);
 
@@ -1074,7 +1074,7 @@ bool COMPILER::ProcessDebugExpression0(const char *pExpression, DATA &Result)
     // RunningSegmentID = pRun_fi->segment_id;
     pRunCodeBase = mem_codebase;
 
-    delete Segment.pCode;
+    Segment.pCode.resize(0);
 
     if (pResult)
     {
@@ -1098,7 +1098,7 @@ void COMPILER::ProcessFrame(uint32_t DeltaTime)
             continue;
         // unload segment of program
         delete SegmentTable[n].pData;
-        delete SegmentTable[n].pCode;
+        SegmentTable[n].pCode.resize(0);
         delete SegmentTable[n].name;
         delete SegmentTable[n].Files_list;
         SegmentTable[n].Files_list = nullptr;
@@ -1145,11 +1145,11 @@ void COMPILER::ResizeBCodeBuffer(SEGMENT_DESC &Segment, uint32_t add_size)
     if ((Segment.BCode_Program_size + add_size) >= Segment.BCode_Buffer_size)
     {
         Segment.BCode_Buffer_size += BCODE_BUFFER_BLOCKSIZE;
-        // Segment.pCode = (char *)RESIZE(Segment.pCode,Segment.BCode_Buffer_size);
-        auto *const newPtr = new char[Segment.BCode_Buffer_size];
-        memcpy(newPtr, Segment.pCode, Segment.BCode_Program_size);
-        delete Segment.pCode;
-        Segment.pCode = newPtr;
+        Segment.pCode.resize(Segment.BCode_Buffer_size);
+//        auto *const newPtr = new char[Segment.BCode_Buffer_size];
+//        memcpy(newPtr, Segment.pCode, Segment.BCode_Program_size);
+//        delete Segment.pCode;
+//        Segment.pCode = newPtr;
     }
 }
 
@@ -1214,7 +1214,7 @@ void COMPILER::CompileToken(SEGMENT_DESC &Segment, S_TOKEN_TYPE Token_type, uint
         ResizeBCodeBuffer(Segment, sizeof(uint32_t) + 1);
         Segment.pCode[Segment.BCode_Program_size] = static_cast<uint8_t>(0xff);
         Segment.BCode_Program_size += 1;
-        memcpy(&Segment.pCode[Segment.BCode_Program_size], &write_size, sizeof(uint32_t));
+        memcpy(Segment.pCode.data() + Segment.BCode_Program_size, &write_size, sizeof(uint32_t));
         Segment.BCode_Program_size += sizeof(uint32_t);
     }
     //--------------------------------------------------------------------------
@@ -1226,7 +1226,7 @@ void COMPILER::CompileToken(SEGMENT_DESC &Segment, S_TOKEN_TYPE Token_type, uint
         memcpy(&data_ptr, pCompileTokenTempBuffer + n * (sizeof(char *) + sizeof(uint32_t)), sizeof(char *));
         memcpy(&data_size, pCompileTokenTempBuffer + n * (sizeof(char *) + sizeof(uint32_t)) + sizeof(char *),
                sizeof(uint32_t));
-        memcpy(&Segment.pCode[Segment.BCode_Program_size], data_ptr, data_size);
+        memcpy(Segment.pCode.data() + Segment.BCode_Program_size, data_ptr, data_size);
         Segment.BCode_Program_size += data_size;
     }
 }
@@ -2093,7 +2093,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
     {
         LabelUpdateTable.GetStringData(n, &ddw);
         LabelTable.GetStringData(ddw.dw1, &label_offset);
-        memcpy(&Segment.pCode[ddw.dw2], &label_offset, sizeof(uint32_t));
+        memcpy(Segment.pCode.data() + ddw.dw2, &label_offset, sizeof(uint32_t));
     }
 
     if (pInternalCode == nullptr)
@@ -2112,7 +2112,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
                         FILE_ATTRIBUTE_NORMAL, nullptr);
         if (fh != INVALID_HANDLE_VALUE)
         {
-            WriteFile(fh, Segment.pCode, Segment.BCode_Program_size, (LPDWORD)&dwR, nullptr);
+            WriteFile(fh, Segment.pCode.data(), Segment.BCode_Program_size, (LPDWORD)&dwR, nullptr);
             CloseHandle(fh);
         }
     }
@@ -2225,7 +2225,7 @@ void COMPILER::UpdateOffsets(SEGMENT_DESC &Segment, STRINGS_LIST &list, uint32_t
         for (n = 0; n < list.GetStringsCount(); n++)
         {
             list.GetStringData(n, (char *)&jump_voffset);
-            memcpy(&Segment.pCode[jump_voffset], &offset, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + jump_voffset, &offset, sizeof(uint32_t));
         }
         return;
     }
@@ -2234,7 +2234,7 @@ void COMPILER::UpdateOffsets(SEGMENT_DESC &Segment, STRINGS_LIST &list, uint32_t
         if (strcmp(sname, list.GetString(n)) != 0)
             continue;
         list.GetStringData(n, (char *)&jump_voffset);
-        memcpy(&Segment.pCode[jump_voffset], &offset, sizeof(uint32_t));
+        memcpy(Segment.pCode.data() + jump_voffset, &offset, sizeof(uint32_t));
     }
 }
 
@@ -2497,7 +2497,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                     if(!CompileBlock(Segment,bFunctionBlock,inout,SEPARATOR,continue_jump,break_offset,BreakTable))
                return false;
                   }
-                  memcpy(&Segment.pCode[update_offset],&Segment.BCode_Program_size,sizeof(uint32_t));
+                  memcpy(Segment.pCode.data() + update_offset,&Segment.BCode_Program_size,sizeof(uint32_t));
                   CompileToken(Segment,POP_EXPRESULT);    // pop
                 break;
                 case ELSE_BLOCK:
@@ -2516,7 +2516,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                     if(!CompileBlock(Segment,bFunctionBlock,inout,SEPARATOR,continue_jump,break_offset,BreakTable))
                return false;
                   }
-                  memcpy(&Segment.pCode[update_offset],&Segment.BCode_Program_size,sizeof(uint32_t));
+                  memcpy(Segment.pCode.data() + update_offset,&Segment.BCode_Program_size,sizeof(uint32_t));
                 break;
                 case WHILE_BLOCK:
                   BreakUpdateTable.Release();
@@ -2539,7 +2539,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                   }
                   else { SetError("missed '{'");    return false; }
                   CompileToken(Segment,JUMP,1,(char *)&jump_offset,sizeof(uint32_t));
-                  memcpy(&Segment.pCode[update_offset],&Segment.BCode_Program_size,sizeof(uint32_t));
+                  memcpy(Segment.pCode.data() + update_offset,&Segment.BCode_Program_size,sizeof(uint32_t));
                   UpdateOffsets(Segment,BreakUpdateTable,Segment.BCode_Program_size,"b");
                   UpdateOffsets(Segment,BreakUpdateTable,jump_offset,"c");
                   BreakUpdateTable.Release();
@@ -2591,7 +2591,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                   CompileToken(Segment,sttResult,1,(char *)&var_code,sizeof(uint32_t));
                   CompileToken(Segment,forOp);
                   CompileToken(Segment,JUMP,1,(char *)&jump_offset,sizeof(uint32_t));
-                  memcpy(&Segment.pCode[update_offset],&Segment.BCode_Program_size,sizeof(uint32_t));
+                  memcpy(Segment.pCode.data() + update_offset,&Segment.BCode_Program_size,sizeof(uint32_t));
                   UpdateOffsets(Segment,BreakUpdateTable,Segment.BCode_Program_size,"b");
                   UpdateOffsets(Segment,BreakUpdateTable,forcont_offset,"c");
                   BreakUpdateTable.Release();
@@ -2643,7 +2643,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                   // ??? why INVALID_OFFSET on continue_jump here? dont remember; anyway now change to normal
                   if(!CompileBlock(Segment,bFunctionBlock,inout,BREAK_COMMAND,continue_jump,0,BreakTable)) return false;
 
-                  memcpy(&Segment.pCode[update_offset],&Segment.BCode_Program_size,sizeof(uint32_t));
+                  memcpy(Segment.pCode.data() + update_offset,&Segment.BCode_Program_size,sizeof(uint32_t));
                 break;
 
             */
@@ -2682,7 +2682,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                 if (!CompileBlock(Segment, bFunctionBlock, inout, SEPARATOR, continue_jump, break_offset, BreakTable))
                     return false;
             }
-            memcpy(&Segment.pCode[update_offset], &Segment.BCode_Program_size, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + update_offset, &Segment.BCode_Program_size, sizeof(uint32_t));
             // CompileToken(Segment,STACK_POP);
             // CompileToken(Segment,EX);
 
@@ -2704,7 +2704,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                 if (!CompileBlock(Segment, bFunctionBlock, inout, SEPARATOR, continue_jump, break_offset, BreakTable))
                     return false;
             }
-            memcpy(&Segment.pCode[update_offset], &Segment.BCode_Program_size, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + update_offset, &Segment.BCode_Program_size, sizeof(uint32_t));
             break;
 
         case WHILE_BLOCK:
@@ -2751,7 +2751,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                 // **** ?
             }
             CompileToken(Segment, JUMP, 1, (char *)&jump_offset, sizeof(uint32_t));
-            memcpy(&Segment.pCode[update_offset], &Segment.BCode_Program_size, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + update_offset, &Segment.BCode_Program_size, sizeof(uint32_t));
             UpdateOffsets(Segment, BreakUpdateTable, Segment.BCode_Program_size, "b");
             UpdateOffsets(Segment, BreakUpdateTable, jump_offset, "c");
             BreakUpdateTable.Release();
@@ -2833,7 +2833,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
             CompileToken(Segment, sttResult, 1, (char *)&var_code, sizeof(uint32_t));
             CompileToken(Segment, forOp);
             CompileToken(Segment, JUMP, 1, (char *)&jump_offset, sizeof(uint32_t));
-            memcpy(&Segment.pCode[update_offset], &Segment.BCode_Program_size, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + update_offset, &Segment.BCode_Program_size, sizeof(uint32_t));
             UpdateOffsets(Segment, BreakUpdateTable, Segment.BCode_Program_size, "b");
             UpdateOffsets(Segment, BreakUpdateTable, forcont_offset, "c");
             BreakUpdateTable.Release();
@@ -2911,7 +2911,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
             if (!CompileBlock(Segment, bFunctionBlock, inout, BREAK_COMMAND, continue_jump, 0, BreakTable))
                 return false;
 
-            memcpy(&Segment.pCode[update_offset], &Segment.BCode_Program_size, sizeof(uint32_t));
+            memcpy(Segment.pCode.data() + update_offset, &Segment.BCode_Program_size, sizeof(uint32_t));
             break;
         case INVALID_TOKEN:
             SetError("bad token");
@@ -3993,7 +3993,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
             SetError("Function (%s) segment not loaded", fi.name);
             return false;
         }
-        if (SegmentTable[segment_index].pCode == nullptr)
+        if (SegmentTable[segment_index].pCode.empty())
         {
             SetError("Segment (%s) not loaded", SegmentTable[segment_index].name);
             return false;
@@ -4042,7 +4042,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
 
         InstructionPointer = fi.offset;
 
-        pCodeBase = SegmentTable[segment_index].pCode;
+        pCodeBase = SegmentTable[segment_index].pCode.data();
         pRunCodeBase = pCodeBase;
     }
     else

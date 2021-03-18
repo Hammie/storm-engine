@@ -1030,13 +1030,13 @@ bool COMPILER::CompileExpression_L0(SEGMENT_DESC &Segment)
 
         // jump1
         // just convert stack top to bool
-        memcpy(&Segment.pCode[dwUpdateOffset1], &Segment.BCode_Program_size, sizeof(uint32_t));
+        memcpy(Segment.pCode.data() + dwUpdateOffset1, &Segment.BCode_Program_size, sizeof(uint32_t));
         CompileToken(Segment, OP_BOOL_CONVERT);
         CompileToken(Segment, STACK_TOP);
 
         // jump2
         // end of operation
-        memcpy(&Segment.pCode[dwUpdateOffset2], &Segment.BCode_Program_size, sizeof(uint32_t));
+        memcpy(Segment.pCode.data() + dwUpdateOffset2, &Segment.BCode_Program_size, sizeof(uint32_t));
 
         sttOpType = Token.GetType();
     }
