@@ -41,17 +41,17 @@ class TFishSchools : public TDynamicSystem
   private:
     void LoadSettings();
 
-    VDX9RENDER *renderService;
-    entid_t fishSchoolModel;
-    TFishSchool *fishSchools[FISHSCHOOL_COUNT];
-    long shipsCount;
-    long fishSchoolsCount;
+    VDX9RENDER* renderService = nullptr;
+    entid_t fishSchoolModel = -1;
+    TFishSchool* fishSchools[FISHSCHOOL_COUNT];
+    long shipsCount{};
+    long fishSchoolsCount{};
     TDynamicObject cameraObject;
 
-    float maxDistance;
+    float maxDistance{};
 
-    bool enabled;
-    SEA_BASE *sea;
+    bool enabled{};
+    SEA_BASE* sea = nullptr;
 };
 
 #endif // !defined

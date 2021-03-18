@@ -7,6 +7,8 @@
 
 #define MAKEHASHINDEX(x) (x & 0xff)
 
+static_assert(S_FUNCTAB::MakeHashValue("Test") == 502948u);
+
 S_FUNCTAB::S_FUNCTAB()
 {
     Buffer_size = 0;
@@ -159,25 +161,6 @@ uint32_t S_FUNCTAB::AddFunc(const FUNCINFO &fi)
     Func_num++;
 
     return (Func_num - 1);
-}
-
-uint32_t S_FUNCTAB::MakeHashValue(const char *string)
-{
-    uint32_t hval = 0;
-    while (*string != 0)
-    {
-        auto v = *string++;
-        if ('A' <= v && v <= 'Z')
-            v += 'a' - 'A'; // case independent
-        hval = (hval << 4) + static_cast<unsigned long>(v);
-        const uint32_t g = hval & (static_cast<unsigned long>(0xf) << (32 - 4));
-        if (g != 0)
-        {
-            hval ^= g >> (32 - 8);
-            hval ^= g;
-        }
-    }
-    return hval;
 }
 
 void S_FUNCTAB::InvalidateBySegmentID(uint32_t segment_id)

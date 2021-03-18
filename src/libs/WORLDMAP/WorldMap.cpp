@@ -559,17 +559,32 @@ uint64_t WorldMap::ProcessMessage(MESSAGE &message)
     switch (message.Long())
     {
     case MSG_WORLDMAP_CREATESTORM: {
-        const auto isTornado = message.Long() != 0;
-        CreateStorm(isTornado);
+        if (message.Format() == "ll") {
+            const auto isTornado = message.Long() != 0;
+            CreateStorm(isTornado);
+        }
+        else {
+            CreateStorm(false);
+        }
     }
     break;
     case MSG_WORLDMAP_CREATEENC_MER: {
-        message.String(sizeof(sName), sName);
-        message.String(sizeof(buf), buf);
-        message.String(sizeof(sName2), sName2);
-        const auto kSpeed = message.Float();
-        const auto timeOut = message.Float();                           // boal
-        return CreateMerchantShip(sName, buf, sName2, kSpeed, timeOut); // boal
+        if (message.Format() == "lsssff") {
+            message.String(sizeof(sName), sName);
+            message.String(sizeof(buf), buf);
+            message.String(sizeof(sName2), sName2);
+            const auto kSpeed = message.Float();
+            const auto timeOut = message.Float();                           // boal
+            return CreateMerchantShip(sName, buf, sName2, kSpeed, timeOut); // boal
+        }
+        else if (message.Format() == "llssf") {
+            const long type = message.Long();
+            message.String(sizeof(sName), sName); // Ship name
+            message.String(sizeof(buf), buf); // Island name
+            const auto kSpeed = message.Float();
+            return CreateMerchantShip(sName, buf, nullptr, kSpeed);
+        }
+
     }
     break;
         // boal 04/01/06 -->
@@ -586,17 +601,34 @@ uint64_t WorldMap::ProcessMessage(MESSAGE &message)
     break;
         // boal <--
     case MSG_WORLDMAP_CREATEENC_FLW: {
-        message.String(sizeof(sName), sName);
-        const auto kSpeed = message.Float();
-        const auto timeOut = message.Float();
-        return CreateFollowShip(sName, kSpeed, timeOut);
+        if (message.Format() == "lsff") {
+            message.String(sizeof(sName), sName);
+            const auto kSpeed = message.Float();
+            const auto timeOut = message.Float();
+            return CreateFollowShip(sName, kSpeed, timeOut);
+        }
+        else if (message.Format() == "llsf") {
+            const long type = message.Long();
+            message.String(sizeof(sName), sName);
+            const auto kSpeed = message.Float();
+            return CreateFollowShip(sName, kSpeed);
+        }
     }
     break;
     case MSG_WORLDMAP_CREATEENC_WAR: {
-        message.String(sizeof(sName), sName);
-        message.String(sizeof(sName), sName2);
-        const auto timeOut = message.Float();
-        return CreateWarringShips(sName, sName2, timeOut);
+        if (message.Format() == "lssf") {
+            message.String(sizeof(sName), sName);
+            message.String(sizeof(sName), sName2);
+            const auto timeOut = message.Float();
+            return CreateWarringShips(sName, sName2, timeOut);
+        }
+        else if (message.Format() == "llsls"){
+            const long type1 = message.Long();
+            message.String(sizeof(sName), sName);
+            const long type2 = message.Long();
+            message.String(sizeof(sName), sName2);
+            return CreateWarringShips(sName, sName2);
+        }
     }
     break;
     case MSG_WORLDMAP_CREATEENC_RELEASE:

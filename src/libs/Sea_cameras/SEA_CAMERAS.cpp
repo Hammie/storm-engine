@@ -33,7 +33,17 @@ void SEA_CAMERAS::ProcessMessage(uint32_t iMsg, uint32_t wParam, uint32_t lParam
 uint64_t SEA_CAMERAS::ProcessMessage(MESSAGE &message)
 {
     uint32_t i;
-    switch (message.Long())
+
+    long messageCode = 0;
+    if (message.Format().starts_with('l')) {
+        messageCode = message.Long();
+    }
+    // Backwards-compatibility for script error in POTC
+    else if (message.Format().starts_with('i')) {
+        messageCode = AI_CAMERAS_SET_CAMERA;
+    }
+
+    switch (messageCode)
     {
     case AI_CAMERAS_ADD_CAMERA: {
         const auto eidCamera = message.EntityID();

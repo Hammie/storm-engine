@@ -76,7 +76,27 @@ class S_FUNCTAB
     uint32_t AddFunc(const FUNCINFO &fi);
     bool GetFunc(FUNCINFO &fi, uint32_t func_code);  // return true if func registred and loaded
     bool GetFuncX(FUNCINFO &fi, uint32_t func_code); // return true if func registred
-    uint32_t MakeHashValue(const char *string);
+
+    static constexpr uint32_t MakeHashValue(const char *string) {
+        uint32_t hval = 0;
+        while (*string != 0)
+        {
+            auto v = *string++;
+            if ('A' <= v && v <= 'Z')
+            {
+                v += 'a' - 'A'; // case independent
+            }
+            hval = (hval << 4) + static_cast<unsigned long>(v);
+            const uint32_t g = hval & (static_cast<unsigned long>(0xf) << (32 - 4));
+            if (g != 0)
+            {
+                hval ^= g >> (32 - 8);
+                hval ^= g;
+            }
+        }
+        return hval;
+    }
+
     // void  KeepNameMode(bool on){bKeepName = on;};
     void Release();
     void InvalidateBySegmentID(uint32_t segment_id);

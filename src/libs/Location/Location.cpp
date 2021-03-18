@@ -238,7 +238,11 @@ uint64_t Location::ProcessMessage(MESSAGE &message)
         message.String(sizeof(tech), tech);
         tech[sizeof(tech) - 1] = 0;
         level = message.Long();
-        const auto dynamicLightsOn = message.Long();
+
+        bool dynamicLightsOn = false;
+        if (message.Format() == "lssll") {
+            dynamicLightsOn = message.Long() == 1;
+        }
         lastLoadStaticModel = LoadStaticModel(name, tech, level, dynamicLightsOn == 1);
         return lastLoadStaticModel >= 0;
     }

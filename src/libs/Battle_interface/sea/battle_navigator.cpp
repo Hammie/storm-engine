@@ -1431,8 +1431,12 @@ void BATTLE_NAVIGATOR::SetIsland()
         m_bYesIsland = true;
     else
         m_bYesIsland = false;
-    m_fXIsland = posCenter.x;
-    m_fYIsland = posCenter.z;
+
+    if (pM != nullptr) {
+        m_fXIsland = posCenter.x;
+        m_fYIsland = posCenter.z;
+    }
+
     m_fIslandWidth = m_fIslandHeight = islSize;
     m_fIslandRadius = sqrtf(SQR(m_fIslandWidth) + SQR(m_fIslandHeight));
 }

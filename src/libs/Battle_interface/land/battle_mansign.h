@@ -162,6 +162,9 @@ inline bool BIManSign::FloatACompare(ATTRIBUTES *pA, const char *attrName, float
 inline bool BIManSign::StringACompare(ATTRIBUTES *pA, const char *attrName, std::string &sCompareVal)
 {
     auto *const pVal = pA->GetAttribute(attrName);
+    if (pVal == nullptr) {
+        return sCompareVal != "";
+    }
     if (sCompareVal == pVal)
         return false;
     sCompareVal = pVal;

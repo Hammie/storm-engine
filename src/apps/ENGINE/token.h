@@ -137,13 +137,6 @@ enum S_TOKEN_TYPE
     TOKEN_TYPES_COUNT
 };
 
-struct INTFUNCDESC
-{
-    uint32_t dwArgsNum;
-    const char *pName;
-    S_TOKEN_TYPE ReturnType;
-};
-
 #define PROGRAM_STEPS_CACHE 16
 
 #define TOKENHASHTABLE_SIZE 256

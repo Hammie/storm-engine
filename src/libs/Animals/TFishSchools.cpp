@@ -78,7 +78,7 @@ uint64_t TFishSchools::ProcessMessage(long _code, MESSAGE &message)
     switch (_code)
     {
     case MSG_ANIMALS_FISHSCHOOLS_SHOW:
-        enabled = true;
+        enabled = sea != nullptr;
         break;
 
     case MSG_ANIMALS_FISHSCHOOLS_HIDE:

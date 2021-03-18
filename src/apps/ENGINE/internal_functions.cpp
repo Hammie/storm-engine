@@ -1,6 +1,8 @@
 #include "compiler.h"
 #include "core.h"
 
+#include "compatibility.hpp"
+
 #define INVALID_FA "Invalid function argument"
 #define BAD_FA "Bad function argument"
 #define MISSING_PARAMETER "Missing function parameter(s)"
@@ -213,6 +215,8 @@ bool COMPILER::IsIntFuncVarArgsNum(uint32_t code)
     case FUNC_SEND_MESSAGE:
     case FUNC_EVENT:
     case FUNC_POSTEVENT:
+    case FUNC_LAYER_SET_REALIZE:
+    case FUNC_LAYER_SET_EXECUTE:
 
         return true;
     }
@@ -1176,17 +1180,26 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         pVResult = pV;
         return pV;
 
-        /*case FUNC_GETEntityNAME:
-            pV = SStack.Pop(); if(!pV){SetError(INVALID_FA);break;};
-            pV->Get(ent);
-            pV = SStack.Push();
-            VMA * pClass;
-            pClass = core.FindVMA(core.GetEntityClassCode(ent));
-            if(pClass) pV->Set(pClass->GetName());
-            else pV->Set("unknown class");
-            pVResult = pV;
+    case FUNC_GETEntityNAME: {
+        pV = SStack.Pop();
+        if (!pV)
+        {
+            SetError(INVALID_FA);
+            break;
+        };
+        pV->Get(ent);
+        pV = SStack.Push();
+        VMA *pClass;
+        const auto class_code = EntityManager::GetClassCode(EntityManager::GetEntityId(ent));
+        pClass = core.FindVMA(class_code);
+        if (pClass)
+            pV->Set(pClass->GetName());
+        else
+            pV->Set("unknown class");
+        pVResult = pV;
         return pV;
-        case FUNC_GETEntity:
+    }
+        /*case FUNC_GETEntity:
             pV2 = SStack.Pop(); if(!pV2){SetError(INVALID_FA);break;};
 
             pV = SStack.Pop(); if(!pV){SetError(INVALID_FA);break;};
@@ -1206,20 +1219,26 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             pV = SStack.Push();
             pV->Set(TempLong1);
             pVResult = pV;
-        return pV;
-        case FUNC_GETEntityNEXT:
-            ent = walker();
-            pV = SStack.Pop(); if(!pV){SetError(INVALID_FA);break;};
-            pV->GetVarPointer();
-            pV->Set(ent);
-            pV->SetType(VAR_AREFERENCE);
-      pV->SetAReference(core.Entity_GetAttributePointer(ent));
-            if(EntityManager::GetEntityPointer(ent)) TempLong1 = 1;
-            else TempLong1 = 0;
-            pV = SStack.Push();
-            pV->Set(TempLong1);
-            pVResult = pV;
         return pV;*/
+    case FUNC_GETEntityNEXT: {
+        SetError(INVALID_FA);
+        break;
+
+//        const auto class_code = EntityManager::GetClassCode(EntityManager::GetEntityId(ent));
+//        VMA *pClass = core.FindVMA(class_code);
+//        ent = pClass->Next()->GetHash();
+//        pV = SStack.Pop(); if(!pV){SetError(INVALID_FA);break;};
+//        pV->GetVarPointer();
+//        pV->Set(ent);
+//        pV->SetType(VAR_AREFERENCE);
+//        pV->SetAReference(core.Entity_GetAttributePointer(ent));
+//        if(EntityManager::GetEntityPointer(ent)) TempLong1 = 1;
+//        else TempLong1 = 0;
+//        pV = SStack.Push();
+//        pV->Set(TempLong1);
+//        pVResult = pV;
+//        return pV;
+    }
     case FUNC_POW:
         pV = SStack.Pop();
         if (!pV)
@@ -1372,28 +1391,76 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
       core.LayerDeleteContent(pChar);*/
         break;
     case FUNC_LAYER_SET_REALIZE:
-        // pV2 = SStack.Pop(); if(!pV2){SetError(INVALID_FA);break;};
+        if (arguments == 2) {
+            pV2 = SStack.Pop();
+            if (!pV2)
+            {
+                SetError(INVALID_FA);
+                break;
+            }
+        }
+
         pV = SStack.Pop();
         if (!pV)
         {
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong1);
+
+        if (pV->GetType() == VAR_INTEGER) {
+            pV->Get(TempLong1);
+        }
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+            const auto layerId = GetLayerIDByOldName(pV->GetString());
+            if (!layerId) {
+                SetError(INVALID_FA);
+                break;
+            }
+            TempLong1 = layerId.value();
+        }
+        else {
+            SetError(INVALID_FA);
+            break;
+        }
+
         // pV2->Get(TempLong1);
         // if(TempLong1 == 0) core.LayerSetRealize(pChar,false);
         // else core.LayerSetRealize(pChar,true);
         EntityManager::SetLayerType(TempLong1, EntityManager::Layer::Type::realize);
         break;
     case FUNC_LAYER_SET_EXECUTE:
-        // pV2 = SStack.Pop(); if(!pV2){SetError(INVALID_FA);break;};
+        if (arguments == 2) {
+            pV2 = SStack.Pop();
+            if (!pV2)
+            {
+                SetError(INVALID_FA);
+                break;
+            }
+        }
+
         pV = SStack.Pop();
         if (!pV)
         {
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong1);
+
+        if (pV->GetType() == VAR_INTEGER) {
+            pV->Get(TempLong1);
+        }
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+            const auto layerId = GetLayerIDByOldName(pV->GetString());
+            if (!layerId) {
+                SetError(INVALID_FA);
+                break;
+            }
+            TempLong1 = layerId.value();
+        }
+        else {
+            SetError(INVALID_FA);
+            break;
+        }
+
         // pV2->Get(TempLong1);
         // if(TempLong1 == 0) core.LayerSetExecute(pChar,false);
         // else core.LayerSetExecute(pChar,true);
@@ -1426,7 +1493,23 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong2);
+
+        if (pV->GetType() == VAR_INTEGER) {
+            pV->Get(TempLong2);
+        }
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+            const auto layerId = GetLayerIDByOldName(pV->GetString());
+            if (!layerId) {
+                SetError(INVALID_FA);
+                break;
+            }
+            TempLong2 = layerId.value();
+        }
+        else {
+            SetError(INVALID_FA);
+            break;
+        }
+
         pV2->Get(TempEid);
         pV3->Get(TempLong1);
         EntityManager::AddToLayer(TempLong2, TempEid, TempLong1);
@@ -1444,7 +1527,23 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong2);
+
+        if (pV->GetType() == VAR_INTEGER) {
+            pV->Get(TempLong2);
+        }
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+            const auto layerId = GetLayerIDByOldName(pV->GetString());
+            if (!layerId) {
+                SetError(INVALID_FA);
+                break;
+            }
+            TempLong2 = layerId.value();
+        }
+        else {
+            SetError(INVALID_FA);
+            break;
+        }
+
         pV2->Get(TempEid);
         EntityManager::RemoveFromLayer(TempLong2, TempEid);
         break;
@@ -1461,7 +1560,23 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong2);
+
+        if (pV->GetType() == VAR_INTEGER) {
+            pV->Get(TempLong2);
+        }
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+            const auto layerId = GetLayerIDByOldName(pV->GetString());
+            if (!layerId) {
+                SetError(INVALID_FA);
+                break;
+            }
+            TempLong2 = layerId.value();
+        }
+        else {
+            SetError(INVALID_FA);
+            break;
+        }
+
         pV2->Get(TempLong1);
         EntityManager::SetLayerFrozen(TempLong2, TempLong1);
         break;
@@ -1506,23 +1621,19 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         pVResult = pV;
         return pV;
 
-    case FUNC_RAND:
+    case FUNC_RAND: {
         pV = SStack.Pop();
         if (!pV)
         {
             SetError(INVALID_FA);
             break;
         }
-        pV->Get(TempLong1);
-        TempLong2 = ((TempLong1 + 1) * rand()) / RAND_MAX;
-        if (TempLong2 > TempLong1)
-            TempLong2 = TempLong1;
-        pV = SStack.Push();
-        // TempLong2 = TempLong1; // ***
-        pV->Set(TempLong2);
-        pVResult = pV;
-        return pV;
 
+        const auto result = func_rand(pV->Get<long>());
+        pVResult = SStack.Push(result);
+
+        return pVResult;
+    }
         // create entity
     case FUNC_CREATE_Entity:
 
@@ -2696,4 +2807,14 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
         n++;
     }
     return true;
+}
+
+long func_rand(long max)
+{
+    int value = ((max + 1) * rand()) / RAND_MAX;
+    if (value > max)
+    {
+        value = max;
+    }
+    return value;
 }

@@ -71,6 +71,14 @@ class DATA : public VDATA
     DATA(S_TOKEN_TYPE _element_type);
     DATA(uint32_t num_of_elements, S_TOKEN_TYPE _element_type);
     ~DATA();
+
+    template<typename T>
+    T Get() {
+        T result;
+        Get(result);
+        return result;
+    }
+
     void Set(long value);
     void SetPtr(uintptr_t value);
     bool GetPtr(uintptr_t &value);

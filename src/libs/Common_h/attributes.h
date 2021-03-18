@@ -62,7 +62,7 @@ class ATTRIBUTES
         _flushall();
     }
 
-    VSTRING_CODEC *pVStringCodec;
+    VSTRING_CODEC* pVStringCodec = nullptr;
     uint32_t nNameCode;
     char *Attribute;
     std::vector<ATTRIBUTES *> pAttributes;

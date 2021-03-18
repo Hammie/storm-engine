@@ -6,9 +6,35 @@
 
 static constexpr const bool ENABLE_SCRIPT_COMPATIBILITY = true;
 
-static constexpr const std::array<INTFUNCDESC, 98> IntFuncTable {
-    INTFUNCDESC
-    {1, "Rand", VAR_INTEGER},
+long func_rand(long max);
+
+template<typename T>
+struct TokenTypeFromType;
+
+template<> struct TokenTypeFromType<long> { static constexpr S_TOKEN_TYPE type = VAR_INTEGER; };
+
+//using IntFuncCall = DATA* (*)(DATA *&pVResult, uint32_t arguments);
+using IntFuncCall = DATA* (*)();
+
+struct INTFUNCDESC
+{
+    uint32_t dwArgsNum;
+    const char *pName;
+    S_TOKEN_TYPE ReturnType;
+};
+
+template<typename ReturnType, typename... Args>
+static constexpr auto GenerateFuncDesc(const char* name, ReturnType(*func_ptr)(Args... args)) -> INTFUNCDESC {
+    return INTFUNCDESC {
+        sizeof...(Args),
+        name,
+        TokenTypeFromType<ReturnType>::type,
+    };
+}
+
+static constexpr const std::array<INTFUNCDESC, 103> IntFuncTable {
+    // {1, "Rand", VAR_INTEGER},
+    GenerateFuncDesc("Rand", &func_rand),
     {0, "frnd", VAR_FLOAT},
     {1, "CreateClass", VAR_OBJECT},
     {2, "CreateEntity", VAR_INTEGER},
@@ -27,8 +53,8 @@ static constexpr const std::array<INTFUNCDESC, 98> IntFuncTable {
     {2,"LayerCreate",TVOID},
     {1,"LayerDelete",TVOID},
     {1, "LayerDeleteContent", TVOID},
-    {1, "LayerSetRealize", TVOID},
-    {1, "LayerSetExecute", TVOID},
+    {2, "LayerSetRealize", TVOID},
+    {2, "LayerSetExecute", TVOID},
     {2, "LayerSetMessages", TVOID},
     {3, "LayerAddObject", TVOID},
     {2, "LayerDelObject", TVOID},
@@ -70,9 +96,9 @@ static constexpr const std::array<INTFUNCDESC, 98> IntFuncTable {
     {0, "Breakpoint", TVOID},
     {2, "Pow", VAR_FLOAT},
     {2, "CopyAttributes", TVOID},
-    // {2,"GetEntityPointer",VAR_INTEGER},
-    // {1,"GetEntityNext",VAR_INTEGER},
-    // {1,"GetEntityName",VAR_STRING},
+    // {2, "GetEntityPointer", VAR_INTEGER},
+    {1, "GetEntityNext", VAR_INTEGER},
+    {1, "GetEntityName", VAR_STRING},
     {3, "strcut", VAR_STRING},
     {3, "findSubStr", VAR_STRING},
     {1, "ClearRef", TVOID},
@@ -110,6 +136,10 @@ static constexpr const std::array<INTFUNCDESC, 98> IntFuncTable {
     {1, "DLCStartOverlay", VAR_INTEGER},
     {0, "GetSteamEnabled", VAR_INTEGER},
     {1, "StartBackProcess", TVOID},
+
+    // Not yet implemented
+    {2, "FindClass", VAR_INTEGER},
+    {1, "FindClassNext", VAR_INTEGER},
 };
 
 static constexpr uint32_t GetInternalFunctionArgumentsNum(uint32_t code) {
@@ -183,9 +213,9 @@ enum FUNCTION_CODE
     FUNC_BREAKPOINT,
     FUNC_POW,
     FUNC_COPYATTRIBUTES,
-    // FUNC_GETEntity,
-    // FUNC_GETEntityNEXT,
-    // FUNC_GETEntityNAME,
+//    FUNC_GETEntity,
+    FUNC_GETEntityNEXT,
+    FUNC_GETEntityNAME,
     FUNC_STRCUT,
     FUNC_FINDSUBSTR,
     FUNC_CLEARREF,

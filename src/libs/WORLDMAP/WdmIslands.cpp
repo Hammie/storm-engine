@@ -40,6 +40,12 @@ WdmIslands::WdmIslands()
     // Loading the base model
     baseModel = static_cast<WdmRenderModel *>(
         wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands\\islands", false, false, false, 1));
+
+    if (!baseModel) {
+        baseModel = static_cast<WdmRenderModel *>(
+            wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands", false, false, false, 1));
+    }
+
     if (!baseModel || !baseModel->geo)
         return;
     // Geometry information

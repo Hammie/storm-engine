@@ -7,6 +7,8 @@
 #include "Cvector.h"
 #include "Entity.h"
 
+#include <string_view>
+
 class VDATA;
 
 class MESSAGE
@@ -19,6 +21,10 @@ class MESSAGE
   public:
     entid_t Sender_ID;
     va_list args;
+
+    virtual auto Format() const -> std::string_view {
+        return format;
+    }
 
     virtual void Move2Start()
     {

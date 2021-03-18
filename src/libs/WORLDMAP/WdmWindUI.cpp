@@ -93,7 +93,10 @@ void WdmWindUI::SetAttributes(ATTRIBUTES *apnt)
         auto *s = ap->GetAttribute("font");
         if (s && s[0])
             dateFont = wdmObjects->wm->GetRS()->LoadFont(s);
-        strcpy_s(wdmObjects->stCoordinate, ap->GetAttribute("coordinate"));
+        const char* coordinateAttribute = ap->GetAttribute("coordinate");
+        if (coordinateAttribute) {
+            strcpy_s(wdmObjects->stCoordinate, coordinateAttribute);
+        }
         auto *a = ap->FindAClass(ap, "monthnames");
         if (a)
         {

@@ -355,6 +355,10 @@ void SEAFOAM::InterpolateRightParticle(tShipFoamInfo &_shipFoamInfo, int z, uint
 //--------------------------------------------------------------------
 void SEAFOAM::RealizeShipFoam_Particles(tShipFoamInfo &_shipFoamInfo, uint32_t _dTime)
 {
+    if (sea == nullptr) {
+        return;
+    }
+
     // MODEL *arrow = (MODEL*)EntityManager::GetEntityPointer(arrowModel);
 
     for (auto z = 0; z < TRACE_STEPS_Z; ++z)

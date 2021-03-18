@@ -8,6 +8,8 @@
 #include "Track.h"
 #include "inlines.h"
 
+#include "../apps/ENGINE/compatibility.hpp"
+
 VDX9RENDER *SHIP::pRS = nullptr;
 SEA_BASE *SHIP::pSea = nullptr;
 ISLAND_BASE *SHIP::pIsland = nullptr;
@@ -94,8 +96,21 @@ bool SHIP::Init()
 
     LoadServices();
 
-    iShipPriorityExecute = static_cast<VDATA *>(core.GetScriptVariable("iShipPriorityExecute"))->GetLong();
-    iShipPriorityRealize = static_cast<VDATA *>(core.GetScriptVariable("iShipPriorityRealize"))->GetLong();
+    const auto priorityExecutePtr = static_cast<VDATA *>(core.GetScriptVariable("iShipPriorityExecute"));
+    if (priorityExecutePtr) {
+        iShipPriorityExecute = priorityExecutePtr->GetLong();
+    }
+    else {
+        iShipPriorityExecute = 2;
+    }
+
+    const auto priorityRealizePtr = static_cast<VDATA *>(core.GetScriptVariable("iShipPriorityRealize"));
+    if (priorityRealizePtr) {
+        iShipPriorityRealize = priorityRealizePtr->GetLong();
+    }
+    else {
+        iShipPriorityRealize = 31;
+    }
 
     return true;
 }
@@ -946,7 +961,9 @@ void SHIP::MastFall(mast_t *pM)
                     core.Send_Message(ent, "lpii", MSG_MAST_SETGEOMETRY, pM->pNode, GetId(), GetModelEID());
                     EntityManager::AddToLayer(ExecuteLayer, ent, iShipPriorityExecute + 1);
                     EntityManager::AddToLayer(RealizeLayer, ent, iShipPriorityRealize + 1);
-                    pShipsLights->KillMast(this, pMast->pNode, false);
+                    if (pShipsLights) {
+                        pShipsLights->KillMast(this, pMast->pNode, false);
+                    }
                     ATTRIBUTES *pAMasts = GetACharacter()->FindAClass(GetACharacter(), "Ship.Masts");
                     if (!pAMasts)
                         pAMasts = GetACharacter()->CreateSubAClass(GetACharacter(), "Ship.Masts");
@@ -1081,17 +1098,23 @@ void SHIP::Realize(uint32_t dtime)
 
 void SHIP::SetLights()
 {
-    pShipsLights->SetLights(this);
+    if (pShipsLights) {
+        pShipsLights->SetLights(this);
+    }
 }
 
 void SHIP::UnSetLights()
 {
-    pShipsLights->UnSetLights(this);
+    if (pShipsLights) {
+        pShipsLights->UnSetLights(this);
+    }
 }
 
 void SHIP::Fire(const CVECTOR &vPos)
 {
-    pShipsLights->AddDynamicLights(this, vPos);
+    if (pShipsLights) {
+        pShipsLights->AddDynamicLights(this, vPos);
+    }
 }
 
 float SHIP::GetMaxSpeedZ()
@@ -1146,10 +1169,23 @@ uint64_t SHIP::ProcessMessage(MESSAGE &message)
     case MSG_SEA_REFLECTION_DRAW:
         Realize(0);
         break;
-    case AI_MESSAGE_SET_LAYERS:
-        ExecuteLayer = message.Long();
-        RealizeLayer = message.Long();
+    case AI_MESSAGE_SET_LAYERS: {
+        const std::string_view format = message.Format();
+        if (format == "lll") {
+            ExecuteLayer = message.Long();
+            RealizeLayer = message.Long();
+        }
+        else if (format == "lss") {
+            message.String(256, str);
+            ExecuteLayer = GetLayerIDByOldName(str).value();
+            message.String(256, str);
+            RealizeLayer = GetLayerIDByOldName(str).value();
+        }
+        else {
+            throw std::runtime_error(fmt::format("Unsupported message format: '{}'", format));
+        }
         break;
+    }
     case MSG_SHIP_CREATE:
         SetACharacter(message.AttributePointer());
         Mount(message.AttributePointer());
@@ -1235,7 +1271,9 @@ uint64_t SHIP::ProcessMessage(MESSAGE &message)
     break;
     case MSG_MAST_DELGEOMETRY: {
         auto *const pNode = (NODE *)message.Pointer();
-        pShipsLights->KillMast(this, pNode, true);
+        if (pShipsLights) {
+            pShipsLights->KillMast(this, pNode, true);
+        }
     }
     break;
     case MSG_SHIP_SAFE_DELETE:
@@ -1486,7 +1524,11 @@ bool SHIP::Mount(ATTRIBUTES *_pAShip)
         pShipsLights->AddLights(this, GetModel(), bLights, bFlares);
         pShipsLights->ProcessStage(Stage::execute, 0);
     }
-    Assert(pShipsLights);
+
+    if (!pShipsLights) {
+        spdlog::warn("Mounted ship with no active ShipsLights");
+    }
+    // Assert(pShipsLights);
 
     NODE *pFDay = pModel->FindNode("fonar_day");
     NODE *pFNight = pModel->FindNode("fonar_night");
@@ -1499,11 +1541,13 @@ bool SHIP::Mount(ATTRIBUTES *_pAShip)
     // add masts
     BuildMasts();
 
-    for (long i = 0; i < iNumMasts; i++)
-        if (pMasts[i].bBroken)
-        {
-            pShipsLights->KillMast(this, pMasts[i].pNode, true);
-        }
+    if (pShipsLights) {
+        for (long i = 0; i < iNumMasts; i++)
+            if (pMasts[i].bBroken)
+            {
+                pShipsLights->KillMast(this, pMasts[i].pNode, true);
+            }
+    }
 
     BuildHulls();
 

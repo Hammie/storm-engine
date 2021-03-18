@@ -15,7 +15,7 @@
 class MESSAGE_SCRIPT : public MESSAGE
 {
   protected:
-    char *format;
+    char* format;
     char *pData;
     long Data_size;
     char *ReadPointer;
@@ -40,6 +40,11 @@ class MESSAGE_SCRIPT : public MESSAGE
     {
         ResetIndex();
     };
+
+    auto Format() const -> std::string_view override {
+        return format;
+    }
+
     // va_list args;
     bool Set(char *data)
     {

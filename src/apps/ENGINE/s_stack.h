@@ -18,6 +18,14 @@ class S_STACK : public VS_STACK
     S_STACK();
     ~S_STACK();
     void Release();
+
+    template<typename T> requires (!std::is_pointer_v<T> && !std::same_as<T, nullptr_t>)
+    DATA* Push(const T& value) {
+        DATA* pV = Push();
+        pV->Set(value);
+        return pV;
+    }
+
     DATA *Push(DATA *pdataclass = nullptr);
     DATA *Pop();
     DATA *Read(uint32_t offset, uint32_t index);

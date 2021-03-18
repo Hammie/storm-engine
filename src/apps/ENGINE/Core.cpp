@@ -240,9 +240,14 @@ void CORE::ProcessEngineIniFile()
 
         if (iScriptVersion != ENGINE_SCRIPT_VERSION)
         {
-            ShowCursor(true);
-            MessageBoxA(nullptr, "Wrong script version", "Error", MB_OK);
-            Compiler->ExitProgram();
+            if (ENABLE_SCRIPT_COMPATIBILITY) {
+                spdlog::warn("Unsupported script version: {}", iScriptVersion);
+            }
+            else {
+                ShowCursor(true);
+                MessageBoxA(nullptr, "Wrong script version", "Error", MB_OK);
+                Compiler->ExitProgram();
+            }
         }
     }
 

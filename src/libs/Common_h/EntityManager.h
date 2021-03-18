@@ -4,6 +4,8 @@
 #include "Entity.h"
 #include "vmodule_api.h"
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -224,7 +226,7 @@ class EntityManager final
         }
         if (pClass == nullptr)
         {
-            throw std::exception("invalid entity name");
+            throw std::runtime_error(fmt::format("invalid entity name: '{}'", name));
         }
 
         /* CREATE Entity */
