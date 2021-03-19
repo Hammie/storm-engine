@@ -9,9 +9,11 @@
 
 namespace scripting {
 
-struct ATTRIBUTES {};
-struct VDATA {};
-struct entid_t {};
+class ATTRIBUTES;
+struct VDATA;
+using entid_t = uint64_t;
+
+namespace detail {
 
 template<char c>
 struct MessageFormatTraits;
@@ -30,51 +32,90 @@ using MessageParams = std::tuple<typename MessageFormatTraits<Format>::type...>;
 template<size_t N>
 struct MessageFormat
 {
-    std::array<char, N> arr_;
+    static const size_t Length = N - 1;
 
     constexpr MessageFormat(const char(&in)[N]) : arr_{}
     {
-        std::copy(in, in + N, arr_.begin());
+        std::copy(in, in + Length, arr_.begin());
     }
 
     [[nodiscard]]
-    constexpr size_t size() const noexcept {
+    constexpr std::string_view str() const noexcept
+    {
+        return std::string_view(arr_.begin(), arr_.end());
+    }
+
+    [[nodiscard]]
+    constexpr size_t size() const noexcept
+    {
         return arr_.size();
     }
 
     [[nodiscard]]
-    constexpr char at(size_t index) const noexcept {
+    constexpr char at(size_t index) const noexcept
+    {
         return arr_.at(index);
     }
+
+    std::array<char, Length> arr_;
 };
+
+} // namespace detail
 
 class Message {
 public:
-    template<MessageFormat format>
-    auto GetParams() {
-        return GetParams_impl<format>(std::make_index_sequence<format.size() - 1>{});
+    template<detail::MessageFormat format, typename... Params>
+    [[nodiscard]]
+    static Message Create(Params ...params)
+    {
+        Message result;
+        result.format_ = format.str();
+        return result;
     }
 
-    template<MessageFormat format, typename... Params>
-    auto SetParams(Params ...params) {
-        return SetParams_impl<format>(std::make_index_sequence<format.size() - 1>{}, params...);
+    template<detail::MessageFormat format>
+    [[nodiscard]]
+    auto GetParams() const
+    {
+        return GetParams_impl<format>(std::make_index_sequence<format.size()>{});
     }
 
-private:
-    template<MessageFormat format, typename T, T... Index>
-    auto GetParams_impl (std::integer_sequence<size_t, Index...> seq) {
-        return MessageParams<format.at(Index)...>{
-            std::any_cast<typename MessageFormatTraits<format.at(Index)>::type>(data_.at(Index))...
+    template<detail::MessageFormat format, typename... Params>
+    auto SetParams(Params ...params)
+    {
+        return SetParams_impl<format>(std::make_index_sequence<format.size()>{}, params...);
+    }
+
+    [[nodiscard]]
+    std::string_view Format() const
+    {
+        return format_;
+    }
+
+    [[nodiscard]]
+    bool CheckFormat(const std::string_view& format) const
+    {
+        return format_ == format;
+    }
+
+  private:
+    template<detail::MessageFormat format, typename T, T... Index>
+    auto GetParams_impl (std::integer_sequence<size_t, Index...> seq) const
+    {
+        return detail::MessageParams<format.at(Index)...>{
+            std::any_cast<typename detail::MessageFormatTraits<format.at(Index)>::type>(data_.at(Index))...
         };
     }
 
-    template<MessageFormat format, typename T, T... Index, typename... Params>
-    auto SetParams_impl(std::integer_sequence<size_t, Index...> seq, Params ...params) {
+    template<detail::MessageFormat format, typename T, T... Index, typename... Params>
+    auto SetParams_impl(std::integer_sequence<size_t, Index...> seq, Params ...params)
+    {
         data_ = std::vector<std::any>{
-            static_cast<typename MessageFormatTraits<format.at(Index)>::type>(params)...
+            static_cast<typename detail::MessageFormatTraits<format.at(Index)>::type>(params)...
         };
     }
 
+    std::string format_;
     std::vector<std::any> data_;
 };
 
