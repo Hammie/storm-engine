@@ -7,6 +7,8 @@
 #include "Cvector.h"
 #include "Entity.h"
 
+#include <message.hpp>
+
 #include <string_view>
 
 class VDATA;
@@ -21,6 +23,43 @@ class MESSAGE
   public:
     entid_t Sender_ID;
     va_list args;
+
+    scripting::Message Convert()
+    {
+        std::vector<std::any> params;
+
+        const std::string_view& format = Format();
+
+        for (unsigned i = 0; i < format.size(); ++i) {
+            switch(format[i]) {
+                case 'a': {
+                    params.emplace_back(AttributePointer());
+                } break;
+                case 'e': {
+                    params.emplace_back(ScriptVariablePointer());
+                } break;
+                case 'f': {
+                    params.emplace_back(Float());
+                } break;
+                case 'i': {
+                    params.emplace_back(EntityID());
+                } break;
+                case 'l': {
+                    params.emplace_back(Long());
+                } break;
+                case 'p': {
+                    params.emplace_back(reinterpret_cast<uintptr_t>(Pointer()));
+                } break;
+                case 's': {
+                    static char buffer[256] = {};
+                    String(sizeof(buffer), buffer);
+                    params.emplace_back(std::string(buffer));
+                } break;
+            }
+        }
+
+        return scripting::Message(std::string(format), params);
+    }
 
     virtual auto Format() const -> std::string_view {
         return format;

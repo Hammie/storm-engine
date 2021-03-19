@@ -7,10 +7,11 @@
 #include <utility>
 #include <vector>
 
+class ATTRIBUTES;
+class VDATA;
+
 namespace scripting {
 
-class ATTRIBUTES;
-struct VDATA;
 using entid_t = uint64_t;
 
 namespace detail {
@@ -64,6 +65,13 @@ struct MessageFormat
 
 class Message {
 public:
+    Message() noexcept = default;
+
+    explicit Message(std::string format, std::vector<std::any> params)
+        : format_(std::move(format))
+        , data_(std::move(params))
+    { }
+
     template<detail::MessageFormat format, typename... Params>
     [[nodiscard]]
     static Message Create(Params ...params)

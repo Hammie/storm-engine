@@ -27,6 +27,8 @@
 #include "WdmWindUI.h"
 #include "defines.h"
 
+#include "message.hpp"
+
 //============================================================================================
 
 //#define EVENTS_OFF
@@ -553,15 +555,14 @@ void WorldMap::Realize(uint32_t delta_time)
 // Messages
 uint64_t WorldMap::ProcessMessage(MESSAGE &message)
 {
-    char buf[256];
-    char sName[256];
-    char sName2[256];
-    switch (message.Long())
+    scripting::Message msg = message.Convert();
+
+    switch (std::get<0>(msg.GetParams<"l">()))
     {
     case MSG_WORLDMAP_CREATESTORM: {
-        if (message.Format() == "ll") {
-            const auto isTornado = message.Long() != 0;
-            CreateStorm(isTornado);
+        if (msg.CheckFormat("ll")) {
+            auto [_, isTornado] = msg.GetParams<"ll">();
+            CreateStorm(isTornado != 0);
         }
         else {
             CreateStorm(false);
@@ -569,65 +570,42 @@ uint64_t WorldMap::ProcessMessage(MESSAGE &message)
     }
     break;
     case MSG_WORLDMAP_CREATEENC_MER: {
-        if (message.Format() == "lsssff") {
-            message.String(sizeof(sName), sName);
-            message.String(sizeof(buf), buf);
-            message.String(sizeof(sName2), sName2);
-            const auto kSpeed = message.Float();
-            const auto timeOut = message.Float();                           // boal
-            return CreateMerchantShip(sName, buf, sName2, kSpeed, timeOut); // boal
+        if (msg.CheckFormat("lsssff")) {
+            auto [_, modelName, startLocator, endLocator, speed, timeOut] = msg.GetParams<"lsssff">();
+            return CreateMerchantShip(modelName.data(), startLocator.data(), endLocator.data(), speed, timeOut);
         }
-        else if (message.Format() == "llssf") {
-            const long type = message.Long();
-            message.String(sizeof(sName), sName); // Ship name
-            message.String(sizeof(buf), buf); // Island name
-            const auto kSpeed = message.Float();
-            return CreateMerchantShip(sName, buf, nullptr, kSpeed);
+        else if (msg.CheckFormat("llssf")) {
+            auto [_, type, modelName, startLocator, speed] = msg.GetParams<"llssf">();
+            return CreateMerchantShip(modelName.data(), startLocator.data(), nullptr, speed);
         }
-
     }
     break;
         // boal 04/01/06 -->
     case MSG_WORLDMAP_CREATEENC_MER_XZ: {
-        message.String(sizeof(sName), sName);
-        const auto fx1 = message.Float();
-        const auto fz1 = message.Float();
-        const auto fx2 = message.Float();
-        const auto fz2 = message.Float();
-        const auto kSpeed = message.Float();
-        const auto timeOut = message.Float();
-        return CreateMerchantShipXZ(sName, fx1, fz1, fx2, fz2, kSpeed, timeOut);
+        auto [_, name, fx1, fz1, fx2, fz2, speed, timeOut] = msg.GetParams<"lsffffff">();
+        return CreateMerchantShipXZ(name.data(), fx1, fz1, fx2, fz2, speed, timeOut);
     }
     break;
         // boal <--
     case MSG_WORLDMAP_CREATEENC_FLW: {
-        if (message.Format() == "lsff") {
-            message.String(sizeof(sName), sName);
-            const auto kSpeed = message.Float();
-            const auto timeOut = message.Float();
-            return CreateFollowShip(sName, kSpeed, timeOut);
+        if (msg.CheckFormat("lsff") ) {
+            auto [_, name, speed, timeOut] = msg.GetParams<"lsff">();
+            return CreateFollowShip(name.data(), speed, timeOut);
         }
-        else if (message.Format() == "llsf") {
-            const long type = message.Long();
-            message.String(sizeof(sName), sName);
-            const auto kSpeed = message.Float();
-            return CreateFollowShip(sName, kSpeed);
+        else if (msg.CheckFormat("llsf") ) {
+            auto [_, type, name, speed] = msg.GetParams<"llsf">();
+            return CreateFollowShip(name.data(), speed);
         }
     }
     break;
     case MSG_WORLDMAP_CREATEENC_WAR: {
-        if (message.Format() == "lssf") {
-            message.String(sizeof(sName), sName);
-            message.String(sizeof(sName), sName2);
-            const auto timeOut = message.Float();
-            return CreateWarringShips(sName, sName2, timeOut);
+        if (msg.CheckFormat("lssf") ) {
+            auto [_, name1, name2, timeOut] = msg.GetParams<"lssf">();
+            return CreateWarringShips(name1.data(), name2.data(), timeOut);
         }
-        else if (message.Format() == "llsls"){
-            const long type1 = message.Long();
-            message.String(sizeof(sName), sName);
-            const long type2 = message.Long();
-            message.String(sizeof(sName), sName2);
-            return CreateWarringShips(sName, sName2);
+        else if (msg.CheckFormat("llsls") ) {
+            auto [_, type1, name1, type2, name2] = msg.GetParams<"llsls">();
+            return CreateWarringShips(name1.data(), name2.data());
         }
     }
     break;
@@ -644,11 +622,12 @@ uint64_t WorldMap::ProcessMessage(MESSAGE &message)
             core.Event("ExitFromWorldMap");
         break;
     case MSG_WORLDMAP_SET_NATION_FLAG:
-        wdmObjects->nationFlagIndex = message.Long();
+        std::tie(std::ignore, wdmObjects->nationFlagIndex) = msg.GetParams<"ll">();
         break;
-    case MSG_WORLDMAP_SET_COORDINATES:
-        message.String(sizeof(wdmObjects->coordinate), wdmObjects->coordinate);
-        break;
+    case MSG_WORLDMAP_SET_COORDINATES: {
+        auto [_, coordinate] = msg.GetParams<"ls">();
+        strcpy_s(wdmObjects->coordinate, coordinate.data());
+    } break;
     }
     return 0;
 }

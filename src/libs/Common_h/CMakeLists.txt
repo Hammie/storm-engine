@@ -13,7 +13,8 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} 
-    INTERFACE 
+    INTERFACE
+    scripting
     ${DirectX_D3DX9_LIBRARY}
     CONAN_PKG::spdlog
 )
