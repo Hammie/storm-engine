@@ -14,9 +14,9 @@
 #include "s_stack.h"
 #include "s_vartab.h"
 #include "script_libriary.h"
-#include "string_codec.h"
 #include "strings_list.h"
 #include "tclass_list.h"
+#include "string_codec.h"
 #include "token.h"
 
 #include "internal_functions.hpp"
@@ -140,7 +140,7 @@ class COMPILER : public VIRTUAL_COMPILER
     POSTEVENTS_LIST EventMsg;
     TCLASS_LIST<SLIBHOLDER> LibriaryFuncs;
 
-    STRING_CODEC SCodec;
+    std::unique_ptr<AbstractStringCodec> SCodec;
 
     bool bRuntimeLog;
     uint32_t nRuntimeLogEventsBufferSize;
@@ -184,9 +184,9 @@ class COMPILER : public VIRTUAL_COMPILER
     COMPILER();
     ~COMPILER();
 
-    VSTRING_CODEC *GetVSC()
+    AbstractStringCodec* GetVSC()
     {
-        return &SCodec;
+        return SCodec.get();
     }
 
     char *LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath = false);

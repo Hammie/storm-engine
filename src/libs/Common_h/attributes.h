@@ -8,19 +8,7 @@
 
 #include "storm_assert.h"
 
-class VSTRING_CODEC
-{
-  public:
-    VSTRING_CODEC(){};
-
-    virtual ~VSTRING_CODEC(){};
-    virtual uint32_t GetNum() = 0;
-    virtual uint32_t Convert(const char *pString) = 0;
-    virtual uint32_t Convert(const char *pString, long iLen) = 0;
-    virtual const char *Convert(uint32_t code) = 0;
-
-    virtual void VariableChanged() = 0;
-};
+#include "string_codec.h"
 
 // here for now
 constexpr size_t TSE_MAX_EVENT_LENGTH = 64;
@@ -62,7 +50,7 @@ class ATTRIBUTES
         _flushall();
     }
 
-    VSTRING_CODEC* pVStringCodec = nullptr;
+    AbstractStringCodec* pVStringCodec = nullptr;
     uint32_t nNameCode;
     char *Attribute;
     std::vector<ATTRIBUTES *> pAttributes;
@@ -85,7 +73,7 @@ class ATTRIBUTES
     }
 
   public:
-    ATTRIBUTES(VSTRING_CODEC *p)
+    ATTRIBUTES(AbstractStringCodec *p)
     {
         pVStringCodec = p;
         Attribute = nullptr;
@@ -189,9 +177,12 @@ class ATTRIBUTES
 
     ATTRIBUTES *GetAttributeClass(const char *name)
     {
-        for (const auto &attribute : pAttributes)
-            if (_stricmp(name, attribute->GetThisName()) == 0)
+        for (const auto &attribute : pAttributes) {
+            const char* attributeName = attribute->GetThisName();
+            if (attributeName != nullptr && _stricmp(name, attributeName) == 0) {
                 return attribute;
+            }
+        }
         return nullptr;
     };
 

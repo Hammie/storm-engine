@@ -1,47 +1,55 @@
-#ifndef _STRING_CODEC_H_
-#define _STRING_CODEC_H_
+#ifndef TEHO_STRING_CODEC_H
+#define TEHO_STRING_CODEC_H
+#pragma once
 
-#include "defines.h"
-#define HASH_TABLE_SIZE 512 // must be power of 2
+#include "string_codec.h"
+
+constexpr uint32_t HASH_TABLE_SIZE = 512;
 
 struct HTSUBELEMENT
 {
-    char *pStr;
-    uint32_t dwHashCode;
+    char *pStr = nullptr;
+    uint32_t dwHashCode{};
 };
 
 struct HTELEMENT
 {
-    HTSUBELEMENT *pElements;
-    uint32_t nStringsNum;
+    HTSUBELEMENT *pElements = nullptr;
+    uint32_t nStringsNum{};
 };
 
-class STRING_CODEC : public VSTRING_CODEC
+class TEHO_STRING_CODEC final : public AbstractStringCodec
 {
-    uint32_t nHTIndex;
-    uint32_t nHTEIndex;
-    uint32_t nStringsNum;
+    uint32_t nHTIndex{};
+    uint32_t nHTEIndex{};
+    uint32_t nStringsNum{};
 
-    HTELEMENT HTable[HASH_TABLE_SIZE];
+    HTELEMENT HTable[HASH_TABLE_SIZE]{};
 
   public:
-    STRING_CODEC() : nHTIndex(0), nHTEIndex(0)
+    using AbstractStringCodec::Convert;
+
+    TEHO_STRING_CODEC() : nHTIndex(0), nHTEIndex(0)
     {
         nStringsNum = 0;
-        PZERO(HTable, sizeof(HTable));
     }
 
-    ~STRING_CODEC()
+    ~TEHO_STRING_CODEC() noexcept override
     {
-        Release();
+        Reset();
     };
 
-    uint32_t GetNum()
+    uint32_t GetNum() override
     {
         return nStringsNum;
     };
 
-    void Release()
+    uint32_t GetNum(uint32_t dwNum, uint32_t dwAlign = 8)
+    {
+        return (1 + dwNum / dwAlign) * dwAlign;
+    }
+
+    void Clear() override
     {
         for (uint32_t m = 0; m < HASH_TABLE_SIZE; m++)
         {
@@ -56,33 +64,7 @@ class STRING_CODEC : public VSTRING_CODEC
         }
     }
 
-    uint32_t Convert(const char *pString, long iLen)
-    {
-        if (pString == nullptr)
-            return 0xffffffff;
-
-        char cTemp[1024];
-        strncpy_s(cTemp, pString, iLen);
-        cTemp[iLen] = 0;
-
-        bool bNew;
-        return Convert(cTemp, bNew);
-    }
-
-    uint32_t Convert(const char *pString)
-    {
-        if (pString == nullptr)
-            return 0xffffffff;
-        bool bNew;
-        return Convert(pString, bNew);
-    }
-
-    inline uint32_t GetNum(uint32_t dwNum, uint32_t dwAlign = 8)
-    {
-        return (1 + dwNum / dwAlign) * dwAlign;
-    }
-
-    uint32_t Convert(const char *pString, bool &bNew)
+    uint32_t Convert(const char *pString, bool &bNew) override
     {
         uint32_t nStringCode;
         uint32_t n;
@@ -118,8 +100,6 @@ class STRING_CODEC : public VSTRING_CODEC
         return nStringCode;
     }
 
-    void VariableChanged();
-
     const char *Convert(uint32_t code)
     {
         uint32_t nTableIndex = code >> 16;
@@ -135,7 +115,7 @@ class STRING_CODEC : public VSTRING_CODEC
         return HTable[nTableIndex].pElements[n].pStr;
     }
 
-    uint32_t MakeHashValue(const char *ps)
+    static uint32_t MakeHashValue(const char *ps)
     {
         uint32_t hval = 0;
         while (*ps != 0)
@@ -154,7 +134,7 @@ class STRING_CODEC : public VSTRING_CODEC
         return hval;
     }
 
-    char *Get()
+    const char *Get() override
     {
         nHTIndex = 0;
         for (nHTIndex = 0; nHTIndex < HASH_TABLE_SIZE; nHTIndex++)
@@ -168,7 +148,7 @@ class STRING_CODEC : public VSTRING_CODEC
         return nullptr;
     }
 
-    char *GetNext()
+    const char *GetNext() override
     {
         nHTEIndex++;
         for (; nHTIndex < HASH_TABLE_SIZE; nHTIndex++)

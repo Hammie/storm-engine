@@ -9,7 +9,7 @@ class VIRTUAL_COMPILER
   public:
     virtual void SetError(const char *data_PTR, ...){};
     virtual void SetWarning(const char *data_PTR, ...){};
-    virtual VSTRING_CODEC *GetVSC()
+    virtual AbstractStringCodec* GetVSC()
     {
         return nullptr;
     }

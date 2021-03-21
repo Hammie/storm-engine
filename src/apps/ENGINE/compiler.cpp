@@ -27,6 +27,8 @@ extern uint32_t dwNumberScriptCommandsExecuted;
 
 COMPILER::COMPILER()
 {
+    SCodec = std::make_unique<STRING_CODEC>();
+
     CompilerStage = CS_SYSTEM;
     File_Service._DeleteFile(COMPILER_LOG_FILENAME);
     File_Service._DeleteFile(COMPILER_ERRORLOG_FILENAME);
@@ -168,7 +170,7 @@ void COMPILER::Release()
     SStack.Release();
     EventTab.Release();
     EventMsg.Release();
-    SCodec.Release();
+    SCodec->Clear();
     LibriaryFuncs.Release();
 
     delete pDebExpBuffer;
@@ -3548,7 +3550,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
                         return false;
                     }
                     Token.LowCase();
-                    dwAWCode = SCodec.Convert(Token.GetData());
+                    dwAWCode = SCodec->Convert(Token.GetData());
                     // CompileToken(Segment,ADVANCE_AP);
                     CompileToken(Segment, VERIFY_AP);
                     CompileToken(Segment, ACCESS_WORD_CODE, 1, &dwAWCode, sizeof(uint32_t));
@@ -3612,7 +3614,7 @@ bool COMPILER::CompileBlock(SEGMENT_DESC &Segment, bool &bFunctionBlock, uint32_
             // CompileToken(Segment,ACCESS_WORD,1,Token.GetData(),strlen(Token.GetData())+1);
 
             Token.LowCase();
-            awcode = SCodec.Convert(Token.GetData());
+            awcode = SCodec->Convert(Token.GetData());
             CompileToken(Segment, ACCESS_WORD_CODE, 1, &awcode, sizeof(uint32_t));
             break;
 
@@ -5766,7 +5768,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 else
                     rAP = rAP->GetAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
                 if (!rAP)
-                    SetError("missed attribute: %s", SCodec.Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
+                    SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
                 break;
             case VARIABLE:
                 if (!VarTab.GetVar(vi, *((long *)&pRunCodeBase[TLR_DataOffset])))
@@ -6386,12 +6388,12 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
             pV->Set(eid);
 
             if (pV->AttributesClass == nullptr)
-                pV->AttributesClass = new ATTRIBUTES(&SCodec);
+                pV->AttributesClass = new ATTRIBUTES(SCodec.get());
             ReadAttributesData(pV->AttributesClass, nullptr);
         }
         else
         {
-            ATTRIBUTES *pTA = new ATTRIBUTES(&SCodec);
+            ATTRIBUTES *pTA = new ATTRIBUTES(SCodec.get());
             ReadAttributesData(pTA, nullptr);
             delete pTA;
         }
@@ -6440,7 +6442,7 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
         }
 
         if (pVRef->AttributesClass == nullptr)
-            pVRef->AttributesClass = new ATTRIBUTES(&SCodec);
+            pVRef->AttributesClass = new ATTRIBUTES(SCodec.get());
         if (pString)
         {
             pA = pVRef->AttributesClass->CreateSubAClass(pVRef->AttributesClass, pString);
@@ -6618,13 +6620,13 @@ bool COMPILER::SaveState(HANDLE fh)
     SaveString(ProgramDirectory);
 
     // 4. SCodec data
-    WriteVDword(SCodec.GetNum());
-    for (n = 0; n < SCodec.GetNum(); n++)
+    WriteVDword(SCodec->GetNum());
+    for (n = 0; n < SCodec->GetNum(); n++)
     {
         if (n == 0)
-            SaveString(SCodec.Get());
+            SaveString(SCodec->Get());
         else
-            SaveString(SCodec.GetNext());
+            SaveString(SCodec->GetNext());
     }
 
     const uint32_t nSegNum = 1; // SegmentsNum;
@@ -6657,7 +6659,8 @@ bool COMPILER::SaveState(HANDLE fh)
         char *pDst = new char[dwCurPointer * 2];
         uint32_t dwPackLen = dwCurPointer * 2;
         RDTSC_B(dw2);
-        compress2((Bytef *)pDst, (uLongf *)&dwPackLen, (Bytef *)pBuffer, dwCurPointer, Z_BEST_COMPRESSION);
+//        compress2((Bytef *)pDst, (uLongf *)&dwPackLen, (Bytef *)pBuffer, dwCurPointer, Z_BEST_COMPRESSION);
+        compress2((Bytef *)pDst, (uLongf *)&dwPackLen, (Bytef *)pBuffer, dwCurPointer, Z_NO_COMPRESSION);
         RDTSC_E(dw2);
 
         fio->_WriteFile(fh, &dwCurPointer, sizeof(dwCurPointer), nullptr);
@@ -6722,7 +6725,7 @@ bool COMPILER::LoadState(HANDLE fh)
         if (pString)
         {
             Assert(utf8::IsValidUtf8(pString));
-            SCodec.Convert(pString);
+            SCodec->Convert(pString);
             delete[] pString;
         }
     }
@@ -7488,7 +7491,7 @@ void COMPILER::FormatDialog(char *file_name)
     fio->_CloseHandle(fh);
 }
 
-void STRING_CODEC::VariableChanged()
+void AbstractStringCodec::VariableChanged()
 {
     CDebug.SetTraceMode(TMODE_MAKESTEP);
 }

@@ -57,7 +57,6 @@ add_executable(${PROJECT_NAME} WIN32
     services_list.h
     sstring.h
     stats.h
-    string_codec.h
     strings_list.cpp
     strings_list.h
     tclass_list.h

@@ -752,7 +752,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 if (pRoot == nullptr)
                 {
                     value->Set("");
-                    SetError("missed attribute: %s", SCodec.Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
+                    SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
                     while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
                     {
                         BC_TokenGet();
@@ -763,7 +763,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 if (pRoot == nullptr)
                 {
                     value->Set("");
-                    SetError("missed attribute: %s", SCodec.Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
+                    SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
                     while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
                     {
                         BC_TokenGet();
@@ -1594,7 +1594,7 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                         return false;
                     }
                     Token.LowCase();
-                    dwAWCode = SCodec.Convert(Token.GetData());
+                    dwAWCode = SCodec->Convert(Token.GetData());
                     CompileToken(Segment, ADVANCE_AP);
                     CompileToken(Segment, ACCESS_WORD_CODE, 1, &dwAWCode, sizeof(uint32_t));
                 }

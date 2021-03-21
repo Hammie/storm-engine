@@ -3,6 +3,8 @@
 
 #define PROJECT_NAME "project.df"
 
+#include "defines.h"
+
 #include "s_dbg_breaktable.h"
 #include "s_dbg_sourceview.h"
 #include "s_dbg_watcherlist.h"
