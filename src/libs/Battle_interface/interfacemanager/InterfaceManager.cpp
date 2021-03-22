@@ -36,8 +36,7 @@ bool BI_InterfaceManager::Init()
     m_pMouse = new MousePointer(this, AttributesPointer);
     Assert(m_pMouse);
 
-    long nBaseWidth = 800;
-    long nBaseHeight = 600;
+    auto [nBaseWidth, nBaseHeight] = core.getScreenSize();
     long nBaseXOffset = 0;
     long nBaseYOffset = 0;
     if (AttributesPointer)

@@ -501,7 +501,7 @@ BOOL CSetupDlg::EnumerateDevicesAndResolutions()
         dm.dmSize = sizeof(dm);
         for (int iModeNum = 0; EnumDisplaySettings(dd.DeviceName, iModeNum, &dm) != 0; iModeNum++)
         {
-            if (dm.dmBitsPerPel >= 32 && dm.dmPelsWidth >= 800 && dm.dmPelsHeight >= 600 &&
+            if (dm.dmBitsPerPel >= 32 && dm.dmPelsWidth >= INTERFACE_SCREEN_WIDTH && dm.dmPelsHeight >= INTERFACE_SCREEN_HEIGHT &&
                 dm.dmDisplayFrequency == 60 && dm.dmDisplayFixedOutput == DMDFO_DEFAULT)
             {
                 res_t *pR = &Devices[numdevices].Resolutions[Devices[numdevices].numresolutions];
@@ -543,7 +543,7 @@ void CSetupDlg::OnDefaultsettings()
     for (i = 0; i < pD->numresolutions; i++)
     {
         res_t *pR = &pD->Resolutions[i];
-        if (pR->width == 800 && pR->height == 600 && pR->bpp == 16)
+        if (pR->width == INTERFACE_SCREEN_WIDTH && pR->height == INTERFACE_SCREEN_HEIGHT && pR->bpp == 16)
         {
             pD->currentresolution = i;
             break;

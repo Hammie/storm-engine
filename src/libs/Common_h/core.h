@@ -8,6 +8,7 @@
 #include "vdata.h"
 #include "vfile_service.h"
 
+#include <compatibility.hpp>
 #include "../apps/engine/services_list.h"
 #include "../apps/engine/timer.h"
 //#include "achievements.h"
@@ -22,6 +23,11 @@ struct IFUNCINFO;
 class VDATA;
 class CSteamStatsAchievements;
 class CSteamDLC;
+
+struct ScreenSize {
+    size_t width{};
+    size_t height{};
+};
 
 class CORE
 {
@@ -175,6 +181,15 @@ class CORE
     uint32_t getDLCCount();
     uint32_t getDLCDataByIndex(uint32_t iDLC);
     bool activateGameOverlayDLC(uint32_t nAppId);
+
+    ScreenSize getScreenSize() const noexcept;
+
+  private:
+    void loadCompatibilitySettings(INIFILE& inifile);
+
+    ENGINE_VERSION m_TargetVersion = ENGINE_VERSION::TO_EACH_HIS_OWN;
+
+    ScreenSize m_ScreenSize;
 };
 // core instance
 inline CORE core;

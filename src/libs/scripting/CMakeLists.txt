@@ -3,6 +3,7 @@ project(scripting)
 add_library(${PROJECT_NAME} STATIC
         src/message.cpp
         src/message.hpp
+        src/compatibility.hpp
         src/string_codec.cpp
         src/string_codec.h
         src/teho_string_codec.h

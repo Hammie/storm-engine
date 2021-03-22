@@ -6,6 +6,18 @@
 #include "dx9render.h"
 #include "externs.h"
 
+namespace {
+
+ENGINE_VERSION getTargetEngineVersion(const std::string_view& version) {
+    if (_stricmp(version.data(), "potc") == 0) {
+        return ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN;
+    }
+
+    return ENGINE_VERSION::TO_EACH_HIS_OWN;
+}
+
+} // namespace
+
 uint32_t dwNumberScriptCommandsExecuted = 0;
 
 typedef struct
@@ -199,6 +211,8 @@ void CORE::ProcessEngineIniFile()
     auto *engine_ini = File_Service.OpenIniFile(ENGINE_INI_FILE_NAME);
     if (engine_ini == nullptr)
         throw std::exception("no 'engine.ini' file");
+
+    loadCompatibilitySettings(*engine_ini);
 
     auto res = engine_ini->ReadString(nullptr, "program_directory", String, sizeof(String), "");
     if (res)
@@ -974,4 +988,25 @@ bool CORE::activateGameOverlayDLC(uint32_t nAppId)
     if (bSteam)
         return g_SteamDLC->activateGameOverlay(nAppId);
     return 0;
+}
+
+ScreenSize CORE::getScreenSize() const noexcept
+{
+    switch (m_TargetVersion)
+    {
+    case ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN: {
+        return {640, 480};
+    }
+    default: {
+        return {800, 600};
+    }
+    }
+}
+
+void CORE::loadCompatibilitySettings(INIFILE& inifile)
+{
+    std::array<char, 128> strBuffer{};
+    inifile.ReadString("compatibility", "target_version", strBuffer.data(), strBuffer.size(), "");
+    const std::string_view target_engine_version = strBuffer.data();
+    m_TargetVersion = getTargetEngineVersion(target_engine_version);
 }
