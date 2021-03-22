@@ -21,6 +21,8 @@ std::optional<int> GetLayerIDByOldName(const std::string_view& layerName) {
         return INFO_REALIZE;
     } else if (layerName == "sails_trace") {
         return SAILS_TRACE;
+    } else if (layerName == "system_messages") {
+        return INFO_REALIZE; // Not sure about this one
     } else {
         return std::nullopt;
     }

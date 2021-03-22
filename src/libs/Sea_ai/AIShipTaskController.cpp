@@ -122,11 +122,17 @@ void AIShipTaskController::FindRunAwayPoint()
     else
     {
         // If 1 is returned from the script, then use the script point
+        vRAPoint.x = 0.0f;
+        vRAPoint.y = 0.0f;
+        vRAPoint.z = 0.0f;
+
         auto *pV = core.Event(SHIP_GET_RUNAWAY_POINT, "aff", GetAIShip()->GetACharacter(), vRAPoint.x, vRAPoint.z);
         auto *pARAP = GetAIShip()->GetACharacter()->FindAClass(GetAIShip()->GetACharacter(), "SeaAI.RunAwayPnt");
-        vRAPoint.y = 0.0f;
-        vRAPoint.x = pARAP->GetAttributeAsFloat("x", 0.0f);
-        vRAPoint.z = pARAP->GetAttributeAsFloat("z", 0.0f);
+        if (pARAP) {
+            vRAPoint.x = pARAP->GetAttributeAsFloat("x", 0.0f);
+            vRAPoint.z = pARAP->GetAttributeAsFloat("z", 0.0f);
+        }
+        
         SetDestinationPoint(vRAPoint);
     }
 

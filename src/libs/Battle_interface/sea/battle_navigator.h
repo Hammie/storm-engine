@@ -74,81 +74,81 @@ class BATTLE_NAVIGATOR
     void UpdateWindParam();
 
   protected:
-    uint32_t m_dwBackGradColor1;
-    uint32_t m_dwBackGradColor2;
+    uint32_t m_dwBackGradColor1{};
+    uint32_t m_dwBackGradColor2{};
     // visible horizon parameters
-    float m_fMapRadius;    // radius of the minimap on screen
-    float m_fTextureRad;   // radius of the minimap in texture
-    float m_fWorldRad;     // radius of the minimap in world coordinates
-    float m_fCurScale;     // minimap scale
-    float m_fDefaultScale; // default map scale
-    float m_fMinScale;     // minimum map scale
-    float m_fMaxScale;     // maximum map scale
-    float m_fScaleStep;    // zoom step
-    float m_fShipShowRad;  // radius of the displayed ship
+    float m_fMapRadius{};    // radius of the minimap on screen
+    float m_fTextureRad{};   // radius of the minimap in texture
+    float m_fWorldRad{};     // radius of the minimap in world coordinates
+    float m_fCurScale{};     // minimap scale
+    float m_fDefaultScale{}; // default map scale
+    float m_fMinScale{};     // minimum map scale
+    float m_fMaxScale{};     // maximum map scale
+    float m_fScaleStep{};    // zoom step
+    float m_fShipShowRad{};  // radius of the displayed ship
 
     // navigation window options
-    long m_NavigationWidth;
-    long m_NavigationHeight;
-    long m_XNavigator;
-    long m_YNavigator;
+    long m_NavigationWidth{};
+    long m_NavigationHeight{};
+    long m_XNavigator{};
+    long m_YNavigator{};
 
     // coordinates of our ship
-    float m_fXPos;
-    float m_fYPos;
-    float m_fAngle;
-    float m_fShipSpeed;
-    float m_fMaxShipSpeed;
-    float m_fShipSpeedScale;
-    float m_fShipWindAgainst;
+    float m_fXPos{};
+    float m_fYPos{};
+    float m_fAngle{};
+    float m_fShipSpeed{};
+    float m_fMaxShipSpeed{};
+    float m_fShipSpeedScale{};
+    float m_fShipWindAgainst{};
 
     // island coordinates
-    bool m_bYesIsland;
-    float m_fXIsland;
-    float m_fYIsland;
-    float m_fIslandWidth;
-    float m_fIslandHeight;
-    float m_fIslandRadius;
+    bool m_bYesIsland{};
+    float m_fXIsland{};
+    float m_fYIsland{};
+    float m_fIslandWidth{};
+    float m_fIslandHeight{};
+    float m_fIslandRadius{};
 
     // wind
-    float m_fWindAngle;
-    float m_fWindStrength;
-    float m_fWindMaxStrength;
-    long m_windWidth;
-    long m_windHeight;
+    float m_fWindAngle{};
+    float m_fWindStrength{};
+    float m_fWindMaxStrength{};
+    long m_windWidth{};
+    long m_windHeight{};
 
     // cannon charge parameters
-    uint32_t m_dwChargeCannon;
-    uint32_t m_dwReadyCannon;
-    uint32_t m_dwDamagedCannon;
+    uint32_t m_dwChargeCannon{};
+    uint32_t m_dwReadyCannon{};
+    uint32_t m_dwDamagedCannon{};
 
-    float m_fBegAnglLeftCharge;
-    float m_fCurAnglLeftCharge;
-    float m_fCurAnglLeftDamage;
-    float m_fEndAnglLeftCharge;
+    float m_fBegAnglLeftCharge{};
+    float m_fCurAnglLeftCharge{};
+    float m_fCurAnglLeftDamage{};
+    float m_fEndAnglLeftCharge{};
 
-    float m_fBegAnglRightCharge;
-    float m_fCurAnglRightCharge;
-    float m_fCurAnglRightDamage;
-    float m_fEndAnglRightCharge;
+    float m_fBegAnglRightCharge{};
+    float m_fCurAnglRightCharge{};
+    float m_fCurAnglRightDamage{};
+    float m_fEndAnglRightCharge{};
 
-    float m_fBegAnglForwardCharge;
-    float m_fCurAnglForwardCharge;
-    float m_fCurAnglForwardDamage;
-    float m_fEndAnglForwardCharge;
+    float m_fBegAnglForwardCharge{};
+    float m_fCurAnglForwardCharge{};
+    float m_fCurAnglForwardDamage{};
+    float m_fEndAnglForwardCharge{};
 
-    float m_fBegAnglBackCharge;
-    float m_fCurAnglBackCharge;
-    float m_fCurAnglBackDamage;
-    float m_fEndAnglBackCharge;
+    float m_fBegAnglBackCharge{};
+    float m_fCurAnglBackCharge{};
+    float m_fCurAnglBackDamage{};
+    float m_fEndAnglBackCharge{};
 
     // ship speed and wind parameters
-    float m_fBegAnglShipSpeed;
-    float m_fEndAnglShipSpeed;
-    float m_fCurAnglShipSpeed;
-    float m_fBegAnglWindSpeed;
-    float m_fEndAnglWindSpeed;
-    float m_fCurAnglWindSpeed;
+    float m_fBegAnglShipSpeed{};
+    float m_fEndAnglShipSpeed{};
+    float m_fCurAnglShipSpeed{};
+    float m_fBegAnglWindSpeed{};
+    float m_fEndAnglWindSpeed{};
+    float m_fCurAnglWindSpeed{};
 
     // textures
     long m_idCompasTex;     // compass
