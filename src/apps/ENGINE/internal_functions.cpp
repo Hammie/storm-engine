@@ -398,34 +398,6 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         return pV;
         break;
 
-    case FUNC_STARTBACKPROC:
-        pV = SStack.Pop();
-        if (!pV)
-        {
-            SetError(INVALID_FA);
-            break;
-        }
-        if (pV->GetType() == VAR_STRING)
-        {
-            pV->Get(pChar);
-            if (pChar == 0)
-            {
-                SetError("invalid string argument");
-                return 0;
-            }
-            if ((function_code = FuncTab.FindFunc(pChar)) == INVALID_FUNC_CODE)
-            {
-                SetError("invalid function");
-                return 0;
-            }
-            core.StartEvent(function_code);
-        }
-        else
-        {
-            SetError("unexpected thread parameter");
-        }
-        break;
-
     case FUNC_GETENGINEVERSION:
         pV = SStack.Push();
         pV->Set(static_cast<long>(ENGINE_SCRIPT_VERSION));

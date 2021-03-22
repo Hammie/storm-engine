@@ -1,5 +1,6 @@
-#ifndef _COMPILER_H_
-#define _COMPILER_H_
+#pragma once
+
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "data.h"
 #include "message.h"
@@ -178,6 +179,11 @@ class COMPILER : public VIRTUAL_COMPILER
     ATTRIBUTES *rAP;
 
   public:
+    std::shared_ptr<spdlog::sinks::basic_file_sink_mt> error_warning_sink;
+    std::shared_ptr<spdlog::logger> tracelog;
+    std::shared_ptr<spdlog::logger> errorlog;
+    std::shared_ptr<spdlog::logger> warninglog;
+
     bool bBreakOnError;
     COMPRESS Compress;
 
@@ -339,5 +345,3 @@ class COMPILER : public VIRTUAL_COMPILER
 
     DATA *GetOperand(const char *pCodeBase, uint32_t &ip, S_TOKEN_TYPE *pTokenType = nullptr);
 };
-
-#endif

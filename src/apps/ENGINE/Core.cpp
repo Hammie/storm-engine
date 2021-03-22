@@ -59,16 +59,13 @@ void CORE::ResetCore()
 
 void CORE::CleanUp()
 {
-    if (Initialized) {
-        Initialized = false;
-        bEngineIniProcessed = false;
-        ReleaseServices();
-        Compiler->Release();
-        Services_List.Release();
-        Services_List.Release();
-        delete State_file_name;
-        ReleaseThread();
-    }
+    Initialized = false;
+    bEngineIniProcessed = false;
+    ReleaseServices();
+    Compiler->Release();
+    Services_List.Release();
+    Services_List.Release();
+    delete State_file_name;
 }
 
 void CORE::InitBase()
@@ -187,7 +184,6 @@ bool CORE::Initialize()
     ResetCore();
 
     InitializeCriticalSection(&lock);
-    StartThread();
 
     Initialized = true;
 
@@ -472,7 +468,7 @@ void CORE::Trace(const char *format, ...)
     va_start(args, format);
     _vsnprintf_s(buffer_4k, sizeof(buffer_4k) - 4, format, args);
     va_end(args);
-    spdlog::trace(buffer_4k);
+    tracelog->info(buffer_4k);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -866,56 +862,6 @@ void CORE::Leave_CriticalSection()
 {
     LeaveCriticalSection(&lock);
 };
-
-uint32_t CORE::Process()
-{
-    DWORD dwWaitResult;
-    DATA *pResult;
-
-    while (1)
-    {
-        if (!thrQueue.empty())
-            SetEvent(hEvent);
-        dwWaitResult = WaitForSingleObject(hEvent, 1);
-        if (dwWaitResult == WAIT_OBJECT_0)
-        {
-            EnterCriticalSection(&lock);
-            uint32_t &function_code = thrQueue.front();
-            Compiler->BC_Execute(function_code, pResult);
-            thrQueue.pop();
-            LeaveCriticalSection(&lock);
-        }
-        //        if(Reset_flag) return 0;
-    }
-    return 0;
-}
-
-void CORE::StartEvent(uint32_t function_code)
-{
-    thrQueue.push(function_code);
-}
-
-void CORE::StartThread()
-{
-    hEvent = CreateEvent(nullptr, false, false, TEXT("thrEvent"));
-    if (hEvent == nullptr)
-    {
-        Trace("Error create event!!");
-        return;
-    }
-    MyThread.pThis = this;
-    MyThread.pMethod = &CORE::Process;
-    MyThread.Handle = CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(MyThread.Function), &MyThread,
-                                   CREATE_SUSPENDED, nullptr);
-    SetThreadPriority(MyThread.Handle, THREAD_PRIORITY_NORMAL);
-    ResumeThread(MyThread.Handle);
-}
-
-void CORE::ReleaseThread()
-{
-    WaitForSingleObject(MyThread.Handle, 0);
-    CloseHandle(MyThread.Handle);
-}
 
 bool CORE::isSteamEnabled()
 {
