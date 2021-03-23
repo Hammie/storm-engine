@@ -17,7 +17,6 @@ CXI_SCROLLIMAGE::CXI_SCROLLIMAGE()
     m_texBorder = -1;
     m_nCurImage = 0;
     m_nListSize = 0;
-    m_Image = nullptr;
     m_pScroll = nullptr;
     m_bDoMove = false;
     m_sBorderGroupName = nullptr;
@@ -37,12 +36,6 @@ CXI_SCROLLIMAGE::CXI_SCROLLIMAGE()
     m_dwSpecTechniqueARGB = 0xFFFFFFFF;
 
     m_nSlotsQnt = 0;
-    m_idBadTexture = nullptr;
-    m_idBadPic = nullptr;
-    m_pPicOffset = nullptr;
-    m_dwNormalColor = nullptr;
-    m_dwSelectColor = nullptr;
-    m_dwCurColor = nullptr;
 }
 
 CXI_SCROLLIMAGE::~CXI_SCROLLIMAGE()
@@ -53,7 +46,7 @@ CXI_SCROLLIMAGE::~CXI_SCROLLIMAGE()
 void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
 {
     int n;
-    if (m_bUse && m_Image != nullptr)
+    if (m_bUse && !m_Image.empty())
     {
         if (m_bDoMove)
         {
@@ -77,7 +70,7 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                 ChangeDinamicParameters(0);
             }
             for (n = 0; n < m_nSlotsQnt; n++)
-                m_dwCurColor[n] = m_dwNormalColor[n];
+                m_SlotProperties[n].curColor = m_SlotProperties[n].normalColor;
         }
         else
         {
@@ -91,14 +84,14 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
 
                 for (n = 0; n < m_nSlotsQnt; n++)
                 {
-                    const int ad = ALPHA(m_dwNormalColor[n]);
-                    const int rd = RED(m_dwNormalColor[n]);
-                    const int gd = GREEN(m_dwNormalColor[n]);
-                    const int bd = BLUE(m_dwNormalColor[n]);
-                    const int al = ALPHA(m_dwSelectColor[n]);
-                    const int rl = RED(m_dwSelectColor[n]);
-                    const int gl = GREEN(m_dwSelectColor[n]);
-                    const int bl = BLUE(m_dwSelectColor[n]);
+                    const int ad = ALPHA(m_SlotProperties[n].normalColor);
+                    const int rd = RED(m_SlotProperties[n].normalColor);
+                    const int gd = GREEN(m_SlotProperties[n].normalColor);
+                    const int bd = BLUE(m_SlotProperties[n].normalColor);
+                    const int al = ALPHA(m_SlotProperties[n].selectColor);
+                    const int rl = RED(m_SlotProperties[n].selectColor);
+                    const int gl = GREEN(m_SlotProperties[n].selectColor);
+                    const int bl = BLUE(m_SlotProperties[n].selectColor);
                     int a, r, g, b;
                     if (m_bColorType)
                     {
@@ -106,7 +99,7 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                         r = (rl - rd) * m_nBlindCounter / m_nMaxBlindCounter;
                         g = (gl - gd) * m_nBlindCounter / m_nMaxBlindCounter;
                         b = (bl - bd) * m_nBlindCounter / m_nMaxBlindCounter;
-                        m_dwCurColor[n] = ARGB(ad + a, rd + r, gd + g, bd + b);
+                        m_SlotProperties[n].curColor = ARGB(ad + a, rd + r, gd + g, bd + b);
                     }
                     else
                     {
@@ -114,14 +107,14 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                         r = (rl - rd) * m_nBlindCounter / m_nMaxBlindCounter;
                         g = (gl - gd) * m_nBlindCounter / m_nMaxBlindCounter;
                         b = (bl - bd) * m_nBlindCounter / m_nMaxBlindCounter;
-                        m_dwCurColor[n] = ARGB(al - a, rl - r, gl - g, bl - b);
+                        m_SlotProperties[n].curColor = ARGB(al - a, rl - r, gl - g, bl - b);
                     }
                 }
             }
             else
             {
                 for (n = 0; n < m_nSlotsQnt; n++)
-                    m_dwCurColor[n] = m_dwNormalColor[n];
+                    m_SlotProperties[n].curColor = m_SlotProperties[n].normalColor;
             }
         }
 
@@ -174,7 +167,7 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
             {
                 FXYRECT pos;
 
-                if (m_Image[pScroll->imageNum].ptex[n] != nullptr)
+                if (m_Image[pScroll->imageNum].ptex[n] != nullptr && m_Image[pScroll->imageNum].tex[n] > 0)
                 {
                     m_rs->SetTexture(0, m_Image[pScroll->imageNum].ptex[n]);
                     rectTex.left = 0.f;
@@ -190,17 +183,17 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                 }
                 else
                 {
-                    if (m_idBadPic[n] != -1 && m_idBadTexture[n] != -1)
+                    if (m_SlotProperties[n].idBadPic != -1 && m_SlotProperties[n].idBadTexture != -1)
                     // partial use of texture for a "bad" picture
                     {
-                        m_rs->TextureSet(0, m_nGroupTex[m_idBadTexture[n]]);
-                        pPictureService->GetTexturePos(m_idBadPic[n], rectTex);
+                        m_rs->TextureSet(0, m_nGroupTex[m_SlotProperties[n].idBadTexture]);
+                        pPictureService->GetTexturePos(m_SlotProperties[n].idBadPic, rectTex);
                     }
                     else // "bad" picture for the whole texture
                     {
-                        if (m_idBadTexture[n] != -1)
+                        if (m_SlotProperties[n].idBadTexture != -1)
                         {
-                            m_rs->TextureSet(0, m_idBadTexture[n]);
+                            m_rs->TextureSet(0, m_SlotProperties[n].idBadTexture);
                             rectTex.left = 0.f;
                             rectTex.top = 0.f;
                             rectTex.right = 1.f;
@@ -215,7 +208,7 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                 }
 
                 pos.right = (pos.left = pScroll->pCenter.x - m_ImageSize.x / 2.f) + m_ImageSize.x;
-                pos.bottom = (pos.top = pScroll->pCenter.y - m_ImageSize.y / 2.f + m_pPicOffset[n]) + m_ImageSize.y;
+                pos.bottom = (pos.top = pScroll->pCenter.y - m_ImageSize.y / 2.f + m_SlotProperties[n].picOffset) + m_ImageSize.y;
                 if (pos.left < m_rect.left)
                 {
                     if (pos.right <= m_rect.left)
@@ -247,9 +240,9 @@ void CXI_SCROLLIMAGE::Draw(bool bSelected, uint32_t Delta_Time)
                 v[0].tv = v[2].tv = rectTex.top;
                 v[1].tv = v[3].tv = rectTex.bottom;
                 if (pScroll == m_pScroll)
-                    v[0].color = v[1].color = v[2].color = v[3].color = m_dwCurColor[n];
+                    v[0].color = v[1].color = v[2].color = v[3].color = m_SlotProperties[n].curColor;
                 else
-                    v[0].color = v[1].color = v[2].color = v[3].color = m_dwNormalColor[n];
+                    v[0].color = v[1].color = v[2].color = v[3].color = m_SlotProperties[n].normalColor;
                 if (m_Image[pScroll->imageNum].bUseSpecTechnique[n])
                 {
                     m_rs->SetRenderState(D3DRS_TEXTUREFACTOR, m_dwSpecTechniqueARGB);
@@ -370,7 +363,7 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
     // set parameters for blend & minimize far images
     m_fScale = GetIniFloat(ini1, name1, ini2, name2, "fBoundScale", 1.f);
     m_lDelta = GetIniLong(ini1, name1, ini2, name2, "wDelta", 0);
-    m_dwBlendColor = GetIniARGB(ini1, name1, ini2, name2, "blendColor", 0xFFFFFFFF);
+//    m_dwBlendColor = GetIniARGB(ini1, name1, ini2, name2, "blendColor", 0xFFFFFFFF);
 
     //
     m_nMaxBlindCounter = GetIniLong(ini1, name1, ini2, name2, "blindDelay", 2000);
@@ -380,31 +373,19 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
 
     m_nSlotsQnt = GetIniLong(ini1, name1, ini2, name2, "LayerQuantity", 0);
 
-    if (m_nSlotsQnt > 0)
-    {
-        m_dwCurColor = new uint32_t[m_nSlotsQnt];
-        m_dwNormalColor = new uint32_t[m_nSlotsQnt];
-        m_dwSelectColor = new uint32_t[m_nSlotsQnt];
-        m_pPicOffset = new long[m_nSlotsQnt];
-        m_idBadTexture = new long[m_nSlotsQnt];
-        m_idBadPic = new long[m_nSlotsQnt];
-        if (!m_dwCurColor || !m_dwNormalColor || !m_dwSelectColor || !m_pPicOffset || !m_idBadTexture || !m_idBadPic)
-        {
-            throw std::exception("allocate memory error");
-        }
-    }
+    m_SlotProperties.resize(m_nSlotsQnt);
 
     // set parameters for blind
     for (i = 0; i < m_nSlotsQnt; i++)
     {
         sprintf_s(param, "dwNormalColorARGB%d", i + 1);
-        m_dwCurColor[i] = m_dwNormalColor[i] = GetIniARGB(ini1, name1, ini2, name2, param, ARGB(255, 128, 128, 128));
+        m_SlotProperties[i].curColor = m_SlotProperties[i].normalColor = GetIniARGB(ini1, name1, ini2, name2, param, ARGB(255, 128, 128, 128));
         sprintf_s(param, "dwSelectColorARGB%d", i + 1);
-        m_dwSelectColor[i] = GetIniARGB(ini1, name1, ini2, name2, param, ARGB(255, 64, 64, 64));
+        m_SlotProperties[i].selectColor = GetIniARGB(ini1, name1, ini2, name2, param, ARGB(255, 64, 64, 64));
         sprintf_s(param, "PicOffset%d", i + 1);
-        m_pPicOffset[i] = GetIniLong(ini1, name1, ini2, name2, param, 0);
-        m_idBadTexture[i] = -1;
-        m_idBadPic[i] = -1;
+        m_SlotProperties[i].picOffset = GetIniLong(ini1, name1, ini2, name2, param, 0);
+        m_SlotProperties[i].idBadTexture = -1;
+        m_SlotProperties[i].idBadPic = -1;
     }
 
     // set stringes
@@ -466,10 +447,10 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
         m_nListSize += m_nNotUsedQuantity;
         // create images array
         if (m_nListSize > 0)
-            m_Image = new IMAGEDESCRIBE[m_nListSize];
+            m_Image.resize(m_nListSize);
         else
         {
-            m_Image = nullptr;
+            m_Image.clear();
             return;
         }
         m_nCurImage = pAttribute->GetAttributeAsDword("current", 0);
@@ -514,23 +495,23 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
             sprintf_s(param, "BadPicture%d", n + 1);
             if ((sBadPict = pAttribute->GetAttribute(param)) != nullptr)
             {
-                m_idBadTexture[n] = m_rs->TextureCreate(sBadPict);
-                m_idBadPic[n] = -1;
+                m_SlotProperties[n].idBadTexture = m_rs->TextureCreate(sBadPict);
+                m_SlotProperties[n].idBadPic = -1;
             }
             else
             {
                 sprintf_s(param, "BadTex%d", n + 1);
-                m_idBadTexture[n] = pAttribute->GetAttributeAsDword(param, -1);
-                if (m_idBadTexture[n] >= 0)
+                m_SlotProperties[n].idBadTexture = pAttribute->GetAttributeAsDword(param, -1);
+                if (m_SlotProperties[n].idBadTexture >= 0)
                 {
                     sprintf_s(param, "BadPic%d", n + 1);
-                    m_idBadPic[n] =
-                        pPictureService->GetImageNum(m_sGroupName[m_idBadTexture[n]], pAttribute->GetAttribute(param));
+                    m_SlotProperties[n].idBadPic =
+                        pPictureService->GetImageNum(m_sGroupName[m_SlotProperties[n].idBadTexture], pAttribute->GetAttribute(param));
                 }
                 else
-                    m_idBadPic[n] = -1;
-                if (m_idBadPic[n] == -1)
-                    m_idBadTexture[n] = -1;
+                    m_SlotProperties[n].idBadPic = -1;
+                if (m_SlotProperties[n].idBadPic == -1)
+                    m_SlotProperties[n].idBadTexture = -1;
             }
         }
 
@@ -548,16 +529,11 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
             m_Image[i].string1 = m_Image[i].string2 = nullptr;
             if (m_nSlotsQnt > 0)
             {
-                m_Image[i].bUseSpecTechnique = new bool[m_nSlotsQnt];
-                m_Image[i].img = new long[m_nSlotsQnt];
-                m_Image[i].ptex = new IDirect3DTexture9 *[m_nSlotsQnt];
-                m_Image[i].saveName = new char *[m_nSlotsQnt];
-                m_Image[i].tex = new long[m_nSlotsQnt];
-                if (!m_Image[i].bUseSpecTechnique || !m_Image[i].img || !m_Image[i].ptex || !m_Image[i].saveName ||
-                    !m_Image[i].tex)
-                {
-                    throw std::exception("allocate memory error");
-                }
+                m_Image[i].bUseSpecTechnique.resize(m_nSlotsQnt);
+                m_Image[i].img.resize(m_nSlotsQnt);
+                m_Image[i].ptex.resize(m_nSlotsQnt);
+                m_Image[i].saveName.resize(m_nSlotsQnt);
+                m_Image[i].tex.resize(m_nSlotsQnt);
                 for (n = 0; n < m_nSlotsQnt; n++)
                 {
                     m_Image[i].bUseSpecTechnique[n] = false;
@@ -569,11 +545,11 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
             }
             else
             {
-                m_Image[i].bUseSpecTechnique = nullptr;
-                m_Image[i].img = nullptr;
-                m_Image[i].ptex = nullptr;
-                m_Image[i].saveName = nullptr;
-                m_Image[i].tex = nullptr;
+                m_Image[i].bUseSpecTechnique.clear();
+                m_Image[i].img.clear();
+                m_Image[i].ptex.clear();
+                m_Image[i].saveName.clear();
+                m_Image[i].tex.clear();
             }
 
             if (pListEntity != nullptr)
@@ -666,7 +642,7 @@ void CXI_SCROLLIMAGE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, c
 
 float CXI_SCROLLIMAGE::ChangeDinamicParameters(float fXDelta)
 {
-    if (m_Image == nullptr)
+    if (m_Image.empty())
         return 0.f;
     int n;
 
@@ -721,7 +697,7 @@ float CXI_SCROLLIMAGE::ChangeDinamicParameters(float fXDelta)
                 break;
 
             // delete current save from list
-            m_Image[curImage].Release(m_nSlotsQnt);
+            m_Image[curImage].Release();
             if (curImage < m_nListSize - 1)
                 memcpy(&m_Image[curImage], &m_Image[curImage + 1],
                        sizeof(IMAGEDESCRIBE) * (m_nListSize - 1 - curImage));
@@ -875,27 +851,21 @@ void CXI_SCROLLIMAGE::ReleaseAll()
 
     STORM_DELETE(m_sSpecTechniqueName);
 
-    if (m_idBadPic && m_idBadTexture)
+    if (!m_SlotProperties.empty())
         for (i = 0; i < m_nSlotsQnt; i++)
         {
-            if (m_idBadPic[i] == -1)
+            if (m_SlotProperties[i].idBadPic == -1)
             {
-                TEXTURE_RELEASE(m_rs, m_idBadTexture[i]);
+                TEXTURE_RELEASE(m_rs, m_SlotProperties[i].idBadTexture);
             }
             else
-                m_idBadTexture[i] = -1;
-            m_idBadPic[i] = -1;
+                m_SlotProperties[i].idBadTexture = -1;
+            m_SlotProperties[i].idBadPic = -1;
         }
 
-    STORM_DELETE(m_idBadPic);
-    STORM_DELETE(m_idBadTexture);
-
-    if (m_Image != nullptr)
-    {
-        for (i = 0; i < m_nListSize; i++)
-            m_Image[i].Release(m_nSlotsQnt);
-        STORM_DELETE(m_Image);
-    }
+    std::for_each(m_Image.begin(), m_Image.end(), [this] (IMAGEDESCRIBE& image) {
+         image.Release();
+    });
 
     while (m_pScroll != nullptr)
     {
@@ -918,11 +888,6 @@ void CXI_SCROLLIMAGE::ReleaseAll()
     FONT_RELEASE(m_rs, m_nOneStrFont);
     FONT_RELEASE(m_rs, m_nTwoStrFont);
 
-    STORM_DELETE(m_dwCurColor);
-    STORM_DELETE(m_dwNormalColor);
-    STORM_DELETE(m_dwSelectColor);
-    STORM_DELETE(m_pPicOffset);
-
     m_nGroupQuantity = 0;
     m_nSlotsQnt = 0;
 }
@@ -930,7 +895,7 @@ void CXI_SCROLLIMAGE::ReleaseAll()
 int CXI_SCROLLIMAGE::CommandExecute(int wActCode)
 {
     int i;
-    if (m_bUse && m_Image != nullptr && m_pScroll != nullptr)
+    if (m_bUse && !m_Image.empty() && m_pScroll != nullptr)
     {
         if (m_bLockStatus)
             return -1;
@@ -1075,7 +1040,7 @@ void CXI_SCROLLIMAGE::ChangeScroll(int nScrollItemNum)
         char *sStringName;
         for (i = nScrollItemNum; i < nScrollLastNum; i++)
         {
-            m_Image[i].Clear(m_nSlotsQnt);
+            m_Image[i].Clear();
 
             sprintf_s(sAttrName, "pic%d", i + 1);
             pAttribute = pAttr->GetAttributeClass(sAttrName);
@@ -1162,23 +1127,25 @@ void CXI_SCROLLIMAGE::DeleteImage(int imgNum)
         return;
     if (m_nListSize <= m_nNotUsedQuantity)
         return;
-    m_Image[imgNum].Release(m_nSlotsQnt);
+    m_Image[imgNum].Release();
+
+    m_Image.erase(m_Image.begin() + imgNum);
+
     m_nListSize--;
     if (m_nListSize <= 0)
     {
-        STORM_DELETE(m_Image);
         return;
     }
 
-    IMAGEDESCRIBE *pOldImgs = m_Image;
-    m_Image = new IMAGEDESCRIBE[m_nListSize];
-    if (m_Image == nullptr)
-        throw std::exception("memory allocate error");
-    if (imgNum > 0)
-        memcpy(m_Image, pOldImgs, imgNum * sizeof(IMAGEDESCRIBE));
-    if (imgNum < m_nListSize)
-        memcpy(&m_Image[imgNum], &pOldImgs[imgNum + 1], (m_nListSize - imgNum) * sizeof(IMAGEDESCRIBE));
-    delete pOldImgs;
+//    IMAGEDESCRIBE *pOldImgs = m_Image;
+//    m_Image = new IMAGEDESCRIBE[m_nListSize];
+//    if (m_Image == nullptr)
+//        throw std::exception("memory allocate error");
+//    if (imgNum > 0)
+//        memcpy(m_Image, pOldImgs, imgNum * sizeof(IMAGEDESCRIBE));
+//    if (imgNum < m_nListSize)
+//        memcpy(&m_Image[imgNum], &pOldImgs[imgNum + 1], (m_nListSize - imgNum) * sizeof(IMAGEDESCRIBE));
+//    delete pOldImgs;
 
     if (m_nCurImage >= m_nListSize - m_nNotUsedQuantity)
         m_nCurImage = m_nListSize - m_nNotUsedQuantity - 1;
@@ -1202,20 +1169,18 @@ void CXI_SCROLLIMAGE::RefreshScroll()
 
     for (i = 0; i < m_nSlotsQnt; i++)
     {
-        if (m_idBadPic[i] == -1)
+        if (m_SlotProperties[i].idBadPic == -1)
         {
-            TEXTURE_RELEASE(m_rs, m_idBadTexture[i]);
+            TEXTURE_RELEASE(m_rs, m_SlotProperties[i].idBadTexture);
         }
         else
-            m_idBadTexture[i] = -1;
-        m_idBadPic[i] = -1;
+            m_SlotProperties[i].idBadTexture = -1;
+        m_SlotProperties[i].idBadPic = -1;
     }
 
-    if (m_Image != nullptr)
+    if (!m_Image.empty())
     {
-        for (i = 0; i < m_nListSize; i++)
-            m_Image[i].Release(m_nSlotsQnt);
-        STORM_DELETE(m_Image);
+        m_Image.clear();
     }
 
     while (m_pScroll != nullptr)
@@ -1258,10 +1223,9 @@ void CXI_SCROLLIMAGE::RefreshScroll()
         m_nListSize += m_nNotUsedQuantity;
         // create images array
         if (m_nListSize > 0)
-            m_Image = new IMAGEDESCRIBE[m_nListSize];
+            m_Image.resize(m_nListSize);
         else
         {
-            m_Image = nullptr;
             return;
         }
         m_nCurImage = pAttribute->GetAttributeAsDword("current", 0);
@@ -1308,23 +1272,23 @@ void CXI_SCROLLIMAGE::RefreshScroll()
             sprintf_s(param, "BadPicture%d", n + 1);
             if ((sBadPict = pAttribute->GetAttribute(param)) != nullptr)
             {
-                m_idBadTexture[n] = m_rs->TextureCreate(sBadPict);
-                m_idBadPic[n] = -1;
+                m_SlotProperties[n].idBadTexture = m_rs->TextureCreate(sBadPict);
+                m_SlotProperties[n].idBadPic = -1;
             }
             else
             {
                 sprintf_s(param, "BadTex%d", n + 1);
-                m_idBadTexture[n] = pAttribute->GetAttributeAsDword(param, -1);
-                if (m_idBadTexture[n] >= 0)
+                m_SlotProperties[n].idBadTexture = pAttribute->GetAttributeAsDword(param, -1);
+                if (m_SlotProperties[n].idBadTexture >= 0)
                 {
                     sprintf_s(param, "BadPic%d", n + 1);
-                    m_idBadPic[n] =
-                        pPictureService->GetImageNum(m_sGroupName[m_idBadTexture[n]], pAttribute->GetAttribute(param));
+                    m_SlotProperties[n].idBadPic =
+                        pPictureService->GetImageNum(m_sGroupName[m_SlotProperties[n].idBadTexture], pAttribute->GetAttribute(param));
                 }
                 else
-                    m_idBadPic[n] = -1;
-                if (m_idBadPic[n] == -1)
-                    m_idBadTexture[n] = -1;
+                    m_SlotProperties[n].idBadPic = -1;
+                if (m_SlotProperties[n].idBadPic == -1)
+                    m_SlotProperties[n].idBadTexture = -1;
             }
         }
 
@@ -1342,16 +1306,11 @@ void CXI_SCROLLIMAGE::RefreshScroll()
             m_Image[i].string1 = m_Image[i].string2 = nullptr;
             if (m_nSlotsQnt > 0)
             {
-                m_Image[i].bUseSpecTechnique = new bool[m_nSlotsQnt];
-                m_Image[i].img = new long[m_nSlotsQnt];
-                m_Image[i].ptex = new IDirect3DTexture9 *[m_nSlotsQnt];
-                m_Image[i].saveName = new char *[m_nSlotsQnt];
-                m_Image[i].tex = new long[m_nSlotsQnt];
-                if (!m_Image[i].bUseSpecTechnique || !m_Image[i].img || !m_Image[i].ptex || !m_Image[i].saveName ||
-                    !m_Image[i].tex)
-                {
-                    throw std::exception("allocate memory error");
-                }
+                m_Image[i].bUseSpecTechnique.resize(m_nSlotsQnt);
+                m_Image[i].img.resize(m_nSlotsQnt);
+                m_Image[i].ptex.resize(m_nSlotsQnt);
+                m_Image[i].saveName.resize(m_nSlotsQnt);
+                m_Image[i].tex.resize(m_nSlotsQnt);
                 for (n = 0; n < m_nSlotsQnt; n++)
                 {
                     m_Image[i].bUseSpecTechnique[n] = false;
@@ -1363,11 +1322,11 @@ void CXI_SCROLLIMAGE::RefreshScroll()
             }
             else
             {
-                m_Image[i].bUseSpecTechnique = nullptr;
-                m_Image[i].img = nullptr;
-                m_Image[i].ptex = nullptr;
-                m_Image[i].saveName = nullptr;
-                m_Image[i].tex = nullptr;
+                m_Image[i].bUseSpecTechnique.clear();
+                m_Image[i].img.clear();
+                m_Image[i].ptex.clear();
+                m_Image[i].saveName.clear();
+                m_Image[i].tex.clear();
             }
 
             if (pListEntity != nullptr)
@@ -1496,7 +1455,7 @@ int CXI_SCROLLIMAGE::FindClickedImageNum() const
 
 int CXI_SCROLLIMAGE::GetRightQuantity() const
 {
-    if (m_pScroll == nullptr || m_Image == nullptr)
+    if (m_pScroll == nullptr || m_Image.empty())
         return 0;
     int q = 0;
     for (SCROLLEntity *pscr = m_pScroll; pscr != nullptr; pscr = pscr->next)
@@ -1527,7 +1486,7 @@ int CXI_SCROLLIMAGE::GetRightQuantity() const
 
 int CXI_SCROLLIMAGE::GetLeftQuantity() const
 {
-    if (m_pScroll == nullptr || m_Image == nullptr)
+    if (m_pScroll == nullptr || m_Image.empty())
         return 0;
     int q = 0;
     for (SCROLLEntity *pscr = m_pScroll; pscr != nullptr; pscr = pscr->next)
@@ -1685,16 +1644,12 @@ int CXI_SCROLLIMAGE::FindTexGroupFromOld(char **pGroupList, char *groupName, int
     return -1;
 }
 
-void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Release(int nQnt)
+void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Release()
 {
-    STORM_DELETE(bUseSpecTechnique);
-    STORM_DELETE(tex);
-    STORM_DELETE(ptex);
-    STORM_DELETE(img);
-
-    for (int i = 0; i < nQnt; i++)
-        STORM_DELETE(saveName[i]);
-    STORM_DELETE(saveName);
+    std::for_each(saveName.begin(), saveName.end(), [] (char* str) {
+        delete[] str;
+    });
+    saveName.clear();
 
     str1 = -1;
     str2 = -1;
@@ -1702,16 +1657,16 @@ void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Release(int nQnt)
     STORM_DELETE(string2);
 }
 
-void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Clear(int nQnt)
+void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Clear()
 {
-    for (int i = 0; i < nQnt; i++)
-    {
-        bUseSpecTechnique[i] = false;
-        tex[i] = -1;
-        ptex[i] = nullptr;
-        img[i] = -1;
-        STORM_DELETE(saveName[i]);
-    }
+    std::for_each(saveName.begin(), saveName.end(), [] (char* str) {
+      delete[] str;
+    });
+    saveName.clear();
+    bUseSpecTechnique.clear();
+    tex.clear();
+    ptex.clear();
+    img.clear();
 
     str1 = -1;
     str2 = -1;
