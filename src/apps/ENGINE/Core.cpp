@@ -214,6 +214,14 @@ void CORE::ProcessEngineIniFile()
 
     loadCompatibilitySettings(*engine_ini);
 
+#ifdef NDEBUG
+    const bool enable_file_search = true;
+#else
+    // Pirates of the Caribbean has some misplaced texture files
+    const bool enable_file_search = m_TargetVersion == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN;
+#endif
+    m_ResourceLocator = std::make_unique<storm::ResourceLocator>(enable_file_search);
+
     auto res = engine_ini->ReadString(nullptr, "program_directory", String, sizeof(String), "");
     if (res)
     {
@@ -1001,6 +1009,11 @@ ScreenSize CORE::getScreenSize() const noexcept
         return {800, 600};
     }
     }
+}
+
+storm::ResourceLocator &CORE::getResourceLocationService()
+{
+    return *m_ResourceLocator;
 }
 
 void CORE::loadCompatibilitySettings(INIFILE& inifile)

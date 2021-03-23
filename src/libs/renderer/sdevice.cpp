@@ -117,7 +117,6 @@ char sSplashText[] = {'\xbb', '\x9a', '\x89', '\x9a', '\x93', '\x90', '\x8f', '\
 #pragma warning(pop)
 char splashbuffer[256];
 
-#define TEXTURESDIR "resource\\textures\\%s.tx"
 #define VIDEODIR "Resource\\Videos\\%s"
 
 struct DX9SphVertex
@@ -1270,16 +1269,15 @@ bool DX9RENDER::TextureLoad(long t)
     // sprintf_s(fn,"resource\\textures\\%s.tx",fname);
     if (Textures[t].name == nullptr)
         return false;
-    sprintf_s(fn, TEXTURESDIR, Textures[t].name);
-    for (long s = 0, d = 0; fn[d]; s++)
-    {
-        if (d > 0 && fn[d - 1] == '\\' && fn[s] == '\\')
-            continue;
-        fn[d++] = fn[s];
+
+    auto& resource_locator = core.getResourceLocationService();
+    const auto& resource_path = resource_locator.findTexture(std::string(Textures[t].name) + ".tx");
+    if (!resource_path) {
+        core.Trace("Can't load texture %s", Textures[t].name);
+        return false;
     }
-    // Opening the file
-    // fio->SetDrive(XBOXDRIVE_CACHE);
-    HANDLE file = fio->_CreateFile(fn);
+
+    HANDLE file = fio->_CreateFile(resource_path->generic_string().c_str());
     // fio->SetDrive();
     if (file == INVALID_HANDLE_VALUE)
     {

@@ -9,6 +9,8 @@
 #include "vfile_service.h"
 
 #include <compatibility.hpp>
+#include <resource_locator.hpp>
+
 #include "../apps/engine/services_list.h"
 #include "../apps/engine/timer.h"
 //#include "achievements.h"
@@ -182,7 +184,9 @@ class CORE
     uint32_t getDLCDataByIndex(uint32_t iDLC);
     bool activateGameOverlayDLC(uint32_t nAppId);
 
-    ScreenSize getScreenSize() const noexcept;
+    [[nodiscard]] ScreenSize getScreenSize() const noexcept;
+
+    storm::ResourceLocator& getResourceLocationService();
 
   private:
     void loadCompatibilitySettings(INIFILE& inifile);
@@ -190,6 +194,7 @@ class CORE
     ENGINE_VERSION m_TargetVersion = ENGINE_VERSION::TO_EACH_HIS_OWN;
 
     ScreenSize m_ScreenSize;
+    std::unique_ptr<storm::ResourceLocator> m_ResourceLocator;
 };
 // core instance
 inline CORE core;
