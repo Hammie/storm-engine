@@ -105,7 +105,11 @@ class ATTRIBUTES
     {
         if (!str || !str[0])
             return false;
-        return _stricmp(pVStringCodec->Convert(nNameCode), str) == 0;
+        const auto attrString = pVStringCodec->Convert(nNameCode);
+        if (attrString == nullptr && str != nullptr) {
+            return false;
+        }
+        return _stricmp(attrString, str) == 0;
     };
 
     auto GetThisName() const
