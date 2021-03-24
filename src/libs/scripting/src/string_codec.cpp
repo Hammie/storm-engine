@@ -44,6 +44,11 @@ uint32_t AbstractStringCodec::Convert(const char *pString)
     return Convert(pString, bNew);
 }
 
+uint32_t AbstractStringCodec::Convert(const std::string_view &pString)
+{
+    return Convert(pString.data());
+}
+
 const char* STRING_CODEC::Convert(const uint32_t code) const
 {
     auto it = table.find(code);

@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <array>
 
+using StringReference = uint32_t;
+
 class AbstractStringCodec
 {
   public:
@@ -14,9 +16,9 @@ class AbstractStringCodec
 
     virtual void Clear() = 0;
 
-    [[nodiscard]] virtual const char *Convert(uint32_t code) const = 0;
+    [[nodiscard]] virtual const char *Convert(StringReference code) const = 0;
 
-    [[nodiscard]] virtual uint32_t Convert(const char *pString, bool &bNew) = 0;
+    [[nodiscard]] virtual StringReference Convert(const char *pString, bool &bNew) = 0;
 
     [[nodiscard]] virtual const char *Get() = 0;
 
@@ -24,9 +26,11 @@ class AbstractStringCodec
 
     void VariableChanged();
 
-    uint32_t Convert(const char *pString, long iLen);
+    StringReference Convert(const char *pString, long iLen);
 
-    uint32_t Convert(const char *pString);
+    StringReference Convert(const char *pString);
+
+    StringReference Convert(const std::string_view &pString);
 };
 
 class STRING_CODEC final : public AbstractStringCodec
@@ -46,10 +50,10 @@ class STRING_CODEC final : public AbstractStringCodec
     }
 
     [[nodiscard]]
-    const char* Convert(uint32_t code) const override;
+    const char* Convert(StringReference code) const override;
 
     [[nodiscard]]
-    uint32_t Convert(const char *pString, bool &bNew) override;
+    StringReference Convert(const char *pString, bool &bNew) override;
 
     [[nodiscard]]
     const char *Get() override;
@@ -58,8 +62,8 @@ class STRING_CODEC final : public AbstractStringCodec
     const char *GetNext() override;
 
   private:
-    std::unordered_map<uint32_t, std::string> table{};
-    std::unordered_map<uint32_t, std::string>::iterator iterator{};
+    std::unordered_map<StringReference, std::string> table{};
+    std::unordered_map<StringReference, std::string>::iterator iterator{};
 };
 
 #endif
