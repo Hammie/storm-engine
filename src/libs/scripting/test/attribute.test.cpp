@@ -10,7 +10,7 @@ TEST_CASE("Create new attribute", "[attribute]")
 
     Attribute attr{codec, "MyAttribute"};
 
-    CHECK(attr.getName() == "MyAttribute"s);
+    CHECK(attr.getName() == "MyAttribute");
 }
 
 TEST_CASE("Add child attribute", "[attribute]")
@@ -20,7 +20,7 @@ TEST_CASE("Add child attribute", "[attribute]")
     Attribute parent{codec, "MyAttribute"};
     parent.createChildAttribute("Child");
 
-    CHECK(parent.getProperty("Child") == "");
+    CHECK(parent.hasProperty("Child"));
 }
 
 TEST_CASE("Get property as string", "[attribute]")
@@ -28,13 +28,13 @@ TEST_CASE("Get property as string", "[attribute]")
     STRING_CODEC codec;
 
     Attribute attribute{codec, "MyAttribute"};
-    attribute.setProperty("StringProperty", "5.25a");
-    attribute.setProperty("IntegerProperty", 5u);
-    attribute.setProperty("FloatProperty", 5.25f);
+    attribute["StringProperty"] = "5.25a";
+    attribute["IntegerProperty"] = 5u;
+    attribute["FloatProperty"] = 5.25f;
 
-    CHECK(attribute.getProperty("StringProperty") == "5.25a");
-    CHECK(attribute.getProperty("IntegerProperty") == "5");
-    CHECK(attribute.getProperty("FloatProperty") == "5.250000");
+    CHECK(attribute.getProperty("StringProperty").as<std::string_view>() == "5.25a");
+    CHECK(attribute.getProperty("IntegerProperty").as<std::string_view>() == "5");
+    CHECK(attribute.getProperty("FloatProperty").as<std::string_view>() == "5.250000");
 }
 
 TEST_CASE("Get property as uint32_t", "[attribute]")
@@ -42,13 +42,13 @@ TEST_CASE("Get property as uint32_t", "[attribute]")
     STRING_CODEC codec;
 
     Attribute attribute{codec, "MyAttribute"};
-    attribute.setProperty("StringProperty", "5.25a");
-    attribute.setProperty("IntegerProperty", 5u);
-    attribute.setProperty("FloatProperty", 5.25f);
+    attribute["StringProperty"] = "5.25a";
+    attribute["IntegerProperty"] = 5u;
+    attribute["FloatProperty"] = 5.25f;
 
-    CHECK(attribute.getProperty<uint32_t>("StringProperty") == 5);
-    CHECK(attribute.getProperty<uint32_t>("IntegerProperty") == 5);
-    CHECK(attribute.getProperty<uint32_t>("FloatProperty") == 5);
+    CHECK(attribute.getProperty("StringProperty").as<uint32_t>() == 5);
+    CHECK(attribute.getProperty("IntegerProperty").as<uint32_t>() == 5);
+    CHECK(attribute.getProperty("FloatProperty").as<uint32_t>() == 5);
 }
 
 TEST_CASE("Get property as float", "[attribute]")
@@ -56,11 +56,23 @@ TEST_CASE("Get property as float", "[attribute]")
     STRING_CODEC codec;
 
     Attribute attribute{codec, "MyAttribute"};
-    attribute.setProperty("StringProperty", "5.25a");
-    attribute.setProperty("IntegerProperty", 5u);
-    attribute.setProperty("FloatProperty", 5.25f);
+    attribute["StringProperty"] = "5.25a";
+    attribute["IntegerProperty"] = 5u;
+    attribute["FloatProperty"] = 5.25f;
 
-    CHECK(attribute.getProperty<float>("StringProperty") == 5.25f);
-    CHECK(attribute.getProperty<float>("IntegerProperty") == 5.f);
-    CHECK(attribute.getProperty<float>("FloatProperty") == 5.25f);
+    CHECK(attribute.getProperty("StringProperty").as<float>() == 5.25f);
+    CHECK(attribute.getProperty("IntegerProperty").as<float>() == 5.f);
+    CHECK(attribute.getProperty("FloatProperty").as<float>() == 5.25f);
+}
+
+TEST_CASE("Nested properties", "[attribute]")
+{
+    STRING_CODEC codec;
+
+    Attribute root{codec, "MyAttribute"};
+    Attribute& child = root.createChildAttribute("Child");
+    Attribute& grand_child = child.createChildAttribute("GrandChild");
+
+    CHECK(root.hasProperty("Child"));
+    CHECK(root["Child"].hasProperty("GrandChild"));
 }

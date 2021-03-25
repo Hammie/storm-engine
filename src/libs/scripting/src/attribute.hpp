@@ -17,7 +17,7 @@ class Attribute {
         m_NameCode = m_StringCodec.Convert(name);
     }
 
-    [[nodiscard]] const char* getName() const {
+    [[nodiscard]] std::string_view getName() const {
         return m_StringCodec.Convert(m_NameCode);
     }
 
@@ -25,34 +25,60 @@ class Attribute {
         return m_NameCode;
     }
 
-    [[nodiscard]] Attribute& getChildAttribute(const std::string_view& name) {
-        Assert(m_Value.empty());
-        auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&name, this] (const Attribute& child) {
-            return child.getName() == name;
-        });
-        if (found == m_Children.end()) {
+    template<typename T>
+    [[nodiscard]] auto as() const {
+        return getValue<T>();
+    }
 
-        }
-        return *found;
+    template<typename T>
+    Attribute& set(T value) {
+        setValue<T>(value);
+        return *this;
+    }
+
+    template<typename T>
+    Attribute& operator = (T value) {
+        set(value);
+        return *this;
     }
 
     Attribute& createChildAttribute(const std::string_view& name) {
         return m_Children.emplace_back(m_StringCodec, name);
     }
 
-    template<typename ValueType = std::string_view>
-    ValueType getProperty(const std::string_view& property_name);
-
-    Attribute& setProperty(const std::string_view& property_name, const std::string_view& value) {
-        return setPropertyImpl<const std::string_view&>(property_name, value);
+    [[nodiscard]] bool hasProperty(const std::string_view& property_name) const noexcept {
+        auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&property_name, this] (const Attribute& child) {
+          return child.getName() == property_name;
+        });
+        return found != m_Children.end();
     }
 
-    Attribute& setProperty(const std::string_view& property_name, uint32_t value) {
-        return setPropertyImpl(property_name, value);
+    [[nodiscard]] Attribute& getProperty(const std::string_view& property_name) {
+        auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&property_name, this] (const Attribute& child) {
+          return child.getName() == property_name;
+        });
+        if (found != m_Children.end()) {
+            return *found;
+        }
+        else {
+            return createChildAttribute(property_name);
+        }
     }
 
-    Attribute& setProperty(const std::string_view& property_name, float value) {
-        return setPropertyImpl(property_name, value);
+    [[nodiscard]] const Attribute& getProperty(const std::string_view& property_name) const {
+        auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&property_name, this] (const Attribute& child) {
+          return child.getName() == property_name;
+        });
+        Assert(found != m_Children.end());
+        return *found;
+    }
+
+    [[nodiscard]] Attribute& operator [] (const std::string_view& property_name) {
+        return getProperty(property_name);
+    }
+
+    [[nodiscard]] const Attribute& operator [] (const std::string_view& property_name) const {
+        return getProperty(property_name);
     }
 
   protected:
@@ -65,9 +91,6 @@ class Attribute {
         return *this;
     }
 
-    template<typename ValueType = const std::string_view&>
-    Attribute& setPropertyImpl(const std::string_view& property_name, ValueType value);
-
   private:
     AbstractStringCodec& m_StringCodec;
     std::vector<Attribute> m_Children;
@@ -76,62 +99,33 @@ class Attribute {
     StringReference m_NameCode{};
 };
 
-
 template<>
-std::string_view Attribute::getValue<std::string_view>() const {
+inline std::string_view Attribute::getValue<std::string_view>() const {
     Assert(m_Children.empty());
     return m_Value;
 }
 
 template<>
-uint32_t Attribute::getValue<uint32_t>() const {
+inline uint32_t Attribute::getValue<uint32_t>() const {
     Assert(m_Children.empty());
     return std::stoul(m_Value);
 }
 
 template<>
-float Attribute::getValue<float>() const {
+inline float Attribute::getValue<float>() const {
     Assert(m_Children.empty());
     return std::stof(m_Value);
 }
 
 template<>
-Attribute& Attribute::setValue<uint32_t>(uint32_t value) {
+inline Attribute& Attribute::setValue<uint32_t>(uint32_t value) {
     m_Value = std::to_string(value);
     return *this;
 }
 
 template<>
-Attribute& Attribute::setValue<float>(float value) {
+inline Attribute& Attribute::setValue<float>(float value) {
     m_Value = std::to_string(value);
-    return *this;
-}
-
-template<typename ValueType>
-inline ValueType Attribute::getProperty(const std::string_view& property_name) {
-    auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&property_name, this] (const Attribute& child) {
-      return child.getName() == property_name;
-    });
-    if (found != m_Children.end()) {
-        return found->getValue<ValueType>();
-    }
-    else {
-        return ValueType{};
-    }
-}
-
-template<typename ValueType>
-inline Attribute& Attribute::setPropertyImpl(const std::string_view& property_name, ValueType value) {
-    auto found = std::find_if(std::begin(m_Children), std::end(m_Children), [&property_name, this] (const Attribute& child) {
-      return child.getName() == property_name;
-    });
-    if (found != m_Children.end()) {
-        found->setValue(value);
-    }
-    else {
-        Attribute& property = m_Children.emplace_back(m_StringCodec, property_name);
-        property.setValue(value);
-    }
     return *this;
 }
 

@@ -12,8 +12,11 @@ ENGINE_VERSION getTargetEngineVersion(const std::string_view& version) {
     if (_stricmp(version.data(), "potc") == 0) {
         return ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN;
     }
+    else if (_stricmp(version.data(), "teho") == 0) {
+        return ENGINE_VERSION::TO_EACH_HIS_OWN;
+    }
 
-    return ENGINE_VERSION::TO_EACH_HIS_OWN;
+    return ENGINE_VERSION::LATEST;
 }
 
 } // namespace
