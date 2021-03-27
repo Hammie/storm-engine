@@ -10,8 +10,8 @@ class SEA_AI : public Entity
   private:
     bool bFirstInit;
 
-    void AddShip(entid_t _eidShip, ATTRIBUTES *pCharacter, ATTRIBUTES *pAShip);
-    void SetCompanionEnemy(ATTRIBUTES *pACharacter);
+    void AddShip(entid_t _eidShip, Attribute *pCharacter, Attribute *pAShip);
+    void SetCompanionEnemy(Attribute *pACharacter);
 
   public:
     SEA_AI();
@@ -46,7 +46,7 @@ class SEA_AI : public Entity
     void ProcessMessage(uint32_t iMsg, uint32_t wParam, uint32_t lParam);
     uint64_t ProcessMessage(MESSAGE &message);
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute);
+    uint32_t AttributeChanged(Attribute &pAttribute);
 };
 
 #endif

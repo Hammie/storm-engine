@@ -88,7 +88,7 @@ void AISeaGoods::Execute(uint32_t dwDeltaTime)
                     if (fDistance <= pS->State.vBoxSize.z * fDistanceMultiply)
                     {
                         auto *pVData = core.Event(SHIP_EAT_SWIM_GOOD, "llsl", iCharacterIndex, pI->iCharIndex,
-                                                  pI->sGoodName, pI->iQuantity);
+                                                  pI->sGoodName.c_str(), pI->iQuantity);
                         if (pVData->GetLong() || bDeleteGoodAnyway)
                         {
                             // aGoods[i]->aItems.ExtractNoShift(j);
@@ -127,11 +127,11 @@ void AISeaGoods::Realize(uint32_t dwDeltaTime)
     AIHelper::pRS->SetRenderState(D3DRS_LIGHTING, false);
 }
 
-uint32_t AISeaGoods::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t AISeaGoods::AttributeChanged(Attribute &attribute)
 {
-    auto *const pParent = pAttribute->GetParent();
+    const Attribute* pParent = attribute.getParent();
 
-    if (*pAttribute == "Add")
+    if (attribute == "Add")
     {
         for (uint32_t i = 0; i < aGoods.size(); i++)
             if (aGoods[i]->sModel == sTmpModel)
@@ -147,59 +147,59 @@ uint32_t AISeaGoods::AttributeChanged(ATTRIBUTES *pAttribute)
         return 0;
     }
 
-    if (*pAttribute == "CharIndex")
+    if (attribute == "CharIndex")
     {
-        TmpItem.iCharIndex = pAttribute->GetAttributeAsDword();
+        attribute.get_to(TmpItem.iCharIndex);
         return 0;
     }
-    if (*pAttribute == "Time")
+    if (attribute == "Time")
     {
-        TmpItem.fTime = pAttribute->GetAttributeAsFloat();
+        attribute.get_to(TmpItem.fTime);
         return 0;
     }
-    if (*pAttribute == "Quantity")
+    if (attribute == "Quantity")
     {
-        TmpItem.iQuantity = pAttribute->GetAttributeAsDword();
+        attribute.get_to(TmpItem.iQuantity);
         return 0;
     }
-    if (*pAttribute == "Model")
+    if (attribute == "Model")
     {
-        sTmpModel = pAttribute->GetThisAttr();
+        attribute.get_to(sTmpModel);
         return 0;
     }
-    if (*pAttribute == "Good")
+    if (attribute == "Good")
     {
-        strcpy_s(TmpItem.sGoodName, pAttribute->GetThisAttr());
+        attribute.get_to(TmpItem.sGoodName);
         return 0;
     }
 
     if (*pParent == "Pos")
     {
-        if (*pAttribute == "x")
+        if (attribute == "x")
         {
-            TmpItem.vPos.x = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(TmpItem.vPos.x);
             return 0;
         }
-        if (*pAttribute == "z")
+        if (attribute == "z")
         {
-            TmpItem.vPos.z = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(TmpItem.vPos.z);
             return 0;
         }
     }
 
-    if (*pAttribute == "ModelsPath")
+    if (attribute == "ModelsPath")
     {
-        sModelPath = pAttribute->GetThisAttr();
+        attribute.get_to(sModelPath);
         return 0;
     }
-    if (*pAttribute == "DeleteGoodAnyway")
+    if (attribute == "DeleteGoodAnyway")
     {
-        bDeleteGoodAnyway = pAttribute->GetAttributeAsDword() == 1;
+        attribute.get_to(bDeleteGoodAnyway);
         return 0;
     }
-    if (*pAttribute == "DistanceMultiply")
+    if (attribute == "DistanceMultiply")
     {
-        fDistanceMultiply = pAttribute->GetAttributeAsFloat();
+        attribute.get_to(fDistanceMultiply);
         return 0;
     }
 

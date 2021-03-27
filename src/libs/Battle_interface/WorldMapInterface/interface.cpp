@@ -85,7 +85,7 @@ uint64_t WM_INTERFACE::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t WM_INTERFACE::AttributeChanged(ATTRIBUTES *pAttr)
+uint32_t WM_INTERFACE::AttributeChanged(Attribute &pAttr)
 {
     return 0;
 }
@@ -94,13 +94,15 @@ void WM_INTERFACE::LoadIniFile()
 {
     m_pShipIcon = new WMShipIcon(GetId(), rs);
     Assert(m_pShipIcon);
-    auto *pA = AttributesPointer ? AttributesPointer->GetAttributeClass("wm_sign") : nullptr;
-    m_pShipIcon->Init(AttributesPointer, pA);
-    m_nCommandListVerticalOffset = pA ? pA->GetAttributeAsDword("commandlistverticaloffset") : -48;
 
-    m_nMainCharIndex = AttributesPointer ? AttributesPointer->GetAttributeAsDword("maincharindex", -1) : -1;
+    Assert(AttributesPointer);
+    Attribute& attr = *AttributesPointer;
+    attr["wm_sign"]["commandlistverticaloffset"].get_to(m_nCommandListVerticalOffset, -48l);
+    attr["maincharindex"].get_to(m_nMainCharIndex, -1l);
 
-    m_pCommandList = new WMShipCommandList(GetId(), AttributesPointer, rs);
+    m_pShipIcon->Init(AttributesPointer, &attr);
+
+    m_pCommandList = new WMShipCommandList(GetId(), *AttributesPointer, rs);
     Assert(m_pCommandList);
 
     UpdateCommandList();

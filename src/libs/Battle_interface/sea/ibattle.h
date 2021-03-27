@@ -20,7 +20,7 @@ class BATTLE_INTERFACE : public Entity
     void Execute(uint32_t delta_time);
     void Realize(uint32_t delta_time);
     uint64_t ProcessMessage(MESSAGE &message) override;
-    uint32_t AttributeChanged(ATTRIBUTES *pAttr) override;
+    uint32_t AttributeChanged(Attribute &pAttr) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -72,7 +72,7 @@ class BATTLE_INTERFACE : public Entity
     BIBorderInfo m_BattleBorder;
     BIImagesInfo m_ImagesInfo;
 
-    ShipInfoImages *m_pShipInfoImages;
+    ShipInfoImages *m_pShipInfoImages = nullptr;
 
   protected:
     void LoadIniFile();

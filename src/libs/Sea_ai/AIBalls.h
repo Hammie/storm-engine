@@ -67,7 +67,7 @@ class AIBalls : public Entity
 
     VDX9RENDER *rs;
 
-    void AddBall(ATTRIBUTES *pABall);
+    void AddBall(Attribute &aBall);
 
     // inherited functions from Entity
     bool Init() override;
@@ -78,7 +78,7 @@ class AIBalls : public Entity
 
     void FireBallFromCamera();
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttributeChanged) override;
+    uint32_t AttributeChanged(Attribute &pAttributeChanged) override;
 
     uint64_t ProcessMessage(MESSAGE &message) override;
 

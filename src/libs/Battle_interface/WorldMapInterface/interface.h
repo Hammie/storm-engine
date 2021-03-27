@@ -16,7 +16,7 @@ class WM_INTERFACE : public Entity
     bool Init() override;
     void Realize(uint32_t delta_time);
     uint64_t ProcessMessage(MESSAGE &message) override;
-    uint32_t AttributeChanged(ATTRIBUTES *pAttr) override;
+    uint32_t AttributeChanged(Attribute &pAttr) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {

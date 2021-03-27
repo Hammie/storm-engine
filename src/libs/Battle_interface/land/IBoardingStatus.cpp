@@ -58,17 +58,18 @@ void IBoardingStatus::Realize(uint32_t delta_time)
 void IBoardingStatus::Create()
 {
     // Set parameters for active action icon
-    auto *pA = core.Entity_GetAttributePointer(GetId());
+    Attribute *pA = core.Entity_GetAttributePointer(GetId());
     if (pA != nullptr)
     {
-        m_myPos.x = static_cast<float>(pA->GetAttributeAsDword("myLeft", 10));
-        m_myPos.y = static_cast<float>(pA->GetAttributeAsDword("myTop", 460));
-        m_enemyPos.x = static_cast<float>(pA->GetAttributeAsDword("enemyLeft", 10));
-        m_enemyPos.y = static_cast<float>(pA->GetAttributeAsDword("enemyTop", 450));
-        m_Width = pA->GetAttributeAsDword("width", 120);
-        m_Height = pA->GetAttributeAsDword("height", 8);
-        m_myColor = pA->GetAttributeAsDword("myColor", ARGB(255, 0, 0, 128));
-        m_enemyColor = pA->GetAttributeAsDword("enemyColor", ARGB(255, 128, 0, 0));
+        const Attribute& attr = *pA;
+        m_myPos.x = attr["myLeft"].get<float>(10);
+        m_myPos.y = attr["myTop"].get<float>(460);
+        m_enemyPos.x = attr["enemyLeft"].get<float>(10);
+        m_enemyPos.y = attr["enemyTop"].get<float>(450);
+        m_Width = attr["width"].get<uint32_t>(120);
+        m_Height = attr["height"].get<uint32_t>(8);
+        m_myColor = attr["myColor"].get<uint32_t>(ARGB(255, 0, 0, 128));
+        m_enemyColor = attr["enemyColor"].get<uint32_t>(ARGB(255, 128, 0, 0));
     }
     else
     {

@@ -122,7 +122,10 @@ void ISLAND::Realize(uint32_t Delta_Time)
     float fOldFogDensity;
     float fIslandFogDensity;
 
-    fIslandFogDensity = AttributesPointer->GetAttributeAsFloat("FogDensity", 0.0f);
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    attr["FogDensity"].get_to(fIslandFogDensity, 0.0f);
 
     if (aForts.size() && !AIFortEID) //~!@
     {
@@ -471,9 +474,12 @@ bool ISLAND::CreateShadowMap(char *pDir, char *pName)
     if (pWeather == nullptr)
         throw std::exception("No found WEATHER entity!");
 
-    const fs::path path = fs::path() / "resource" / "foam" / pDir / AttributesPointer->GetAttribute("LightingPath");
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    const fs::path path = fs::path() / "resource" / "foam" / pDir / attr["LightingPath"].get<std::string_view>();
     // MessageBoxA(NULL, (LPCSTR)path.c_str(), "", MB_OK); //~!~
-    // sDir.Format("resource\\foam\\%s\\%s\\", pDir, AttributesPointer->GetAttribute("LightingPath")); sDir.CheckPath();
+    // sDir.Format("resource\\foam\\%s\\%s\\", pDir, AttributesPointer->getProperty("LightingPath").get<const char*>()); sDir.CheckPath();
     // sprintf_s(fname, "%s%s.tga", (const char*)sDir.c_str(), pName);
     const std::string fileName = path.string() + pName + ".tga";
 
@@ -794,8 +800,11 @@ bool ISLAND::Mount(char *fname, char *fdir, entid_t *eID)
     // MessageBoxA(NULL, (LPCSTR)path.c_str(), "", MB_OK); //~!~
     // sRealFileName.Format("%s\\%s", fdir, fname); sRealFileName.CheckPath();
 
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
     model_id = EntityManager::CreateEntity("MODELR");
-    core.Send_Message(model_id, "ls", MSG_MODEL_SET_LIGHT_PATH, AttributesPointer->GetAttribute("LightingPath"));
+    core.Send_Message(model_id, "ls", MSG_MODEL_SET_LIGHT_PATH, attr["LightingPath"].get<const char*>());
     core.Send_Message(model_id, "ls", MSG_MODEL_LOAD_GEO, (char *)pathStr.c_str());
 
     // extract subobject(sea_bed) to another model
@@ -818,7 +827,7 @@ bool ISLAND::Mount(char *fname, char *fdir, entid_t *eID)
 
     /*sModelPath.Format("islands\\%s\\", fname); sModelPath.CheckPath();
     core.Send_Message(lighter_id, "ss", "ModelsPath", (char*)sModelPath);
-    sLightPath.Format("%s", AttributesPointer->GetAttribute("LightingPath")); sLightPath.CheckPath();
+    sLightPath.Format("%s", AttributesPointer->getProperty("LightingPath").get<const char*>()); sLightPath.CheckPath();
     core.Send_Message(lighter_id, "ss", "LightPath", (char*)sLightPath);*/
 
     const auto lighter_id = EntityManager::GetEntityId("lighter");
@@ -826,8 +835,8 @@ bool ISLAND::Mount(char *fname, char *fdir, entid_t *eID)
     const std::string sSeaBedName = std::string(fname) + "_seabed";
     core.Send_Message(lighter_id, "ssi", "AddModel", (char *)sSeaBedName.c_str(), seabed_id);
 
-    fImmersionDistance = AttributesPointer->GetAttributeAsFloat("ImmersionDistance", 3000.0f);
-    fImmersionDepth = AttributesPointer->GetAttributeAsFloat("ImmersionDepth", 25.0f);
+    attr["ImmersionDistance"].get_to(fImmersionDistance, 3000.0f);
+    attr["ImmersionDepth"].get_to(fImmersionDistance, 25.0f);
 
     // CreateHeightMap(fname);
 

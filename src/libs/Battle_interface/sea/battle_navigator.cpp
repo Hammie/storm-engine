@@ -412,22 +412,25 @@ void BATTLE_NAVIGATOR::UpdateFireRangeBuffer() const
     rs->UnLockVertexBuffer(m_idFireZoneVBuf);
 }
 
-void BATTLE_NAVIGATOR::FillOneSideFireRange(BI_NOTEXTURE_VERTEX *pv, ATTRIBUTES *pShip, ATTRIBUTES *pChar,
+void BATTLE_NAVIGATOR::FillOneSideFireRange(BI_NOTEXTURE_VERTEX *pv, Attribute *pShip, Attribute *pChar,
                                             const char *pstr) const
 {
     if (pv == nullptr || pShip == nullptr || pChar == nullptr || pstr == nullptr)
         return;
 
     auto fDirAng = 0.f, fSizeAng = 0.f, fFireZone = 0.f;
-    ATTRIBUTES *pA;
-    if ((pA = BIUtils::GetAttributesFromPath(pShip, "Cannons", "Borts", pstr, 0)) != nullptr)
+    if (Attribute *pA = BIUtils::GetAttributesFromPath(pShip, "Cannons", "Borts", pstr, 0); pA != nullptr)
     {
-        fSizeAng = pA->GetAttributeAsFloat("FireZone", 0.f);
-        fDirAng = pA->GetAttributeAsFloat("FireDir", 0.f);
+        pA->getProperty("FireZone").get_to(fSizeAng, 0.f);
+        pA->getProperty("FireDir").get_to(fDirAng, 0.f);
     }
 
-    if ((pA = BIUtils::GetAttributesFromPath(pChar, "Cannons", "Borts", pstr, 0)) != nullptr)
-        fFireZone = pA->GetAttributeAsFloat("MaxFireDistance", 0.f);
+    if (Attribute *pA = BIUtils::GetAttributesFromPath(pChar, "Cannons", "Borts", pstr, 0); pA != nullptr)
+    {
+        pA->getProperty("MaxFireDistance").get_to(fFireZone, 0.f);
+        pA->getProperty("FireDir").get_to(fDirAng, 0.f);
+    }
+
     fFireZone *= m_fMapRadius / (m_fWorldRad * m_fCurScale);
     if (fFireZone > m_fMapRadius)
         fFireZone = m_fMapRadius;
@@ -444,7 +447,7 @@ void BATTLE_NAVIGATOR::FillOneSideFireRange(BI_NOTEXTURE_VERTEX *pv, ATTRIBUTES 
 void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
 {
     int i;
-    char *tmpstr;
+    const char *tmpstr = nullptr;
 
     m_pOwnerEI = pOwnerEI;
     if (RenderService == nullptr)
@@ -462,149 +465,150 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
     //
     m_fShipSpeedScale = core.Entity_GetAttributeAsFloat(BIUtils::idBattleInterface, "ShipSpeedScaler", 1.f);
 
-    auto *const pARoot = core.Entity_GetAttributeClass(BIUtils::idBattleInterface, "navigation");
+    const Attribute* pARoot = core.Entity_GetAttributeClass(BIUtils::idBattleInterface, "navigation");
+    Assert(pARoot != nullptr);
 
-    m_fAspectRatio = BIUtils::GetFloatFromAttr(pARoot, "aspectRatio", 1.f);
+    m_fAspectRatio = BIUtils::GetFloatFromAttr(*pARoot, "aspectRatio", 1.f);
 
     // Get navigation window parameters
-    m_NavigationWidth = BIUtils::GetLongFromAttr(pARoot, "navigatorWidth", 128);
-    m_NavigationHeight = BIUtils::GetLongFromAttr(pARoot, "navigatorHeight", 128);
-    m_XNavigator = BIUtils::GetLongFromAttr(pARoot, "rightPos", 640) - m_NavigationWidth / 2;
-    m_YNavigator = BIUtils::GetLongFromAttr(pARoot, "topPos", 0) + m_NavigationHeight / 2;
+    m_NavigationWidth = BIUtils::GetLongFromAttr(*pARoot, "navigatorWidth", 128);
+    m_NavigationHeight = BIUtils::GetLongFromAttr(*pARoot, "navigatorHeight", 128);
+    m_XNavigator = BIUtils::GetLongFromAttr(*pARoot, "rightPos", 640) - m_NavigationWidth / 2;
+    m_YNavigator = BIUtils::GetLongFromAttr(*pARoot, "topPos", 0) + m_NavigationHeight / 2;
 
     // visibility radius on the minimap
-    m_fWorldRad = BIUtils::GetFloatFromAttr(pARoot, "horizontRadius", 400.f);
-    m_fMinScale = BIUtils::GetFloatFromAttr(pARoot, "minScale", .01f);
-    m_fMaxScale = BIUtils::GetFloatFromAttr(pARoot, "maxScale", 2.f);
-    m_fCurScale = m_fDefaultScale = BIUtils::GetFloatFromAttr(pARoot, "curScale", 1.f);
-    m_fScaleStep = BIUtils::GetFloatFromAttr(pARoot, "scaleStep", .01f);
-    m_fShipShowRad = BIUtils::GetFloatFromAttr(pARoot, "shipShowRadius", 2.f);
+    m_fWorldRad = BIUtils::GetFloatFromAttr(*pARoot, "horizontRadius", 400.f);
+    m_fMinScale = BIUtils::GetFloatFromAttr(*pARoot, "minScale", .01f);
+    m_fMaxScale = BIUtils::GetFloatFromAttr(*pARoot, "maxScale", 2.f);
+    m_fCurScale = m_fDefaultScale = BIUtils::GetFloatFromAttr(*pARoot, "curScale", 1.f);
+    m_fScaleStep = BIUtils::GetFloatFromAttr(*pARoot, "scaleStep", .01f);
+    m_fShipShowRad = BIUtils::GetFloatFromAttr(*pARoot, "shipShowRadius", 2.f);
 
-    m_windWidth = BIUtils::GetLongFromAttr(pARoot, "windWidth", 20);
-    m_windHeight = BIUtils::GetLongFromAttr(pARoot, "windHeight", 158);
+    m_windWidth = BIUtils::GetLongFromAttr(*pARoot, "windWidth", 20);
+    m_windHeight = BIUtils::GetLongFromAttr(*pARoot, "windHeight", 158);
 
     // color of loaded cannons
-    m_dwReadyCannon = BIUtils::GetLongFromAttr(pARoot, "argbReadyCannonColor", m_dwReadyCannon);
+    m_dwReadyCannon = BIUtils::GetLongFromAttr(*pARoot, "argbReadyCannonColor", m_dwReadyCannon);
     // color of loading cannons
-    m_dwChargeCannon = BIUtils::GetLongFromAttr(pARoot, "argbChargeCannonColor", m_dwChargeCannon);
+    m_dwChargeCannon = BIUtils::GetLongFromAttr(*pARoot, "argbChargeCannonColor", m_dwChargeCannon);
     // color of damaged cannons
-    m_dwDamagedCannon = BIUtils::GetLongFromAttr(pARoot, "argbDamageCannonColor", m_dwDamagedCannon);
+    m_dwDamagedCannon = BIUtils::GetLongFromAttr(*pARoot, "argbDamageCannonColor", m_dwDamagedCannon);
     // color of the sea
-    m_dwSeaColor = BIUtils::GetLongFromAttr(pARoot, "argbSeaColor", ARGB(255, 255, 255, 255));
+    m_dwSeaColor = BIUtils::GetLongFromAttr(*pARoot, "argbSeaColor", ARGB(255, 255, 255, 255));
     // color of the cannon fire zone
-    m_dwFireZoneColor = BIUtils::GetLongFromAttr(pARoot, "argbFireZoneColor", ARGB(255, 255, 255, 255));
+    m_dwFireZoneColor = BIUtils::GetLongFromAttr(*pARoot, "argbFireZoneColor", ARGB(255, 255, 255, 255));
     // enemy ship color
-    m_dwEnemyShipColor = BIUtils::GetLongFromAttr(pARoot, "argbEnemyShipColor", ARGB(255, 255, 255, 255));
+    m_dwEnemyShipColor = BIUtils::GetLongFromAttr(*pARoot, "argbEnemyShipColor", ARGB(255, 255, 255, 255));
     // color of your ship
-    m_dwFrendShipColor = BIUtils::GetLongFromAttr(pARoot, "argbFrendShipColor", ARGB(255, 255, 255, 255));
+    m_dwFrendShipColor = BIUtils::GetLongFromAttr(*pARoot, "argbFrendShipColor", ARGB(255, 255, 255, 255));
     // neutral ship color
-    m_dwNeutralShipColor = BIUtils::GetLongFromAttr(pARoot, "argbNeutralShipColor", ARGB(255, 255, 255, 255));
+    m_dwNeutralShipColor = BIUtils::GetLongFromAttr(*pARoot, "argbNeutralShipColor", ARGB(255, 255, 255, 255));
     // color of a sinking ship
-    m_dwDeadShipColor = BIUtils::GetLongFromAttr(pARoot, "argbDeadShipColor", ARGB(255, 255, 255, 255));
+    m_dwDeadShipColor = BIUtils::GetLongFromAttr(*pARoot, "argbDeadShipColor", ARGB(255, 255, 255, 255));
     // background gradient color
-    m_dwBackGradColor1 = BIUtils::GetLongFromAttr(pARoot, "argbBackMaxColor", ARGB(255, 0, 0, 128));
-    m_dwBackGradColor2 = BIUtils::GetLongFromAttr(pARoot, "argbBackMinColor", ARGB(55, 0, 0, 128));
+    m_dwBackGradColor1 = BIUtils::GetLongFromAttr(*pARoot, "argbBackMaxColor", ARGB(255, 0, 0, 128));
+    m_dwBackGradColor2 = BIUtils::GetLongFromAttr(*pARoot, "argbBackMinColor", ARGB(55, 0, 0, 128));
 
     // get strings parameters
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "speedShowFont", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "speedShowFont", nullptr);
     if (tmpstr == nullptr)
         m_speedFont = -1;
     else
         m_speedFont = rs->LoadFont(tmpstr);
-    m_ySpeedShow = m_YNavigator + BIUtils::GetLongFromAttr(pARoot, "speedOutYOffset", -m_NavigationHeight / 2);
-    m_xShipSpeed = m_XNavigator + BIUtils::GetLongFromAttr(pARoot, "shipSpeedXOffset", 10);
-    m_xWindSpeed = m_XNavigator + BIUtils::GetLongFromAttr(pARoot, "windSpeedXOffset", -20);
-    m_fFontScale = BIUtils::GetFloatFromAttr(pARoot, "fontScale", 1.f);
+    m_ySpeedShow = m_YNavigator + BIUtils::GetLongFromAttr(*pARoot, "speedOutYOffset", -m_NavigationHeight / 2);
+    m_xShipSpeed = m_XNavigator + BIUtils::GetLongFromAttr(*pARoot, "shipSpeedXOffset", 10);
+    m_xWindSpeed = m_XNavigator + BIUtils::GetLongFromAttr(*pARoot, "windSpeedXOffset", -20);
+    m_fFontScale = BIUtils::GetFloatFromAttr(*pARoot, "fontScale", 1.f);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "compasTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "compasTexture", nullptr);
     if (tmpstr == nullptr)
         m_idCompasTex = -1;
     else
         m_idCompasTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "speedTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "speedTexture", nullptr);
     if (tmpstr == nullptr)
         m_idSpeedTex = -1;
     else
         m_idSpeedTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "cannonsTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "cannonsTexture", nullptr);
     if (tmpstr == nullptr)
         m_idCannonTex = -1;
     else
         m_idCannonTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "emptyTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "emptyTexture", nullptr);
     if (tmpstr == nullptr)
         m_idEmptyTex = -1;
     else
         m_idEmptyTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "windTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "windTexture", nullptr);
     if (tmpstr == nullptr)
         m_idWindTex = -1;
     else
         m_idWindTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "bestCourseTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "bestCourseTexture", nullptr);
     if (tmpstr == nullptr)
         m_idBestCourseTex = -1;
     else
         m_idBestCourseTex = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "chargeTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "chargeTexture", nullptr);
     if (tmpstr == nullptr)
         m_idChargeTexture = -1;
     else
         m_idChargeTexture = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "powderTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "powderTexture", nullptr);
     if (tmpstr == nullptr)
         m_idPowderTexture = -1;
     else
         m_idPowderTexture = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "sailstateTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "sailstateTexture", nullptr);
     if (tmpstr == nullptr)
         m_idSailTexture = -1;
     else
         m_idSailTexture = rs->TextureCreate(tmpstr);
 
-    tmpstr = BIUtils::GetStringFromAttr(pARoot, "windStateTexture", nullptr);
+    tmpstr = BIUtils::GetStringFromAttr(*pARoot, "windStateTexture", nullptr);
     if (tmpstr == nullptr)
         m_idWindTexture = -1;
     else
         m_idWindTexture = rs->TextureCreate(tmpstr);
 
     // get cannon charge angles
-    m_fBegAnglLeftCharge = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "leftChargeBegAngle", 0)) / 180.f * PI;
-    m_fEndAnglLeftCharge = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "leftChargeEndAngle", 0)) / 180.f * PI;
+    m_fBegAnglLeftCharge = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "leftChargeBegAngle", 0)) / 180.f * PI;
+    m_fEndAnglLeftCharge = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "leftChargeEndAngle", 0)) / 180.f * PI;
 
-    m_fBegAnglRightCharge = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "rightChargeBegAngle", 0)) / 180.f * PI;
-    m_fEndAnglRightCharge = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "rightChargeEndAngle", 0)) / 180.f * PI;
+    m_fBegAnglRightCharge = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "rightChargeBegAngle", 0)) / 180.f * PI;
+    m_fEndAnglRightCharge = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "rightChargeEndAngle", 0)) / 180.f * PI;
 
     m_fBegAnglForwardCharge =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "forwardChargeBegAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "forwardChargeBegAngle", 0)) / 180.f * PI;
     m_fEndAnglForwardCharge =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "forwardChargeEndAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "forwardChargeEndAngle", 0)) / 180.f * PI;
 
     m_fBegAnglBackCharge =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "backwardChargeBegAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "backwardChargeBegAngle", 0)) / 180.f * PI;
     m_fEndAnglBackCharge =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "backwardChargeEndAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "backwardChargeEndAngle", 0)) / 180.f * PI;
 
     // get speed angles
-    m_fBegAnglShipSpeed = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "shipSpeedBegAngle", 0)) / 180.f * PI;
+    m_fBegAnglShipSpeed = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "shipSpeedBegAngle", 0)) / 180.f * PI;
     m_fCurAnglShipSpeed = m_fEndAnglShipSpeed =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "shipSpeedEndAngle", 0)) / 180.f * PI;
-    m_fBegAnglWindSpeed = static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "windSpeedBegAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "shipSpeedEndAngle", 0)) / 180.f * PI;
+    m_fBegAnglWindSpeed = static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "windSpeedBegAngle", 0)) / 180.f * PI;
     m_fCurAnglWindSpeed = m_fEndAnglWindSpeed =
-        static_cast<float>(BIUtils::GetLongFromAttr(pARoot, "windSpeedEndAngle", 0)) / 180.f * PI;
+        static_cast<float>(BIUtils::GetLongFromAttr(*pARoot, "windSpeedEndAngle", 0)) / 180.f * PI;
 
     // current charge type
     m_ChargeGreed.x = 1;
     m_ChargeGreed.y = 1;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "chargeTextureGreed", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "chargeTextureGreed", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_ChargeGreed.x, &m_ChargeGreed.y);
     if (m_ChargeGreed.x < 1)
         m_ChargeGreed.x = 1;
@@ -612,19 +616,19 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
         m_ChargeGreed.y = 1;
     m_ChargePos.x = 160;
     m_ChargePos.y = 160;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "chargePos", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "chargePos", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_ChargePos.x, &m_ChargePos.y);
     m_ChargePos.x += m_XNavigator; // - m_NavigationWidth/2;
     m_ChargePos.y += m_YNavigator; // - m_NavigationHeight/2;
     m_ChargeSize.x = 32;
     m_ChargeSize.y = 32;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "chargePictureSize", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "chargePictureSize", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_ChargeSize.x, &m_ChargeSize.y);
 
     // powder
     m_PowderGreed.x = 1;
     m_PowderGreed.y = 1;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "powderTextureGreed", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "powderTextureGreed", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_PowderGreed.x, &m_PowderGreed.y);
     if (m_PowderGreed.x < 1)
         m_PowderGreed.x = 1;
@@ -632,20 +636,20 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
         m_PowderGreed.y = 1;
     m_PowderPos.x = 160;
     m_PowderPos.y = 160;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "powderPos", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "powderPos", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_PowderPos.x, &m_PowderPos.y);
     m_PowderPos.x += m_XNavigator; // - m_NavigationWidth/2;
     m_PowderPos.y += m_YNavigator; // - m_NavigationHeight/2;
     m_PowderSize.x = 32;
     m_PowderSize.y = 32;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "powderPictureSize", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "powderPictureSize", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_PowderSize.x, &m_PowderSize.y);
 
     // wind icon
     m_curSailState = 0;
     m_WindGreed.x = 1;
     m_WindGreed.y = 1;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "windTextureGreed", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "windTextureGreed", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_WindGreed.x, &m_WindGreed.y);
     if (m_WindGreed.x < 1)
         m_WindGreed.x = 1;
@@ -653,20 +657,20 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
         m_WindGreed.y = 1;
     m_WindPos.x = 160;
     m_WindPos.y = 160;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "windPos", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "windPos", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_WindPos.x, &m_WindPos.y);
     m_WindPos.x += m_XNavigator;
     m_WindPos.y += m_YNavigator;
     m_WindSize.x = 32;
     m_WindSize.y = 32;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "windPictureSize", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "windPictureSize", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_WindSize.x, &m_WindSize.y);
 
     // sail position icon
     m_curSailState = 0;
     m_SailGreed.x = 1;
     m_SailGreed.y = 1;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "sailstateTextureGreed", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "sailstateTextureGreed", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_SailGreed.x, &m_SailGreed.y);
     if (m_SailGreed.x < 1)
         m_SailGreed.x = 1;
@@ -674,13 +678,13 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
         m_SailGreed.y = 1;
     m_SailPos.x = 160;
     m_SailPos.y = 160;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "sailstatePos", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "sailstatePos", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_SailPos.x, &m_SailPos.y);
     m_SailPos.x += m_XNavigator;
     m_SailPos.y += m_YNavigator;
     m_SailSize.x = 32;
     m_SailSize.y = 32;
-    if ((tmpstr = BIUtils::GetStringFromAttr(pARoot, "sailstatePictureSize", nullptr)) != nullptr)
+    if ((tmpstr = BIUtils::GetStringFromAttr(*pARoot, "sailstatePictureSize", nullptr)) != nullptr)
         sscanf(tmpstr, "%d,%d", &m_SailSize.x, &m_SailSize.y);
 
     // create buffers
@@ -764,7 +768,7 @@ void BATTLE_NAVIGATOR::Init(VDX9RENDER *RenderService, Entity *pOwnerEI)
         rs->UnLockVertexBuffer(m_idSpeedVBuf);
     }
     // map vertexes
-    m_fMapRadius = BIUtils::GetFloatFromAttr(pARoot, "mapRadius", 100.f);
+    m_fMapRadius = BIUtils::GetFloatFromAttr(*pARoot, "mapRadius", 100.f);
     pV = static_cast<BI_ONETEXTURE_VERTEX *>(rs->LockVertexBuffer(m_idMapVBuf));
     if (pV != nullptr)
     {
@@ -1005,37 +1009,35 @@ void BATTLE_NAVIGATOR::SetMainCharacterData()
     auto *pBortsAttr = BIUtils::GetAttributesFromPath(psd->pAttr, "cannons", "borts", 0);
     if (pBortsAttr != nullptr)
     {
-        ATTRIBUTES *pTmpAttr;
-        float fCharge, fDamage;
         // left cannons
-        if ((pTmpAttr = pBortsAttr->GetAttributeClass("cannonl")) != nullptr)
+        if (const Attribute& cannon = pBortsAttr->getProperty("cannonl"); !cannon.empty())
         {
-            fCharge = pTmpAttr->GetAttributeAsFloat("ChargeRatio", 0);
-            fDamage = pTmpAttr->GetAttributeAsFloat("DamageRatio", 0);
+            const auto fCharge = cannon["ChargeRatio"].get<float>(0);
+            const auto fDamage = cannon["DamageRatio"].get<float>(0);
             m_fCurAnglLeftDamage = GetBetwinFloat(m_fEndAnglLeftCharge, m_fBegAnglLeftCharge, fDamage); //~!~
             m_fCurAnglLeftCharge = GetBetwinFloat(m_fBegAnglLeftCharge, m_fCurAnglLeftDamage, fCharge);
         }
         // right cannons
-        if ((pTmpAttr = pBortsAttr->GetAttributeClass("cannonr")) != nullptr)
+        if (const Attribute& cannon = pBortsAttr->getProperty("cannonr"); !cannon.empty())
         {
-            fCharge = pTmpAttr->GetAttributeAsFloat("ChargeRatio", 0);
-            fDamage = pTmpAttr->GetAttributeAsFloat("DamageRatio", 0);
+            const auto fCharge = cannon["ChargeRatio"].get<float>(0);
+            const auto fDamage = cannon["DamageRatio"].get<float>(0);
             m_fCurAnglRightDamage = GetBetwinFloat(m_fEndAnglRightCharge, m_fBegAnglRightCharge, fDamage);
             m_fCurAnglRightCharge = GetBetwinFloat(m_fBegAnglRightCharge, m_fCurAnglRightDamage, fCharge);
         }
         // forward cannons
-        if ((pTmpAttr = pBortsAttr->GetAttributeClass("cannonf")) != nullptr)
+        if (const Attribute& cannon = pBortsAttr->getProperty("cannonf"); !cannon.empty())
         {
-            fCharge = pTmpAttr->GetAttributeAsFloat("ChargeRatio", 0);
-            fDamage = pTmpAttr->GetAttributeAsFloat("DamageRatio", 0);
+            const auto fCharge = cannon["ChargeRatio"].get<float>(0);
+            const auto fDamage = cannon["DamageRatio"].get<float>(0);
             m_fCurAnglForwardDamage = GetBetwinFloat(m_fEndAnglForwardCharge, m_fBegAnglForwardCharge, fDamage);
             m_fCurAnglForwardCharge = GetBetwinFloat(m_fBegAnglForwardCharge, m_fCurAnglForwardDamage, fCharge);
         }
         // backward cannons
-        if ((pTmpAttr = pBortsAttr->GetAttributeClass("cannonb")) != nullptr)
+        if (const Attribute& cannon = pBortsAttr->getProperty("cannonb"); !cannon.empty())
         {
-            fCharge = pTmpAttr->GetAttributeAsFloat("ChargeRatio", 0);
-            fDamage = pTmpAttr->GetAttributeAsFloat("DamageRatio", 0);
+            const auto fCharge = cannon["ChargeRatio"].get<float>(0);
+            const auto fDamage = cannon["DamageRatio"].get<float>(0);
             m_fCurAnglBackDamage = GetBetwinFloat(m_fEndAnglBackCharge, m_fBegAnglBackCharge, fDamage);
             m_fCurAnglBackCharge = GetBetwinFloat(m_fBegAnglBackCharge, m_fCurAnglBackDamage, fCharge);
         }
@@ -1563,8 +1565,8 @@ void BATTLE_NAVIGATOR::UpdateWindParam()
     }
     if (m_pAWeather)
     {
-        m_fWindStrength = m_pAWeather->GetAttributeAsFloat("WindSpeed");
-        m_fWindAngle = m_pAWeather->GetAttributeAsFloat("WindAngle");
+        m_pAWeather->getProperty("WindSpeed").get_to(m_fWindStrength);
+        m_pAWeather->getProperty("WindAngle").get_to(m_fWindAngle);
     }
 }
 

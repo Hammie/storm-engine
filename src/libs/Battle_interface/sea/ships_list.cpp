@@ -182,29 +182,26 @@ void SHIP_DESCRIBE_LIST::Release(long charIdx)
     pMainShipAttr = nullptr;
 }
 
-void SHIP_DESCRIBE_LIST::Add(long mainChrIndex, long chIdx, ATTRIBUTES *pChAttr, ATTRIBUTES *pShipAttr, bool bMyShip,
+void SHIP_DESCRIBE_LIST::Add(long mainChrIndex, long chIdx, Attribute &pChAttr, Attribute &pShipAttr, bool bMyShip,
                              long relation, uint32_t dwShipColor)
 {
-    assert(pChAttr != NULL);
-    assert(pShipAttr != NULL);
     auto *pr = new SHIP_DESCR;
     if (pr == nullptr)
     {
         throw std::exception("Can`t allocate memory");
     }
     pr->characterIndex = chIdx;
-    pr->maxCrew = pShipAttr->GetAttributeAsDword("MaxCrew");
-    pr->maxHP = pShipAttr->GetAttributeAsDword("HP");
-    pr->maxSP = pShipAttr->GetAttributeAsDword("SP");
+    pShipAttr["MaxCrew"].get_to(pr->maxCrew);
+    pShipAttr["HP"].get_to(pr->maxHP);
+    pShipAttr["SP"].get_to(pr->maxSP);
     pr->isMyShip = bMyShip;
     pr->relation = relation;
     pr->isDead = false;
     pr->pShip = nullptr;
     pr->dwShipColor = dwShipColor;
 
-    auto *const pAttr = pChAttr->GetAttributeClass("Ship");
-    assert(pAttr != NULL);
-    pr->pAttr = pAttr;
+    pr->pAttr = &(pChAttr.getProperty("Ship"));
+    Assert(pr->pAttr != NULL);
     long lTmp;
     SetNLongData(core.Event(BI_EVENT_GET_DATA, "ll", BIDT_SHIPPICTURE, chIdx), 4, &pr->pictureNum, 0,
                  &pr->selectPictureNum, 0, &pr->textureNum, -1, &lTmp, 0); //&pr->isDead,false );
@@ -219,8 +216,8 @@ void SHIP_DESCRIBE_LIST::Add(long mainChrIndex, long chIdx, ATTRIBUTES *pChAttr,
         auto *vob = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(ship));
         if (vob == nullptr)
             continue;
-        auto *pA = vob->GetACharacter();
-        if (static_cast<long>(pA->GetAttributeAsDword("index")) == chIdx)
+        const Attribute& attr = *vob->GetACharacter();
+        if (attr["index"].get<long>() == chIdx)
         {
             pr->pShip = vob;
             break;
@@ -230,7 +227,7 @@ void SHIP_DESCRIBE_LIST::Add(long mainChrIndex, long chIdx, ATTRIBUTES *pChAttr,
     {
       VAI_OBJBASE * vob = (VAI_OBJBASE*)EntityManager::GetEntityPointer(ei);
       if(vob== nullptr) continue;
-      ATTRIBUTES *pA = vob->GetACharacter();
+      Attribute *pA = vob->GetACharacter();
       if((long)pA->GetAttributeAsDword("id")==chIdx)
       {
         pr->pShip = vob;
@@ -252,7 +249,7 @@ void SHIP_DESCRIBE_LIST::Add(long mainChrIndex, long chIdx, ATTRIBUTES *pChAttr,
     if (mainChrIndex == chIdx)
     {
         mainCharacter = pr;
-        pMainShipAttr = pShipAttr;
+        pMainShipAttr = &pShipAttr;
     }
 }
 
@@ -292,14 +289,14 @@ void SHIP_DESCRIBE_LIST::Refresh()
         auto *pA = vob->GetACharacter();
         if (pA == nullptr)
             continue;
-        tls.Push(static_cast<long>(pA->GetAttributeAsDword("index")));
+        tls.Push(pA->getProperty("index").get<long>());
     }
 
     /*if( NetFindClass(false,&ei,"NetShip") ) do
     {
       VAI_OBJBASE * vob = (VAI_OBJBASE*)EntityManager::GetEntityPointer(ei);
       if(vob== nullptr) continue;
-      ATTRIBUTES * pA= vob->GetACharacter();
+      Attribute * pA= vob->GetACharacter();
       if(pA== nullptr) continue;
       tls.Push((long)pA->GetAttributeAsDword("id"));
     } while( NetFindClassNext(false,&ei) );*/

@@ -100,7 +100,7 @@ class WdmIslands : public WdmRenderObject
     bool ObstacleTest(float x, float z, float radius);
 
     // Read Island Data
-    void SetIslandsData(ATTRIBUTES *apnt, bool isChange);
+    void SetIslandsData(Attribute *apnt, bool isChange);
 
     // Find the direction to arrive at a given destination from the current
     void FindDirection(const CVECTOR &position, const CVECTOR &destination, CVECTOR &direction) const;
@@ -126,7 +126,7 @@ class WdmIslands : public WdmRenderObject
     bool IsShipInArea(long islIndex, const CVECTOR &pos);
     static bool AddEdges(const GEOS::VERTEX *vrt, long numVrt);
     static bool FindNearPoint(const GEOS::VERTEX *vrt, long numVrt);
-    void LabelsReadIconParams(ATTRIBUTES *apnt);
+    void LabelsReadIconParams(Attribute *apnt);
     long LabelsFind(const char *id, uint32_t hash);
     bool LabelsFindLocator(const char *name, CVECTOR &pos) const;
     long LabelsAddFont(const char *name);

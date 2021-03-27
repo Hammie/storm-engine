@@ -179,7 +179,7 @@ void DIALOG::DlgTextDescribe::NextPage()
         nStartIndex = anPageEndIndex[n];
 }
 
-void DIALOG::DlgLinkDescribe::ChangeText(ATTRIBUTES *pALinks)
+void DIALOG::DlgLinkDescribe::ChangeText(Attribute *pALinks)
 {
     nEditLine = -1;
     asText.clear();
@@ -187,22 +187,17 @@ void DIALOG::DlgLinkDescribe::ChangeText(ATTRIBUTES *pALinks)
     if (!pALinks)
         return;
 
-    for (long n = 0; n < static_cast<long>(pALinks->GetAttributesNum()); n++)
-    {
-        auto *pA = pALinks->GetAttributeClass(n);
-        if (pA)
-        {
-            // long i = asText.Add();
-            // asText[i] = pA->GetThisAttr();
-            if (pA->GetAttribute("edit"))
-            {
-                nEditLine = n;
-                nEditVarIndex = pA->GetAttributeAsDword("edit", 0);
-                nEditCharIndex = 0;
-            }
-            AddToStringArrayLimitedByWidth(pA->GetThisAttr(), nFontID, fScale, nWindowWidth, asText, nullptr, 100);
-            anLineEndIndex.push_back(asText.size());
+    int n = 0;
+    for (const Attribute& attr : *pALinks) {
+        const Attribute& edit = attr["edit"];
+        if (!edit.empty()) {
+            nEditLine = n;
+            edit.get_to(nEditVarIndex, 0l);
+            nEditCharIndex = 0;
         }
+        AddToStringArrayLimitedByWidth(attr.get<const char*>(), nFontID, fScale, nWindowWidth, asText, nullptr, 100);
+        anLineEndIndex.push_back(asText.size());
+        ++n;
     }
 
     nStartIndex = 0;
@@ -679,9 +674,9 @@ void DIALOG::LoadFromIni()
     GetPointFromIni(pIni, "BACKPARAM", "baseScreenOffset", fpScrOffset);
     const auto& screenSize = core.getScreenSize();
     if (fpScrSize.x <= 0)
-        fpScrSize.x = screenSize.width;
+        fpScrSize.x = static_cast<float>(screenSize.width);
     if (fpScrSize.y <= 0)
-        fpScrSize.y = screenSize.height;
+        fpScrSize.y = static_cast<float>(screenSize.height);
     m_nScrBaseWidth = static_cast<long>(fpScrSize.x);
     m_nScrBaseHeight = static_cast<long>(fpScrSize.y);
     D3DVIEWPORT9 vp;
@@ -1044,18 +1039,18 @@ void DIALOG::Realize(uint32_t Delta_Time)
         if (m_DlgText.IsLastPage())
         {
             // showing answer options
-            ATTRIBUTES *pA = AttributesPointer->GetAttributeClass("links");
-            if (pA)
-                pA = pA->GetAttributeClass(m_DlgLinks.nSelectLine);
-            if (pA)
+            Assert(AttributesPointer != nullptr);
+            const Attribute& links = AttributesPointer->getProperty("links");
+            const Attribute& selected = *(links.begin() + m_DlgLinks.nSelectLine);
+            if (!selected.empty())
             {
-                char *goName = pA->GetAttribute("go");
-                if (!goName || _stricmp(goName, selectedLinkName) == 0)
+                const auto goName = selected["go"].get<std::string_view>();
+                if (_stricmp(goName.data(), selectedLinkName) == 0)
                     EmergencyExit();
                 else
                 {
-                    AttributesPointer->SetAttribute("CurrentNode", goName);
-                    strcpy_s(selectedLinkName, goName);
+                    AttributesPointer->getProperty("CurrentNode") = goName;
+                    strcpy_s(selectedLinkName, goName.data());
 
                     // set default
                     strcpy_s(soundName, charDefSnd);
@@ -1094,24 +1089,24 @@ void DIALOG::Realize(uint32_t Delta_Time)
 }
 
 //--------------------------------------------------------------------
-uint32_t DIALOG::AttributeChanged(ATTRIBUTES *pA)
+uint32_t DIALOG::AttributeChanged(Attribute &pA)
 {
     // search for default settings
     bool parLinks = false;
-    ATTRIBUTES *par = pA->GetParent();
+    const Attribute *par = pA.getParent();
     if (par != nullptr)
     {
-        const char *parname = par->GetThisName();
-        if (parname != nullptr && _stricmp(parname, "Links") == 0)
+        const std::string_view parname = par->getName();
+        if (parname != nullptr && _stricmp(parname.data(), "Links") == 0)
             parLinks = true;
     }
 
-    const char *nm = pA->GetThisName();
+    const std::string_view nm = pA.getName();
 
     // play sound d.speech
-    if (!parLinks && nm && _stricmp(nm, "greeting") == 0) // was "snd"
+    if (!parLinks && _stricmp(nm.data(), "greeting") == 0) // was "snd"
     {
-        strcpy_s(soundName, pA->GetThisAttr());
+        strcpy_s(soundName, pA.get<const char*>());
         if (start)
             play = 0;
     }
@@ -1164,8 +1159,8 @@ void DIALOG::UpdateDlgTexts()
     if (!AttributesPointer)
         return;
 
-    m_DlgText.ChangeText(AttributesPointer->GetAttribute("Text"));
-    m_DlgLinks.ChangeText(AttributesPointer->GetAttributeClass("Links"));
+    m_DlgText.ChangeText(AttributesPointer->getProperty("Text").get<const char*>());
+    m_DlgLinks.ChangeText(&AttributesPointer->getProperty("Links"));
 
     bEditMode = false;
     m_bDlgChanged = false;

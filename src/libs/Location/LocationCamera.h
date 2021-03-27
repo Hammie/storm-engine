@@ -54,7 +54,7 @@ class LocationCamera : public Entity
     // Messages
     uint64_t ProcessMessage(MESSAGE &message) override;
     // Changing an attribute
-    uint32_t AttributeChanged(ATTRIBUTES *apnt) override;
+    uint32_t AttributeChanged(Attribute &apnt) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {

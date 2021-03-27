@@ -3,7 +3,7 @@
 #include "core.h"
 #include "vmodule_api.h"
 
-WMShipCommandList::WMShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
+WMShipCommandList::WMShipCommandList(entid_t eid, Attribute &pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
 {
     Init();
 }
@@ -34,24 +34,18 @@ long WMShipCommandList::CommandAdding()
 {
     core.Event("WM_SetPossibleCommands", "l", m_nCurrentCommandCharacterIndex);
     long retVal = 0;
-    auto *pAttr = m_pARoot->GetAttributeClass("Commands");
-    if (!pAttr)
-        return 0;
-    const size_t attrQuant = pAttr->GetAttributesNum();
 
-    for (long i = 0; i < attrQuant; i++)
-    {
-        auto *pA = pAttr->GetAttributeClass(i);
-        if (pA == nullptr)
-            continue; // no such attribute
-        if (pA->GetAttributeAsDword("enable", 0) == 0)
-            continue; // command not available
-        const long pictureNum = pA->GetAttributeAsDword("picNum", 0);
-        const long selPictureNum = pA->GetAttributeAsDword("selPicNum", 0);
-        const long texNum = pA->GetAttributeAsDword("texNum", -1);
-        auto *const eventName = pA->GetAttribute("event");
-        retVal +=
-            AddToIconList(texNum, pictureNum, selPictureNum, -1, -1, eventName, -1, nullptr, pA->GetAttribute("note"));
+    if (const Attribute& commands = m_pARoot["Commands"]; !commands.empty()) {
+        for (const Attribute& command : commands) {
+            if (command["enable"].get<bool>(false)) {
+                const auto pictureNum = command["picNum"].get<long>(0l);
+                const auto selPictureNum = command["selPicNum"].get<long>(0l);
+                const auto texNum = command["texNum"].get<long>(-1l);
+                const auto eventName = command["event"].get<std::string_view>();
+                const auto note = command["note"].get<std::string_view>();
+                retVal += AddToIconList(texNum, pictureNum, selPictureNum, -1, -1, eventName.data(), -1, nullptr, note.data());
+            }
+        }
     }
 
     return retVal;

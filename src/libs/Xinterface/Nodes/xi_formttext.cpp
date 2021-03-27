@@ -1057,7 +1057,7 @@ uint32_t CXI_FORMATEDTEXT::MessageProc(long msgcode, MESSAGE &message)
 
     case 3: // fill attributes with text sizes
     {
-        ATTRIBUTES *pAttr = message.AttributePointer();
+        Attribute *pAttr = message.AttributePointer();
         if (pAttr == nullptr)
             return 0;
         int i = 0;
@@ -1073,12 +1073,12 @@ uint32_t CXI_FORMATEDTEXT::MessageProc(long msgcode, MESSAGE &message)
                 oldgroup = sd->strGroup;
                 char atrName[128];
                 sprintf_s(atrName, "line%d", idx);
-                pAttr->SetAttributeUseDword(atrName, i);
+                pAttr->getProperty(atrName) = i;
                 idx++;
             }
             else if (idx == 0)
             {
-                pAttr->SetAttributeUseDword("line0", -1);
+                pAttr->getProperty("line0") = -1;
                 idx++;
             }
         }
@@ -1087,7 +1087,7 @@ uint32_t CXI_FORMATEDTEXT::MessageProc(long msgcode, MESSAGE &message)
 
     case 4: // fill attributes with Y coordinates of the top of the text
     {
-        ATTRIBUTES *pAttr = message.AttributePointer();
+        Attribute *pAttr = message.AttributePointer();
         if (pAttr == nullptr)
             return 0;
 
@@ -1104,12 +1104,12 @@ uint32_t CXI_FORMATEDTEXT::MessageProc(long msgcode, MESSAGE &message)
                 oldgroup = sd->strGroup;
                 char atrName[128];
                 sprintf_s(atrName, "line%d", idx);
-                pAttr->SetAttributeUseDword(atrName, m_rect.top + m_vertOffset * i - m_hostRect.top);
+                pAttr->getProperty(atrName) = m_rect.top + m_vertOffset * i - m_hostRect.top;
                 idx++;
             }
             else if (idx == 0)
             {
-                pAttr->SetAttributeUseDword("line0", -1);
+                pAttr->getProperty("line0") = -1;
                 idx++;
             }
         }
@@ -1130,7 +1130,7 @@ uint32_t CXI_FORMATEDTEXT::MessageProc(long msgcode, MESSAGE &message)
 
     case 7: // set strings to given positions
     {
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         if (pA != nullptr)
             SetSpecialStrings(pA);
     }
@@ -1416,7 +1416,7 @@ void CXI_FORMATEDTEXT::CheckScrollButtons()
     }
 }
 
-void CXI_FORMATEDTEXT::SetSpecialStrings(ATTRIBUTES *pARoot)
+void CXI_FORMATEDTEXT::SetSpecialStrings(Attribute *pARoot)
 {
     if (pARoot == nullptr)
         return;
@@ -1432,16 +1432,16 @@ void CXI_FORMATEDTEXT::SetSpecialStrings(ATTRIBUTES *pARoot)
     m_nStringGroupQuantity = 0;
     m_nAllTextStrings = 0;
 
-    const int q = pARoot->GetAttributesNum();
+    const int q = std::distance(pARoot->begin(), pARoot->end());
     for (int i = 0; i < q; i++)
     {
-        ATTRIBUTES *pA = pARoot->GetAttributeClass(i);
-        if (pA == nullptr)
+        const Attribute &attr = *(pARoot->begin() + i);
+        if (attr == nullptr)
             continue;
-        char *tmpstr = pA->GetAttribute("str");
+        const char *tmpstr = attr.getProperty("str").get<const char*>();
         if (tmpstr == nullptr)
             continue;
-        const int pos = pA->GetAttributeAsDword("pos", -1);
+        const int pos = attr["pos"].get<int>(-1);
         while (pos > m_nAllTextStrings)
             AddFormatedText("\n");
         if (pos >= 0)

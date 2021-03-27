@@ -127,16 +127,13 @@ void BIManSign::Draw()
         m_pCommandList->Draw();
 }
 
-void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
+void BIManSign::Init(Attribute *pRoot, Attribute *pA)
 {
     long n;
-    float fTmp;
-    const char *pcTmp;
-    char param[256];
 
     m_pARoot = pRoot;
 
-    m_pCommandList = new BIManCommandList(m_idHostEntity, pRoot, m_pRS);
+    m_pCommandList = new BIManCommandList(m_idHostEntity, *pRoot, m_pRS);
 
     // default value
     m_nBackTextureID = -1;
@@ -186,105 +183,90 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
 
     if (pA)
     {
-        pcTmp = pA->GetAttribute("backtexturename");
-        if (pcTmp)
-            m_nBackTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwBackColor = pA->GetAttributeAsDword("backcolor", m_dwBackColor);
-        pcTmp = pA->GetAttribute("backuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rBackUV.left, &m_rBackUV.top, &m_rBackUV.right, &m_rBackUV.bottom);
-        pcTmp = pA->GetAttribute("backoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackOffset.x, &m_pntBackOffset.y);
-        pcTmp = pA->GetAttribute("backiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackIconSize.x, &m_pntBackIconSize.y);
+        Attribute& attr = *pA;
 
-        pcTmp = pA->GetAttribute("alarmtexturename");
-        if (pcTmp)
-            m_nAlarmTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwAlarmHighColor = pA->GetAttributeAsDword("alarmhighcolor", m_dwAlarmHighColor);
-        m_dwAlarmLowColor = pA->GetAttributeAsDword("alarmlowcolor", m_dwAlarmLowColor);
-        pcTmp = pA->GetAttribute("alarmuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rAlarmUV.left, &m_rAlarmUV.top, &m_rAlarmUV.right, &m_rAlarmUV.bottom);
-        pcTmp = pA->GetAttribute("alarmoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntAlarmOffset.x, &m_pntAlarmOffset.y);
-        pcTmp = pA->GetAttribute("alarmiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntAlarmIconSize.x, &m_pntAlarmIconSize.y);
-        fTmp = pA->GetAttributeAsFloat("alarmuptime", 0.f);
-        if (fTmp > 0.f)
-            m_fAlarmUpSpeed = 1.f / fTmp;
-        fTmp = pA->GetAttributeAsFloat("alarmdowntime", 0.f);
-        if (fTmp > 0.f)
-            m_fAlarmDownSpeed = 1.f / fTmp;
+        const std::string_view pcTmp = attr["backtexturename"].get<std::string_view>();
+        if (!pcTmp.empty())
+            m_nBackTextureID = m_pRS->TextureCreate(pcTmp.data());
 
-        pcTmp = pA->GetAttribute("manstatetexturename");
-        if (pcTmp)
-            m_nManStateTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwManStateColor = pA->GetAttributeAsDword("manstatecolor", m_dwManStateColor);
-        pcTmp = pA->GetAttribute("manhpuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rManHPUV.left, &m_rManHPUV.top, &m_rManHPUV.right, &m_rManHPUV.bottom);
-        pcTmp = pA->GetAttribute("manhpoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManHPOffset.x, &m_pntManHPOffset.y);
-        pcTmp = pA->GetAttribute("manhpiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManHPIconSize.x, &m_pntManHPIconSize.y);
-        pcTmp = pA->GetAttribute("manenegryuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rManEnergyUV.left, &m_rManEnergyUV.top, &m_rManEnergyUV.right,
-                   &m_rManEnergyUV.bottom);
-        pcTmp = pA->GetAttribute("manenegryoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManEnergyOffset.x, &m_pntManEnergyOffset.y);
-        pcTmp = pA->GetAttribute("manenergyiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManEnergyIconSize.x, &m_pntManEnergyIconSize.y);
+        m_dwBackColor = attr["backcolor"].get<uint32_t>(m_dwBackColor);
 
-        pcTmp = pA->GetAttribute("gunchargetexturename");
-        if (pcTmp)
-            m_nGunChargeTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwGunChargeColor = pA->GetAttributeAsDword("gunchargecolor", m_dwGunChargeColor);
-        m_dwGunChargeBackColor = pA->GetAttributeAsDword("gunchargebackcolor", m_dwGunChargeBackColor);
-        pcTmp = pA->GetAttribute("gunchargeuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rGunChargeUV.left, &m_rGunChargeUV.top, &m_rGunChargeUV.right,
-                   &m_rGunChargeUV.bottom);
-        pcTmp = pA->GetAttribute("gunchargeoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntGunChargeOffset.x, &m_pntGunChargeOffset.y);
-        pcTmp = pA->GetAttribute("gunchargeiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntGunChargeIconSize.x, &m_pntGunChargeIconSize.y);
-        pcTmp = pA->GetAttribute("gunchargeprogress");
-        if (pcTmp)
-        {
-            do
-            {
-                m_aChargeProgress.push_back(BIUtils::GetFromStr_Float(pcTmp, 0.f));
-            } while (pcTmp[0]);
+        BIUtils::ReadRectFromAttr(attr, "backuv", m_rBackUV);
+
+        BIUtils::ReadPosFromAttr(attr, "backoffset", m_pntBackOffset);
+        BIUtils::ReadPosFromAttr(attr, "backiconsize", m_pntBackIconSize);
+
+        const std::string_view alarmtexturename = attr["alarmtexturename"].get<std::string_view>();
+        if (!alarmtexturename.empty())
+            m_nAlarmTextureID = m_pRS->TextureCreate(alarmtexturename.data());
+
+        m_dwAlarmHighColor = attr["alarmhighcolor"].get<uint32_t>(m_dwAlarmHighColor);
+        m_dwAlarmLowColor = attr["alarmlowcolor"].get<uint32_t>(m_dwAlarmLowColor);
+
+        BIUtils::ReadRectFromAttr(attr, "alarmuv", m_rAlarmUV);
+
+        BIUtils::ReadPosFromAttr(attr, "alarmoffset", m_pntAlarmOffset);
+        BIUtils::ReadPosFromAttr(attr, "alarmiconsize", m_pntAlarmIconSize);
+
+        if (attr.hasProperty("alarmuptime")) {
+            const float alarm_up_time = attr["alarmuptime"].get<float>();
+            if (alarm_up_time > 0) {
+                m_fAlarmUpSpeed = 1.f / alarm_up_time;
+            }
+        }
+        if (attr.hasProperty("alarmdowntime")) {
+            const float alarm_down_time = attr["alarmdowntime"].get<float>();
+            if (alarm_down_time > 0) {
+                m_fAlarmDownSpeed = 1.f / alarm_down_time;
+            }
         }
 
-        m_dwManFaceColor = pA->GetAttributeAsDword("manfacecolor", m_dwManFaceColor);
-        pcTmp = pA->GetAttribute("manfaceoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManPicOffset.x, &m_pntManPicOffset.y);
-        pcTmp = pA->GetAttribute("manfaceiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntManPicIconSize.x, &m_pntManPicIconSize.y);
+        const std::string_view manstatetexturename = attr["manstatetexturename"].get<std::string_view>();
+        if (!manstatetexturename.empty())
+            m_nManStateTextureID = m_pRS->TextureCreate(manstatetexturename.data());
+        m_dwManStateColor = attr["manstatecolor"].get<uint32_t>(m_dwManStateColor);
+        BIUtils::ReadRectFromAttr(attr, "manhpuv", m_rManHPUV);
+        BIUtils::ReadPosFromAttr(attr, "manhpoffset", m_pntManHPOffset);
+        BIUtils::ReadPosFromAttr(attr, "manhpiconsize", m_pntManHPIconSize);
+        BIUtils::ReadRectFromAttr(attr, "manenegryuv", m_rManEnergyUV);
+        BIUtils::ReadPosFromAttr(attr, "manenegryoffset", m_pntManEnergyOffset);
+        BIUtils::ReadPosFromAttr(attr, "manenergyiconsize", m_pntManEnergyIconSize);
 
-        m_nCommandListVerticalOffset = pA->GetAttributeAsDword("commandlistverticaloffset");
+        const std::string_view gunchargetexturename = attr["gunchargetexturename"].get<std::string_view>();
+        if (!gunchargetexturename.empty())
+            m_nGunChargeTextureID = m_pRS->TextureCreate(gunchargetexturename.data());
+        m_dwGunChargeColor = attr["gunchargecolor"].get<uint32_t>(m_dwGunChargeColor);
+        m_dwGunChargeBackColor = attr["gunchargebackcolor"].get<uint32_t>(m_dwGunChargeBackColor);
+        BIUtils::ReadRectFromAttr(attr, "gunchargeuv", m_rGunChargeUV);
+        BIUtils::ReadPosFromAttr(attr, "gunchargeoffset", m_pntGunChargeOffset);
+        BIUtils::ReadPosFromAttr(attr, "gunchargeiconsize", m_pntGunChargeIconSize);
+
+        if (attr.hasProperty("gunchargeprogress")) {
+            const std::string_view charge_progress_str = attr["gunchargeprogress"].get<std::string_view>();
+            size_t offset = 0;
+            for (size_t i = 0; i < charge_progress_str.size(); ++i)
+            {
+                if (charge_progress_str[i] == ',')
+                {
+                    const std::string_view &charge_string = charge_progress_str.substr(offset, i - offset);
+                    m_aChargeProgress.push_back(std::stof(charge_string.data()));
+                }
+            }
+        }
+
+        m_dwManFaceColor = attr["manfacecolor"].get<uint32_t>(m_dwManFaceColor);
+        BIUtils::ReadPosFromAttr(attr, "manfaceoffset", m_pntManPicOffset);
+        BIUtils::ReadPosFromAttr(attr, "manfaceiconsize", m_pntManPicIconSize);
+
+        m_nCommandListVerticalOffset = attr["commandlistverticaloffset"].get<uint32_t>();
 
         for (n = 0; n < MAX_MAN_QUANTITY; n++)
         {
-            sprintf_s(param, sizeof(param), "iconoffset%d", n + 1);
-            pcTmp = pA->GetAttribute(param);
-            if (pcTmp)
-                sscanf(pcTmp, "%f,%f", &m_Man[n].pntPos.x, &m_Man[n].pntPos.y);
+            std::string_view param_pos = attr[fmt::format("iconoffset{}", n + 1)].get<std::string_view>();
+            if (!param_pos.empty())
+            {
+                sscanf(param_pos.data(), "%f,%f", &m_Man[n].pntPos.x, &m_Man[n].pntPos.y);
+            }
         }
     }
 
@@ -414,11 +396,9 @@ void BIManSign::Release()
 
 long BIManSign::CalculateManQuantity()
 {
-    long n;
-
     // reset all
     m_nManQuantity = 0;
-    for (n = 0; n < MAX_MAN_QUANTITY; n++)
+    for (long n = 0; n < MAX_MAN_QUANTITY; n++)
     {
         m_Man[n].nCharacterIndex = -1;
         m_Man[n].nSlotIndex = -1;
@@ -429,21 +409,20 @@ long BIManSign::CalculateManQuantity()
         m_Man[n].nShootCurrent = 0;
     }
 
-    auto *pAttr = m_pARoot ? m_pARoot->GetAttributeClass("data") : nullptr;
-    if (pAttr)
-        pAttr = pAttr->GetAttributeClass("icons");
-    char attrname[128];
-    if (pAttr)
-        for (n = 0; n < MAX_MAN_QUANTITY; n++)
-        {
-            sprintf_s(attrname, sizeof(attrname), "id%d", n);
-            auto *const pA = pAttr->GetAttributeClass(attrname);
-            if (!pA)
-                continue;
-            m_Man[m_nManQuantity].nCharacterIndex = -1;
-            m_Man[m_nManQuantity].nSlotIndex = n;
-            m_nManQuantity++;
+    if (m_pARoot && m_pARoot->hasProperty("data")) {
+        const Attribute& data = (*m_pARoot)["data"];
+        if (data.hasProperty("icons")) {
+            const Attribute& icons = data["icons"];
+            for (long n = 0; n < MAX_MAN_QUANTITY; n++)
+            {
+                if (icons.hasProperty(fmt::format("id{}", n))) {
+                    m_Man[m_nManQuantity].nCharacterIndex = -1;
+                    m_Man[m_nManQuantity].nSlotIndex = n;
+                    m_nManQuantity++;
+                }
+            }
         }
+    }
 
     return m_nManQuantity;
 }
@@ -512,29 +491,29 @@ void BIManSign::FillVertexBuffer()
         // face
         for (n = 0; n < m_nManQuantity; n++)
             vn += WriteSquareToVBuff(&pV[vn], m_Man[n].rUV, m_dwManFaceColor, m_Man[n].pntPos + m_pntManPicOffset,
-                                     m_pntManPicIconSize);
+                                     static_cast<FPOINT>(m_pntManPicIconSize));
 
         // back icon
         for (n = 0; n < m_nManQuantity; n++)
             vn += WriteSquareToVBuff(&pV[vn], m_rBackUV, m_dwBackColor, m_Man[n].pntPos + m_pntBackOffset,
-                                     m_pntBackIconSize);
+                                     static_cast<FPOINT>(m_pntBackIconSize));
 
         // alarm icon
         if (m_bIsAlarmOn && m_nManQuantity > 0)
         {
             vn += WriteSquareToVBuff(&pV[vn], m_rAlarmUV,
                                      GetColorByFactor(m_dwAlarmLowColor, m_dwAlarmHighColor, m_fAlarmTime),
-                                     m_Man[0].pntPos + m_pntAlarmOffset, m_pntAlarmIconSize);
+                                     m_Man[0].pntPos + m_pntAlarmOffset, static_cast<FPOINT>(m_pntAlarmIconSize));
         }
 
         // state (HP & Energy)
         for (n = 0; n < m_nManQuantity; n++)
         {
             vn += WriteSquareToVBuffWithProgress(&pV[vn], m_rManHPUV, m_dwManStateColor,
-                                                 m_Man[n].pntPos + m_pntManHPOffset, m_pntManHPIconSize,
+                                                 m_Man[n].pntPos + m_pntManHPOffset, static_cast<FPOINT>(m_pntManHPIconSize),
                                                  GetProgressManHP(n), 0.f, 0.f, 0.f);
             vn += WriteSquareToVBuffWithProgress(&pV[vn], m_rManEnergyUV, m_dwManStateColor,
-                                                 m_Man[n].pntPos + m_pntManEnergyOffset, m_pntManEnergyIconSize,
+                                                 m_Man[n].pntPos + m_pntManEnergyOffset, static_cast<FPOINT>(m_pntManEnergyIconSize),
                                                  GetProgressManEnergy(n), 0.f, 0.f, 0.f);
         }
 
@@ -542,10 +521,10 @@ void BIManSign::FillVertexBuffer()
         for (n = 0; n < m_nManQuantity; n++)
         {
             vn += WriteSquareToVBuffWithProgress(&pV[vn], m_rGunChargeUV, m_dwGunChargeBackColor,
-                                                 m_Man[n].pntPos + m_pntGunChargeOffset, m_pntGunChargeIconSize, 0.f,
+                                                 m_Man[n].pntPos + m_pntGunChargeOffset, static_cast<FPOINT>(m_pntGunChargeIconSize), 0.f,
                                                  0.f, 0.f, GetProgressGunChargeMax(n));
             vn += WriteSquareToVBuffWithProgress(&pV[vn], m_rGunChargeUV, m_dwGunChargeColor,
-                                                 m_Man[n].pntPos + m_pntGunChargeOffset, m_pntGunChargeIconSize, 0.f,
+                                                 m_Man[n].pntPos + m_pntGunChargeOffset, static_cast<FPOINT>(m_pntGunChargeIconSize), 0.f,
                                                  0.f, 0.f, GetProgressGunCharge(n));
         }
 
@@ -720,37 +699,41 @@ float BIManSign::GetGunProgressByIndex(long nIdx)
 
 void BIManSign::CheckDataChange()
 {
-    auto *pAttr = m_pARoot ? m_pARoot->GetAttributeClass("data") : nullptr;
-    if (pAttr && BoolACompare(pAttr, "alarm", m_bIsAlarmOn))
-        m_bMakeVertexFill = true;
-    if (pAttr)
-        pAttr = pAttr->GetAttributeClass("icons");
-    if (!pAttr)
+    if (!(m_pARoot && m_pARoot->hasProperty("data"))) {
         return;
+    }
+    const Attribute& data = (*m_pARoot)["data"];
 
-    char attrname[64];
+    if (BoolACompare(data, "alarm", m_bIsAlarmOn))
+        m_bMakeVertexFill = true;
+
+    if (!data.hasProperty("icons")) {
+        return;
+    }
+    const Attribute& icons = data["icons"];
+
     for (long n = 0; n < MAX_MAN_QUANTITY; n++)
     {
         if (m_Man[n].nSlotIndex < 0)
             continue;
-        sprintf_s(attrname, sizeof(attrname), "id%d", m_Man[n].nSlotIndex);
-        auto *const pA = pAttr->GetAttributeClass(attrname);
-        if (!pA)
+        const std::string attrname = fmt::format("id{}", m_Man[n].nSlotIndex);
+        if (!icons.hasProperty(attrname)) {
             continue;
-
-        if (LongACompare(pA, "chrindex", m_Man[n].nCharacterIndex))
+        }
+        const Attribute& slot = icons[attrname];
+        if (LongACompare(slot, "chrindex", m_Man[n].nCharacterIndex))
             m_bMakeVertexFill = true;
-        if (FloatACompare(pA, "health", m_Man[n].fHealth))
+        if (FloatACompare(slot, "health", m_Man[n].fHealth))
             m_bMakeVertexFill = true;
-        if (FloatACompare(pA, "energy", m_Man[n].fEnergy))
+        if (FloatACompare(slot, "energy", m_Man[n].fEnergy))
             m_bMakeVertexFill = true;
-        if (LongACompare(pA, "shootMax", m_Man[n].nShootMax))
+        if (LongACompare(slot, "shootMax", m_Man[n].nShootMax))
             m_bMakeVertexFill = true;
-        if (LongACompare(pA, "shootCur", m_Man[n].nShootCurrent))
+        if (LongACompare(slot, "shootCur", m_Man[n].nShootCurrent))
             m_bMakeVertexFill = true;
-        if (FRectACompare(pA, "uv", m_Man[n].rUV))
+        if (FRectACompare(slot, "uv", m_Man[n].rUV))
             m_bMakeVertexFill = true;
-        if (StringACompare(pA, "texture", m_Man[n].sTexture))
+        if (StringACompare(slot, "texture", m_Man[n].sTexture))
         {
             TEXTURE_RELEASE(m_pRS, m_Man[n].nTexture);
             m_Man[n].nTexture = m_pRS->TextureCreate(m_Man[n].sTexture.c_str());

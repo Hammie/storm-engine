@@ -11,8 +11,10 @@ class TMPTELEPORT : public Entity
     struct TELEPORT_DESCR
     {
         int num;
-        char *name;
-    } * m_descrArray;
+        std::string name;
+    };
+
+    std::vector<TELEPORT_DESCR> m_descrArray;
 
   public:
     TMPTELEPORT();
@@ -40,7 +42,7 @@ class TMPTELEPORT : public Entity
 
   protected:
     void ReleaseAll();
-    void SetShowData(ATTRIBUTES *pA);
+    void SetShowData(Attribute *pA);
     void SortShowData();
     void XChange(TELEPORT_DESCR &d1, TELEPORT_DESCR &d2);
 

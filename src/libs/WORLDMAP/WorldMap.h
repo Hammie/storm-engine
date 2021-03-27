@@ -17,7 +17,7 @@
 
 #define WDMAP_MAXOBJECTS 4096
 
-class ATTRIBUTES;
+class Attribute;
 class MESSAGE;
 class WdmRenderObject;
 class WdmRenderModel;
@@ -55,7 +55,7 @@ class WorldMap : public Entity
     // Messages
     uint64_t ProcessMessage(MESSAGE &message) override;
     // Changing an attribute
-    uint32_t AttributeChanged(ATTRIBUTES *apnt) override;
+    uint32_t AttributeChanged(Attribute &apnt) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -109,22 +109,22 @@ class WorldMap : public Entity
 
     // Utilities
     // Create a storm if possible
-    bool CreateStorm(bool isTornado, float time = -1.0f, ATTRIBUTES *save = nullptr);
+    bool CreateStorm(bool isTornado, float time = -1.0f, Attribute *save = nullptr);
     // Create a merchant's ship
     bool CreateMerchantShip(const char *modelName, const char *locNameStart, const char *locNameEnd, float kSpeed,
-                            float time = -1.0f, ATTRIBUTES *save = nullptr);
+                            float time = -1.0f, Attribute *save = nullptr);
     // boal Create a merchant's ship in coordinates
     bool CreateMerchantShipXZ(const char *modelName, float x1, float z1, float x2, float z2, float kSpeed,
-                              float time = -1.0f, ATTRIBUTES *save = nullptr);
+                              float time = -1.0f, Attribute *save = nullptr);
     // Create a ship that follows us
-    bool CreateFollowShip(const char *modelName, float kSpeed, float time = -1.0f, ATTRIBUTES *save = nullptr);
+    bool CreateFollowShip(const char *modelName, float kSpeed, float time = -1.0f, Attribute *save = nullptr);
     // Create a pair of warring ships
     bool CreateWarringShips(const char *modelName1, const char *modelName2, float time = -1.0f,
-                            ATTRIBUTES *save1 = nullptr, ATTRIBUTES *save2 = nullptr);
+                            Attribute *save1 = nullptr, Attribute *save2 = nullptr);
     // Delete all encounters
     void ReleaseEncounters();
     // Create an attribute to save the encounter parameters
-    ATTRIBUTES *GetEncSaveData(const char *type, const char *retName);
+    Attribute *GetEncSaveData(const char *type, const char *retName);
 
     // Find coordinates and radius by destination
     bool FindIslandPosition(const char *name, float &x, float &z, float &r);
@@ -136,10 +136,10 @@ class WorldMap : public Entity
     VDX9RENDER *rs;
     WdmCamera *camera;
 
-    ATTRIBUTES *aStorm;
-    ATTRIBUTES *aEncounter;
-    ATTRIBUTES *aInfo;
-    ATTRIBUTES *saveData;
+    Attribute *aStorm;
+    Attribute *aEncounter;
+    Attribute *aInfo;
+    Attribute *saveData;
 
     WdmWaitMenu *waitMenu;
 
@@ -155,7 +155,7 @@ class WorldMap : public Entity
 
     RObject object[WDMAP_MAXOBJECTS];
 
-    ATTRIBUTES *aDate;
+    Attribute *aDate;
     float timeScale;
 
     std::string bufForSave;

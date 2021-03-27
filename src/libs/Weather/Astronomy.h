@@ -16,7 +16,7 @@ class Astronomy : public Entity
     bool Init() override;
     void SetDevice();
     void Realize(uint32_t Delta_Time);
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -34,7 +34,7 @@ class Astronomy : public Entity
         }
     }
 
-    ATTRIBUTES *GetRoot(ATTRIBUTES *pA);
+    Attribute *GetRoot(Attribute *pA);
 
   private:
     class PLANETS
@@ -65,10 +65,10 @@ class Astronomy : public Entity
 
         void ReleasePlanets();
 
-        void Init(ATTRIBUTES *pAP);
+        void Init(Attribute *pAP);
         void Execute(double dDeltaTime, double dHour);
         void Realize(double dDeltaTime, double dHour);
-        void TimeUpdate(ATTRIBUTES *pAP);
+        void TimeUpdate(Attribute *pAP);
     };
 
     class STARS
@@ -77,12 +77,12 @@ class Astronomy : public Entity
         STARS();
         ~STARS();
 
-        void Init(ATTRIBUTES *pAP);
+        void Init(Attribute *pAP);
         void Execute(double dDeltaTime, double dHour);
         void Realize(double dDeltaTime, double dHour);
 
-        uint32_t AttributeChanged(ATTRIBUTES *pAttribute);
-        void TimeUpdate(ATTRIBUTES *pAP);
+        uint32_t AttributeChanged(Attribute &pAttribute);
+        void TimeUpdate(Attribute *pAP);
 
         bool IsEnable() const
         {

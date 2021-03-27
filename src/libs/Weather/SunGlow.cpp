@@ -343,15 +343,15 @@ void SUNGLOW::DrawSunMoon()
     }
 }
 
-uint32_t SUNGLOW::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t SUNGLOW::AttributeChanged(Attribute &pAttribute)
 {
-    if (*pAttribute == "isDone")
+    if (pAttribute == "isDone")
     {
         GenerateSunGlow();
         return 0;
     }
 
-    if (*pAttribute == "clear")
+    if (pAttribute == "clear")
     {
         bHaveFlare = false;
         bHaveGlow = false;
@@ -360,86 +360,84 @@ uint32_t SUNGLOW::AttributeChanged(ATTRIBUTES *pAttribute)
         return 0;
     }
 
-    auto *const pParent = pAttribute->GetParent();
+    const Attribute* pParent = pAttribute.getParent();
 
     if (*pParent == "Flares")
     {
         bHaveFlare = true;
-        auto *const pTemp = pAttribute->GetThisAttr();
         // flare_t * pFlare = &Flares.aFlares[Flares.aFlares.Add()];
         flare_t flare;
-        sscanf(pTemp, "%f,%f,%d,%x", &flare.fDist, &flare.fSize, &flare.dwSubTexIndex, &flare.dwColor);
+        sscanf(pAttribute.get<const char*>(), "%f,%f,%d,%x", &flare.fDist, &flare.fSize, &flare.dwSubTexIndex, &flare.dwColor);
         Flares.aFlares.push_back(flare);
         return 0;
     }
 
-    if (*pAttribute == "Moon")
-    {
-        bMoon = pAttribute->GetAttributeAsDword() != 0;
+    if (pAttribute == "Moon") {
+        pAttribute.get_to(bMoon);
         return 0;
     }
 
     if (*pParent == "Glow")
     {
         bHaveGlow = true;
-        if (*pAttribute == "Dist")
+        if (pAttribute == "Dist")
         {
-            Glow.fDist = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fDist);
             return 0;
         }
-        if (*pAttribute == "SunSize")
+        if (pAttribute == "SunSize")
         {
-            Glow.fSunSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fSunSize);
             return 0;
         }
-        if (*pAttribute == "MoonSize")
+        if (pAttribute == "MoonSize")
         {
-            Glow.fMoonSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fMoonSize);
             return 0;
         }
-        if (*pAttribute == "Size")
+        if (pAttribute == "Size")
         {
-            Glow.fGlowSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fGlowSize);
             return 0;
         }
-        if (*pAttribute == "RotateSpeed")
+        if (pAttribute == "RotateSpeed")
         {
-            Glow.fRotateSpeed = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fRotateSpeed);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (pAttribute == "Color")
         {
-            Glow.dwColor = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(Glow.dwColor);
             return 0;
         }
-        if (*pAttribute == "SunTexture")
+        if (pAttribute == "SunTexture")
         {
-            Glow.sSunTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Glow.sSunTexture);
             return 0;
         }
-        if (*pAttribute == "MoonTexture")
+        if (pAttribute == "MoonTexture")
         {
-            Glow.sMoonTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Glow.sMoonTexture);
             return 0;
         }
-        if (*pAttribute == "GlowTexture")
+        if (pAttribute == "GlowTexture")
         {
-            Glow.sGlowTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Glow.sGlowTexture);
             return 0;
         }
-        if (*pAttribute == "TechniqueZ")
+        if (pAttribute == "TechniqueZ")
         {
-            Glow.sTechniqueZ = pAttribute->GetThisAttr();
+            pAttribute.get_to(Glow.sTechniqueZ);
             return 0;
         }
-        if (*pAttribute == "TechniqueNoZ")
+        if (pAttribute == "TechniqueNoZ")
         {
-            Glow.sTechniqueNoZ = pAttribute->GetThisAttr();
+            pAttribute.get_to(Glow.sTechniqueNoZ);
             return 0;
         }
-        if (*pAttribute == "DecayTime")
+        if (pAttribute == "DecayTime")
         {
-            Glow.fDecayTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Glow.fDecayTime);
             return 0;
         }
         return 0;
@@ -447,34 +445,34 @@ uint32_t SUNGLOW::AttributeChanged(ATTRIBUTES *pAttribute)
 
     if (*pParent == "Flare")
     {
-        if (*pAttribute == "Dist")
+        if (pAttribute == "Dist")
         {
-            Flares.fDist = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Flares.fDist);
             return 0;
         }
-        if (*pAttribute == "Texture")
+        if (pAttribute == "Texture")
         {
-            Flares.sTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Flares.sTexture);
             return 0;
         }
-        if (*pAttribute == "Technique")
+        if (pAttribute == "Technique")
         {
-            Flares.sTechnique = pAttribute->GetThisAttr();
+            pAttribute.get_to(Flares.sTechnique);
             return 0;
         }
-        if (*pAttribute == "TexSizeX")
+        if (pAttribute == "TexSizeX")
         {
-            Flares.dwTexSizeX = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(Flares.dwTexSizeX);
             return 0;
         }
-        if (*pAttribute == "TexSizeY")
+        if (pAttribute == "TexSizeY")
         {
-            Flares.dwTexSizeY = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(Flares.dwTexSizeY);
             return 0;
         }
-        if (*pAttribute == "Scale")
+        if (pAttribute == "Scale")
         {
-            Flares.fFlareScale = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Flares.fFlareScale);
             return 0;
         }
         return 0;
@@ -483,29 +481,29 @@ uint32_t SUNGLOW::AttributeChanged(ATTRIBUTES *pAttribute)
     if (*pParent == "Overflow")
     {
         bHaveOverflow = true;
-        if (*pAttribute == "Texture")
+        if (pAttribute == "Texture")
         {
-            Overflow.sTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Overflow.sTexture);
             return 0;
         }
-        if (*pAttribute == "Technique")
+        if (pAttribute == "Technique")
         {
-            Overflow.sTechnique = pAttribute->GetThisAttr();
+            pAttribute.get_to(Overflow.sTechnique);
             return 0;
         }
-        if (*pAttribute == "Size")
+        if (pAttribute == "Size")
         {
-            Overflow.fSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Overflow.fSize);
             return 0;
         }
-        if (*pAttribute == "Start")
+        if (pAttribute == "Start")
         {
-            Overflow.fStart = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Overflow.fStart);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (pAttribute == "Color")
         {
-            Overflow.dwColor = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(Overflow.dwColor);
             return 0;
         }
         return 0;
@@ -514,29 +512,29 @@ uint32_t SUNGLOW::AttributeChanged(ATTRIBUTES *pAttribute)
     if (*pParent == "Reflection")
     {
         bHaveReflection = true;
-        if (*pAttribute == "Texture")
+        if (pAttribute == "Texture")
         {
-            Reflection.sTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(Reflection.sTexture);
             return 0;
         }
-        if (*pAttribute == "Size")
+        if (pAttribute == "Size")
         {
-            Reflection.fSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Reflection.fSize);
             return 0;
         }
-        if (*pAttribute == "Dist")
+        if (pAttribute == "Dist")
         {
-            Reflection.fDist = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(Reflection.fDist);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (pAttribute == "Color")
         {
-            Reflection.dwColor = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(Reflection.dwColor);
             return 0;
         }
-        if (*pAttribute == "Technique")
+        if (pAttribute == "Technique")
         {
-            Reflection.sTechnique = pAttribute->GetThisAttr();
+            pAttribute.get_to(Reflection.sTechnique);
             return 0;
         }
         return 0;

@@ -136,7 +136,7 @@ class FLAG : public Entity
         bool bDeleted;
         bool isShip;
         entid_t ship_id;
-        ATTRIBUTES *char_attributes;
+        Attribute *char_attributes;
     };
 
     int groupQuantity;

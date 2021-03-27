@@ -67,7 +67,7 @@ class WdmEnemyShip : public WdmShip
 
   public:
     // Setting parameters
-    virtual void SetSaveAttribute(ATTRIBUTES *save);
+    virtual void SetSaveAttribute(Attribute *save);
     void DeleteUpdate();
 
     // --------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class WdmEnemyShip : public WdmShip
     // Whether should pay attention when pushing to the player
     bool isLookOnPlayer;
 
-    ATTRIBUTES *saveAttribute;
+    Attribute *saveAttribute;
 
   private:
     float brnAlpha;

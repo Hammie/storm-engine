@@ -12,21 +12,21 @@ class CSaveLoad;
 class VAI_OBJBASE : public CANNON_TRACE_BASE
 {
   private:
-    ATTRIBUTES *pACharacter;
+    Attribute *pACharacter;
 
   public:
     virtual ~VAI_OBJBASE(){};
 
-    virtual void SetACharacter(ATTRIBUTES *pAP)
+    virtual void SetACharacter(Attribute *pAP)
     {
         pACharacter = pAP;
     };
-    virtual ATTRIBUTES *GetACharacter()
+    virtual Attribute *GetACharacter()
     {
         return pACharacter;
     };
 
-    virtual bool Mount(ATTRIBUTES *) = 0;
+    virtual bool Mount(Attribute *) = 0;
 
     virtual void SetPos(const CVECTOR &vNewPos) = 0;
 

@@ -106,12 +106,8 @@ void BISignIcon::Draw()
     }
 }
 
-void BISignIcon::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
+void BISignIcon::Init(Attribute *pRoot, Attribute *pA)
 {
-    long n;
-    char *pcTmp;
-    char param[256];
-
     m_pARoot = pRoot;
     m_pAData = pA;
 
@@ -148,99 +144,47 @@ void BISignIcon::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
     m_SignTextFontOffset.x = -14;
     m_SignTextFontOffset.y = 18;
 
-    for (n = 0; n < MAX_SIGN_QUANTITY; n++)
+    for (long n = 0; n < MAX_SIGN_QUANTITY; n++)
     {
         m_Sign[n].pntPos.x = 20.f;
         m_Sign[n].pntPos.y = 20.f + (m_pntBackIconSize.y + 10.f) * n;
     }
 
-    if (pA)
+    const Attribute& attr = *pA;
+    if (!attr.empty())
     {
-        pcTmp = pA->GetAttribute("fontid");
-        if (pcTmp)
-            m_idSignTextFont = m_pRS->LoadFont(pcTmp);
-        m_dwSignTextFontColor = pA->GetAttributeAsDword("fontcolor", m_dwSignTextFontColor);
-        m_fSignTextFontScale = pA->GetAttributeAsFloat("fontscale", m_fSignTextFontScale);
+        m_idSignTextFont = BIUtils::GetFontIDFromAttr(attr, "fontid", m_pRS).value_or(-1);
+        attr["fontcolor"].get_to(m_dwSignTextFontColor);
+        attr["fontscale"].get_to(m_fSignTextFontScale);
+        attr["fontoffset"].get_to(m_SignTextFontOffset);
+        m_nBackTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "backtexturename");
+        attr["backcolor"].get_to(m_dwBackColor);
+        attr["backuv"].get_to(m_rBackUV);
+        attr["backoffset"].get_to(m_pntBackOffset);
+        attr["backiconsize"].get_to(m_pntBackIconSize);
 
-        pcTmp = pA->GetAttribute("fontoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%ld,%ld", &m_SignTextFontOffset.x, &m_SignTextFontOffset.y);
+        m_nSignStateTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "shipstatetexturename");
+        attr["shipstatecolor"].get_to(m_dwSignStateColor);
+        attr["shiphpuv"].get_to(m_rSignStateLeftUV);
+        attr["shiphpoffset"].get_to(m_pntSignStateLeftOffset);
+        attr["shiphpiconsize"].get_to(m_pntSignStateLeftIconSize);
+        attr["shipspuv"].get_to(m_rSignStateRightUV);
+        attr["shipspoffset"].get_to(m_pntSignStateRightOffset);
+        attr["shipspiconsize"].get_to(m_pntSignStateRightIconSize);
+        m_nSignStarTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "shipclasstexturename");
+        attr["shipclasscolor"].get_to(m_dwSignStarColor);
+        attr["shipclassuv"].get_to(m_rSignStarUV);
+        attr["shipclassoffset"].get_to(m_pntSignStarOffset);
+        attr["shipclassiconsize"].get_to(m_pntSignStarIconSize);
+        m_nSignFaceTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "shiptexturename");
+        attr["shipcolor"].get_to(m_dwSignFaceColor);
+        attr["shipoffset"].get_to(m_pntSignFaceOffset);
+        attr["shipiconsize"].get_to(m_pntSignFaceIconSize);
 
-        pcTmp = pA->GetAttribute("backtexturename");
-        if (pcTmp)
-            m_nBackTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwBackColor = pA->GetAttributeAsDword("backcolor", m_dwBackColor);
-        pcTmp = pA->GetAttribute("backuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rBackUV.left, &m_rBackUV.top, &m_rBackUV.right, &m_rBackUV.bottom);
-        pcTmp = pA->GetAttribute("backoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackOffset.x, &m_pntBackOffset.y);
-        pcTmp = pA->GetAttribute("backiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackIconSize.x, &m_pntBackIconSize.y);
-
-        pcTmp = pA->GetAttribute("shipstatetexturename");
-        if (pcTmp)
-            m_nSignStateTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwSignStateColor = pA->GetAttributeAsDword("shipstatecolor", m_dwSignStateColor);
-        pcTmp = pA->GetAttribute("shiphpuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rSignStateLeftUV.left, &m_rSignStateLeftUV.top, &m_rSignStateLeftUV.right,
-                   &m_rSignStateLeftUV.bottom);
-        pcTmp = pA->GetAttribute("shiphpoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStateLeftOffset.x, &m_pntSignStateLeftOffset.y);
-        pcTmp = pA->GetAttribute("shiphpiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStateLeftIconSize.x, &m_pntSignStateLeftIconSize.y);
-        pcTmp = pA->GetAttribute("shipspuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rSignStateRightUV.left, &m_rSignStateRightUV.top,
-                   &m_rSignStateRightUV.right, &m_rSignStateRightUV.bottom);
-        pcTmp = pA->GetAttribute("shipspoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStateRightOffset.x, &m_pntSignStateRightOffset.y);
-        pcTmp = pA->GetAttribute("shipspiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStateRightIconSize.x, &m_pntSignStateRightIconSize.y);
-
-        pcTmp = pA->GetAttribute("shipclasstexturename");
-        if (pcTmp)
-            m_nSignStarTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwSignStarColor = pA->GetAttributeAsDword("shipclasscolor", m_dwSignStarColor);
-        pcTmp = pA->GetAttribute("shipclassuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rSignStarUV.left, &m_rSignStarUV.top, &m_rSignStarUV.right,
-                   &m_rSignStarUV.bottom);
-        pcTmp = pA->GetAttribute("shipclassoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStarOffset.x, &m_pntSignStarOffset.y);
-        pcTmp = pA->GetAttribute("shipclassiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignStarIconSize.x, &m_pntSignStarIconSize.y);
-
-        pcTmp = pA->GetAttribute("shiptexturename");
-        if (pcTmp)
-            m_nSignFaceTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwSignFaceColor = pA->GetAttributeAsDword("shipcolor", m_dwSignFaceColor);
-        /*pcTmp = pA->GetAttribute( "shipuv" );
-        if( pcTmp ) sscanf( pcTmp, "%f,%f,%f,%f",
-         * &m_rSignStarUV.left,&m_rSignStarUV.top,
-        &m_rSignStarUV.right,&m_rSignStarUV.bottom );*/
-        pcTmp = pA->GetAttribute("shipoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignFaceOffset.x, &m_pntSignFaceOffset.y);
-        pcTmp = pA->GetAttribute("shipiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntSignFaceIconSize.x, &m_pntSignFaceIconSize.y);
-
-        for (n = 0; n < MAX_SIGN_QUANTITY; n++)
+        for (long n = 0; n < MAX_SIGN_QUANTITY; n++)
         {
-            sprintf_s(param, sizeof(param), "iconoffset%d", n + 1);
-            pcTmp = pA->GetAttribute(param);
-            if (pcTmp)
-                sscanf(pcTmp, "%f,%f", &m_Sign[n].pntPos.x, &m_Sign[n].pntPos.y);
+            const Attribute& param = attr[fmt::format("iconoffset{}", n + 1)];
+            param.get_to(m_Sign[n].pntPos);
         }
     }
 
@@ -257,7 +201,7 @@ void BISignIcon::SetActive(bool bActive)
 {
     if (m_pARoot)
     {
-        m_pARoot->SetAttributeUseDword("ComState", (bActive ? 1 : 0));
+        m_pARoot->getProperty("ComState") = bActive;
     }
 
     if (m_bActive == bActive)

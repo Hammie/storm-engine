@@ -14,7 +14,7 @@ class VDATA
 
     virtual DATA *GetReference() = 0;
     virtual void SetReference(DATA *pRef) = 0;
-    virtual void SetAReference(ATTRIBUTES *pARef) = 0;
+    virtual void SetAReference(Attribute *pARef) = 0;
     virtual void Set(long value) = 0;
     virtual void SetPtr(uintptr_t value) = 0;
     virtual bool GetPtr(uintptr_t &value) = 0;
@@ -36,8 +36,8 @@ class VDATA
     virtual void Set(entid_t eid) = 0;
     virtual bool Set(entid_t eid, uint32_t index) = 0;
 
-    virtual ATTRIBUTES *GetAClass() = 0;
-    virtual ATTRIBUTES *GetAClass(uint32_t index) = 0;
+    virtual Attribute *GetAClass() = 0;
+    virtual Attribute *GetAClass(uint32_t index) = 0;
     virtual DATA *GetArrayElement(uint32_t index) = 0;
     // virtual S_TOKEN_TYPE GetType()=0;
     virtual uint32_t GetElementsNum() = 0;

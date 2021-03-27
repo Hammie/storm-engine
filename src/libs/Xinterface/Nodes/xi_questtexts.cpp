@@ -319,11 +319,11 @@ void CXI_QUESTTEXTS::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, co
         m_idFont = m_rs->LoadFont(param);
 }
 
-void CXI_QUESTTEXTS::StartQuestShow(ATTRIBUTES *pA, int qn)
+void CXI_QUESTTEXTS::StartQuestShow(Attribute *pA, int qn)
 {
     if (pA == nullptr)
         return;
-    const long aq = pA->GetAttributesNum();
+    const long aq = std::distance(pA->begin(), pA->end());
     if (qn < 0)
         qn = 0;
     if (qn >= aq)
@@ -338,24 +338,24 @@ void CXI_QUESTTEXTS::StartQuestShow(ATTRIBUTES *pA, int qn)
         STORM_DELETE(m_listCur);
     }
 
-    auto *pAttr = pA->GetAttributeClass(qn);
-    if (pAttr == nullptr)
+    const Attribute &attr = *(pA->begin() + qn);
+    if (attr.empty())
         return;
 
-    const auto cFlag = pAttr->GetAttributeAsDword("Complete", 0) != 0;
-    auto *pATextList = pAttr->GetAttributeClass("Text");
-    const char *questLogName = pAttr->GetAttribute("LogName");
+    const auto cFlag = attr["Complete"].get<bool>(false);
+    const Attribute &pATextList = attr["Text"];
+    const char *questLogName = attr["LogName"].get<const char*>();
     if (!questLogName)
-        questLogName = pAttr->GetThisName();
+        questLogName = attr.getName().data();
 
     std::vector<std::string> asStringList;
-    if (ptrOwner->QuestFileReader() && pATextList)
+    if (ptrOwner->QuestFileReader() && !pATextList.empty())
     {
-        const long q = pATextList->GetAttributesNum();
+        const long q = std::distance(pATextList.begin(), pATextList.end());
         for (auto n = q - 1; n >= 0; n--)
         {
-            ATTRIBUTES *pAttr = pATextList->GetAttributeClass(n);
-            if (!pAttr)
+            const Attribute &pAttr = *(pATextList.begin() + n);
+            if (pAttr.empty())
                 continue;
 
             // space for aparting records
@@ -364,7 +364,7 @@ void CXI_QUESTTEXTS::StartQuestShow(ATTRIBUTES *pA, int qn)
 
             // whole string list for one record
             asStringList.clear();
-            GetStringListForQuestRecord(asStringList, pAttr->GetThisAttr(), pAttr->GetAttribute("UserData"));
+            GetStringListForQuestRecord(asStringList, pAttr.get<const char*>(), pAttr.getProperty("UserData").get<const char*>());
             for (long i = 0; i < asStringList.size(); i++)
             {
                 // decompose the resulting string into lines that fit into the output area

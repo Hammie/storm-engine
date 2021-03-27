@@ -227,19 +227,15 @@ void AIShipCannonController::Execute(float fDeltaTime)
             // update borts parameters for script
             // if (GetAIShip()->isMainCharacter())
             {
-                ATTRIBUTES *pAPlayer = GetAIShip()->GetACharacter();
-                ATTRIBUTES *pABorts = pAPlayer->FindAClass(pAPlayer, "Ship.Cannons.Borts");
-                Assert(pABorts);
-                pABorts->SetAttribute((char *)pBort->sName.c_str(), "");
-                ATTRIBUTES *pACurBort = pABorts->FindAClass(pABorts, (char *)pBort->sName.c_str());
-                Assert(pACurBort);
-
-                pACurBort->SetAttributeUseFloat("MaxFireDistance", pBort->fMaxFireDistance);
-                pACurBort->SetAttributeUseFloat("ChargeRatio", pBort->fChargePercent);
-                pACurBort->SetAttributeUseFloat("DamageRatio",
-                                                1.0f - (static_cast<float>(GetBortIntactCannonsNum(i)) +
-                                                        static_cast<float>(GetBortDisabledCannonsNum(i))) /
-                                                           static_cast<float>(pBort->aCannons.size()));
+                Attribute *pAPlayer = GetAIShip()->GetACharacter();
+                Assert(pAPlayer);
+                Attribute &attr = pAPlayer->getProperty("Ship")["Cannons"]["Borts"];
+                Attribute &aCurBort = attr[pBort->sName] = "";
+                aCurBort["MaxFireDistance"] = pBort->fMaxFireDistance;
+                aCurBort["ChargeRatio"] = pBort->fChargePercent;
+                aCurBort["DamageRatio"] = 1.0f - (static_cast<float>(GetBortIntactCannonsNum(i)) +
+                                                  static_cast<float>(GetBortDisabledCannonsNum(i))) /
+                                                     static_cast<float>(pBort->aCannons.size());
                 //        pACurBort->SetAttributeUseFloat("DamageRatio",
                 //                                        1.0f - static_cast<float>(GetBortIntactCannonsNum(i)) /
                 //                                        static_cast<float>(pBort
@@ -551,11 +547,10 @@ bool AIShipCannonController::isCanFire(AIShip *pEnemy)
 
 float AIShipCannonController::GetSpeedV0()
 {
-    ATTRIBUTES *pACannon;
-    ATTRIBUTES *pACharacter = GetAIShip()->GetACharacter();
-    pACannon = pACharacter->FindAClass(pACharacter, "Ship.Cannons");
-    Assert(pACannon);
-    return pACannon->GetAttributeAsFloat("SpeedV0");
+    Attribute *pACannon;
+    Attribute *pACharacter = GetAIShip()->GetACharacter();
+    const Attribute &aCannon = pACharacter->getProperty("Ship")["Cannons"];
+    return aCannon["SpeedV0"].get<float>();
 }
 
 void AIShipCannonController::Realize(float fDeltaTime)
@@ -634,42 +629,34 @@ void AIShipCannonController::Realize(float fDeltaTime)
     }
 }
 
-bool AIShipCannonController::Init(ATTRIBUTES *_pAShip)
+bool AIShipCannonController::Init(Attribute *_pAShip)
 {
     pAShip = _pAShip;
 
-    ATTRIBUTES *pACharacter = GetAIShip()->GetACharacter();
-    ATTRIBUTES *pABorts = pACharacter->FindAClass(pACharacter, "Ship.Cannons.Borts");
-    Assert(pABorts);
+    Attribute *pACharacter = GetAIShip()->GetACharacter();
+    Assert(pACharacter);
+    Attribute &aBorts = pACharacter->getProperty("Ship")["Cannons"]["Borts"];
 
     // init borts from ShipsTypes attributes
-    ATTRIBUTES *pAP = pAShip->FindAClass(pAShip, "Cannons.Borts");
-    if (!pAP)
+    const Attribute &attrShipBorts = pAShip->getProperty("Cannons")["Borts"];
+    if (attrShipBorts.empty())
         return false;
     uint32_t dwIdx = 0;
-    while (true)
-    {
-        ATTRIBUTES *pBortAttribute = pAP->GetAttributeClass(dwIdx);
-        if (!pBortAttribute)
-            break;
+    for (const Attribute &attr : attrShipBorts) {
+        if (!attr.empty()) {
+            AISHIP_BORT& bort = aShipBorts.emplace_back();
+            bort.sName = attr.getName();
+            attr["FireZone"].get_to(bort.fFireZone);
+            attr["FireAngMin"].get_to(bort.fFireAngMin);
+            attr["FireAngMax"].get_to(bort.fFireAngMax);
+            attr["FireDir"].get_to(bort.fFireDir);
+            bort.dwNumDamagedCannons = 0;
+            bort.fCosFireZone = cosf(bort.fFireZone / 2.0f);
 
-        aShipBorts.push_back(AISHIP_BORT{});
-        // AISHIP_BORT * pBort = &aShipBorts[aShipBorts.Add()];
-        AISHIP_BORT *pBort = &aShipBorts.back();
-        pBort->sName = pBortAttribute->GetThisName();
-        pBort->fFireZone = pBortAttribute->GetAttributeAsFloat("FireZone");
-        pBort->fFireAngMin = pBortAttribute->GetAttributeAsFloat("FireAngMin");
-        pBort->fFireAngMax = pBortAttribute->GetAttributeAsFloat("FireAngMax");
-        pBort->fFireDir = pBortAttribute->GetAttributeAsFloat("FireDir");
-        pBort->dwNumDamagedCannons = 0;
-
-        pBort->fCosFireZone = cosf(pBort->fFireZone / 2.0f);
-        dwIdx++;
-
-        // create damages
-        char str[512];
-        sprintf_s(str, "%s.damages", (char *)pBort->sName.c_str());
-        pABorts->CreateSubAClass(pABorts, str);
+            // create damages
+            const std::string str = fmt::format("{}.damages", bort.sName);
+            aBorts.createChildAttribute(str);
+        }
     }
 
     return ScanShipForCannons();
@@ -677,16 +664,15 @@ bool AIShipCannonController::Init(ATTRIBUTES *_pAShip)
 
 bool AIShipCannonController::ScanShipForCannons()
 {
-    char str[512];
     uint32_t i, j;
     CMatrix m;
     GEOS::LABEL label;
     GEOS::INFO info;
     NODE *pNode;
 
-    ATTRIBUTES *pACharacter = GetAIShip()->GetACharacter();
-    ATTRIBUTES *pABorts = pACharacter->FindAClass(pACharacter, "Ship.Cannons.Borts");
-    Assert(pABorts);
+    Attribute *pACharacter = GetAIShip()->GetACharacter();
+    Assert(pACharacter);
+    Attribute &aBorts = pACharacter->getProperty("Ship")["Cannons"]["Borts"];
     MODEL *pModel = GetAIShip()->GetModel();
     Assert(pModel);
 
@@ -709,11 +695,11 @@ bool AIShipCannonController::ScanShipForCannons()
                     aShipBorts[j].fOurBortFireHeight += m.Pos().y;
                     pCannon->Init(GetAIShip(), GetAIShip()->GetShipEID(), label);
 
-                    sprintf_s(str, "%s.damages", label.group_name);
-                    ATTRIBUTES *pADamages = pABorts->FindAClass(pABorts, str);
-                    sprintf_s(str, "c%zd", aShipBorts[j].aCannons.size() - 1);
-                    const float fDamage = pADamages->GetAttributeAsFloat(str, 0.0f);
-                    pADamages->SetAttributeUseFloat(str, fDamage);
+                    const std::string damagesStr = fmt::format("{}.damages", label.group_name);
+                    Attribute& aDamages = aBorts[damagesStr];
+                    const std::string cannonStr = fmt::format("c{}", aShipBorts[j].aCannons.size() - 1);
+                    const float fDamage = aDamages[cannonStr].get<float>(0.0f);
+                    aDamages[cannonStr] = fDamage;
                     pCannon->SetDamage(fDamage);
                     if (pCannon->isDamaged())
                         aShipBorts[j].dwNumDamagedCannons++;
@@ -810,19 +796,17 @@ void AIShipCannonController::CheckCannonsBoom(float fTmpCannonDamage, const CVEC
     char str[512];
     uint32_t i, j;
 
-    ATTRIBUTES *pACharacter = GetAIShip()->GetACharacter();
-    ATTRIBUTES *pABorts = pACharacter->FindAClass(pACharacter, "Ship.Cannons.Borts");
-    Assert(pABorts);
+    Attribute *pACharacter = GetAIShip()->GetACharacter();
+    Assert(pACharacter);
+    Attribute &aBorts = pACharacter->getProperty("Ship")["Cannons"]["Borts"];
 
     for (i = 0; i < aShipBorts.size(); i++)
     {
         AISHIP_BORT *pBort = &aShipBorts[i];
 
-        sprintf_s(str, "%s.damages", (char *)pBort->sName.c_str());
-        ATTRIBUTES *pADamages = pABorts->FindAClass(pABorts, str);
-        Assert(pADamages);
-        ATTRIBUTES *pACurBort = pABorts->FindAClass(pABorts, (char *)pBort->sName.c_str());
-        Assert(pACurBort);
+        const std::string damagesStr = fmt::format("{}.damages", (char *)pBort->sName.c_str());
+        Attribute& aDamages = aBorts[damagesStr];
+        Attribute& aCurBort = aBorts[pBort->sName];
 
         for (j = 0; j < pBort->aCannons.size(); j++)
         {
@@ -840,13 +824,12 @@ void AIShipCannonController::CheckCannonsBoom(float fTmpCannonDamage, const CVEC
             sprintf_s(str, "c%d", j);
 
             pC->SetDamage(pVData->GetFloat());
-            pADamages->SetAttributeUseFloat(str, pC->GetDamage());
+            aDamages[str] = pC->GetDamage();
             if (pC->isDamaged())
             {
-                pACurBort->SetAttributeUseFloat("DamageRatio",
-                                                1.0f - (static_cast<float>(GetBortIntactCannonsNum(i)) +
+                aCurBort["DamageRatio"] = 1.0f - (static_cast<float>(GetBortIntactCannonsNum(i)) +
                                                         static_cast<float>(GetBortDisabledCannonsNum(i))) /
-                                                           static_cast<float>(pBort->aCannons.size()));
+                                                           static_cast<float>(pBort->aCannons.size());
                 // pBort->dwNumDamagedCannons++;
                 // pACurBort->SetAttributeUseFloat("DamageRatio",
                 //                                1.0f - static_cast<float>(GetBortIntactCannonsNum(i)) /
@@ -863,33 +846,31 @@ void AIShipCannonController::ResearchCannons()
     char str[512];
     uint32_t i, j;
 
-    ATTRIBUTES *pACharacter = GetAIShip()->GetACharacter();
-    ATTRIBUTES *pABorts = pACharacter->FindAClass(pACharacter, "Ship.Cannons.Borts");
-    Assert(pABorts);
+    Attribute *pACharacter = GetAIShip()->GetACharacter();
+    Assert(pACharacter);
+    Attribute &aBorts = pACharacter->getProperty("Ship")["Cannons"]["Borts"];
 
     for (i = 0; i < aShipBorts.size(); i++)
     {
         AISHIP_BORT *pBort = &aShipBorts[i];
 
-        sprintf_s(str, "%s.damages", (char *)pBort->sName.c_str());
-        ATTRIBUTES *pADamages = pABorts->FindAClass(pABorts, str);
-        Assert(pADamages);
-        ATTRIBUTES *pACurBort = pABorts->FindAClass(pABorts, (char *)pBort->sName.c_str());
-        Assert(pACurBort);
+        const std::string damagesStr = fmt::format("{}.damages", (char *)pBort->sName.c_str());
+        Attribute& aDamages = aBorts[damagesStr];
+        Attribute& aCurBort = aBorts[pBort->sName];
         pBort->dwNumDamagedCannons = 0; // not used anywhere, maybe a rudiment?
 
         for (j = 0; j < pBort->aCannons.size(); j++)
         {
             AICannon *pC = &pBort->aCannons[j];
             sprintf_s(str, "c%d", j);
-            const float fDamage = pADamages->GetAttributeAsFloat(str, 0.0f);
+            const float fDamage = aDamages[str].get<float>();
             pC->SetDamage(fDamage);
-            pADamages->SetAttributeUseFloat(str, pC->GetDamage());
+            aDamages[str] = pC->GetDamage();
             if (pC->isDamaged())
             {
                 pBort->dwNumDamagedCannons++;
-                pACurBort->SetAttributeUseFloat("DamageRatio", 1.0f - static_cast<float>(GetBortIntactCannonsNum(i)) /
-                                                                          static_cast<float>(pBort->aCannons.size()));
+                aCurBort["DamageRatio"] =
+                    1.0f - static_cast<float>(GetBortIntactCannonsNum(i)) / static_cast<float>(pBort->aCannons.size());
             }
         }
     }

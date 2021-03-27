@@ -69,7 +69,6 @@ void GetQuotedString(char *inBuf, char *outBuf, long bufSize)
 TMPTELEPORT::TMPTELEPORT()
 {
     rs = nullptr;
-    m_descrArray = nullptr;
     m_nStrQuantity = m_nCurStr = m_nCurShowPos = 0;
 }
 
@@ -175,14 +174,7 @@ void TMPTELEPORT::Realize(uint32_t Delta_Time)
 
 void TMPTELEPORT::ReleaseAll()
 {
-    if (m_descrArray != nullptr)
-    {
-        for (auto i = 0; i < m_nStrQuantity; i++)
-        {
-            DELETE_PTR(m_descrArray[i].name);
-        }
-    }
-    DELETE_PTR(m_descrArray);
+    m_descrArray.clear();
     m_nStrQuantity = 0;
     m_nCurStr = m_nCurShowPos = 0;
     m_nShowType = 0;
@@ -205,34 +197,27 @@ uint64_t TMPTELEPORT::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-void TMPTELEPORT::SetShowData(ATTRIBUTES *pA)
+void TMPTELEPORT::SetShowData(Attribute *pA)
 {
     ReleaseAll();
     m_nStrQuantity = 0;
     if (pA == nullptr)
         return;
-    m_nStrQuantity = pA->GetAttributesNum();
-    if (m_nStrQuantity == 0)
+
+    Assert(pA != nullptr);
+    const Attribute& attr = *pA;
+
+    if (attr.empty()) {
         return;
-    if ((m_descrArray = new TELEPORT_DESCR[m_nStrQuantity]) == nullptr)
-    {
-        throw std::exception("Allocate memory error");
     }
 
-    for (auto i = 0; i < m_nStrQuantity; i++)
-    {
-        auto *const tmpStr = pA->GetAttribute(i);
-        m_descrArray[i].name = nullptr;
-        m_descrArray[i].num = i;
-        if (tmpStr == nullptr)
-            continue;
-        const auto len = strlen(tmpStr) + 1;
-        if ((m_descrArray[i].name = new char[len]) == nullptr)
-        {
-            throw std::exception("Allocate memory error");
-        }
-        memcpy(m_descrArray[i].name, tmpStr, len);
-    }
+    int i = 0;
+    std::transform(attr.begin(), attr.end(), std::back_inserter(m_descrArray), [&i] (const Attribute& entry) {
+      TELEPORT_DESCR result;
+      result.num = i++;
+      entry.get_to(result.name);
+      return result;
+    });
 
     SortShowData();
 }
@@ -247,15 +232,7 @@ void TMPTELEPORT::SortShowData()
         bContinueSort = false;
         for (auto i = 1; i < m_nStrQuantity; i++)
         {
-            if (m_descrArray[i - 1].name == nullptr)
-                continue;
-            if (m_descrArray[i].name == nullptr)
-            {
-                XChange(m_descrArray[i - 1], m_descrArray[i]);
-                bContinueSort = true;
-                continue;
-            }
-            if (strcmp(m_descrArray[i].name, m_descrArray[i - 1].name) < 0)
+            if (m_descrArray[i].name == m_descrArray[i - 1].name)
             {
                 XChange(m_descrArray[i - 1], m_descrArray[i]);
                 bContinueSort = true;
@@ -266,32 +243,20 @@ void TMPTELEPORT::SortShowData()
 
 void TMPTELEPORT::XChange(TELEPORT_DESCR &d1, TELEPORT_DESCR &d2)
 {
-    const auto n = d1.num;
-    d1.num = d2.num;
-    d2.num = n;
-
-    auto *const nm = d1.name;
-    d1.name = d2.name;
-    d2.name = nm;
+    std::swap(d1.num, d2.num);
+    std::swap(d1.name, d2.name);
 }
 
 bool FINDFILESINTODIRECTORY::Init()
 {
     if (AttributesPointer)
     {
-        auto *const dirName = AttributesPointer->GetAttribute("dir");
-        auto *const maskName = AttributesPointer->GetAttribute("mask");
-        char fullName[512];
-        fullName[0] = 0;
-        if (dirName)
-            sprintf_s(fullName, "%s\\", dirName);
-        if (maskName)
-            strcat_s(fullName, maskName);
-        else
-            strcat_s(fullName, "*.*");
+        Assert(AttributesPointer != nullptr);
+        Attribute& attr = *AttributesPointer;
+        std::string fullName = attr["dir"].get<std::string>() + '\\' + attr["mash"].get<std::string>("*.*");
         WIN32_FIND_DATA finddat;
-        auto *const hdl = fio->_FindFirstFile(fullName, &finddat);
-        auto *pA = AttributesPointer->CreateSubAClass(AttributesPointer, "filelist");
+        auto *const hdl = fio->_FindFirstFile(fullName.c_str(), &finddat);
+        Attribute& aFileList = attr["filelist"];
         for (auto file_idx = 0; hdl != INVALID_HANDLE_VALUE; file_idx++)
         {
             char sname[32];
@@ -299,7 +264,7 @@ bool FINDFILESINTODIRECTORY::Init()
             if (finddat.cFileName)
             {
                 std::string FileName = utf8::ConvertWideToUtf8(finddat.cFileName);
-                pA->SetAttribute(sname, FileName.c_str());
+                aFileList[sname] = FileName.c_str();
             }
             if (!fio->_FindNextFile(hdl, &finddat))
                 break;
@@ -316,9 +281,12 @@ bool FINDDIALOGNODES::Init()
 {
     if (AttributesPointer)
     {
-        auto *const fileName = AttributesPointer->GetAttribute("file");
-        auto *pA = AttributesPointer->CreateSubAClass(AttributesPointer, "nodelist");
-        if (fileName && pA)
+        Assert(AttributesPointer != nullptr);
+        Attribute& attr = *AttributesPointer;
+
+        auto *const fileName = attr["file"].get<const char*>();
+        Attribute &aNodeList = attr["nodelist"];
+        if (fileName && !aNodeList.empty())
         {
             auto *const hfile = fio->_CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING);
             if (hfile == INVALID_HANDLE_VALUE)
@@ -370,7 +338,7 @@ bool FINDDIALOGNODES::Init()
                 {
                     sprintf_s(param, "id%d", nodIdx);
                     nodIdx++;
-                    pA->SetAttribute(param, param2);
+                    aNodeList[param] = param2;
                 }
             }
 

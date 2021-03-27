@@ -532,24 +532,19 @@ bool Sharks::Init()
     for (long i = 0; i < numShakes; i++)
         if (!shark[i].Init(0.0f, 0.0f))
             return false;
+
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
     // Execution layer
-    char execute[64];
-    char realize[64];
-    const char *attr = AttributesPointer->GetAttribute("execute");
-    if (attr && attr[0])
-        strcpy_s(execute, attr);
-    else
-        strcpy_s(execute, "execute");
-    attr = AttributesPointer->GetAttribute("realize");
-    if (attr && attr[0])
-        strcpy_s(realize, attr);
-    else
-        strcpy_s(realize, "realize");
+    const std::string_view execute = attr["execute"].get<std::string_view>("execute");
+    const std::string_view realize = attr["realize"].get<std::string_view>("realize");
+
     // Execution layers
-    const long emdl = AttributesPointer->GetAttributeAsDword("executeModels", 77);
-    const long rmdl = AttributesPointer->GetAttributeAsDword("realizeModels", 77);
-    const long eprt = AttributesPointer->GetAttributeAsDword("executeParticles", 77);
-    const long rprt = AttributesPointer->GetAttributeAsDword("realizeParticles", 100000);
+    const long emdl = attr["executeModels"].get<uint32_t>(77u);
+    const long rmdl = attr["realizeModels"].get<uint32_t>(77u);
+    const long eprt = attr["executeParticles"].get<uint32_t>(77u);
+    const long rprt = attr["realizeParticles"].get<uint32_t>(100000u);
     // Set the execution layers
     EntityManager::AddToLayer(EXECUTE, GetId(), eprt);
     EntityManager::AddToLayer(REALIZE, GetId(), rprt);
@@ -564,22 +559,23 @@ bool Sharks::Init()
     auto *v = static_cast<VDATA *>(core.GetScriptVariable("Environment"));
     if (v)
     {
-        auto *root = v->GetAClass();
-        if (root)
+        auto *pRoot = v->GetAClass();
+        if (pRoot)
         {
-            const auto time = root->GetAttributeAsFloat("time");
+            const Attribute& aRoot = *pRoot;
+            const auto time = aRoot["time"].get<float>();
             if (time > 9.0f && time < 20.0f)
             {
-                root = root->FindAClass(root, "date");
-                if (root)
+                const Attribute& aDate = aRoot["date"];
+                if (!aRoot.empty())
                 {
-                    const auto year = root->GetAttributeAsFloat("year");
+                    const auto year = aDate["year"].get<uint32_t>();
                     if (year >= 1633.0f)
                     {
-                        const auto month = root->GetAttributeAsDword("month");
+                        const auto month = aDate["month"].get<uint32_t>();
                         if (month & 1)
                         {
-                            const auto day = root->GetAttributeAsDword("day");
+                            const auto day = aDate["day"].get<uint32_t>();
                             if (day == 7)
                             {
                                 if ((GetTickCount() & 7) == 5)

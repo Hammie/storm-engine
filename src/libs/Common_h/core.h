@@ -119,16 +119,16 @@ class CORE
     // return service object pointer;
     void *CreateService(const char *service_name);
 
-    ATTRIBUTES *Entity_GetAttributeClass(entid_t id_PTR, const char *name);
-    char *Entity_GetAttribute(entid_t id_PTR, const char *name);
+    Attribute *Entity_GetAttributeClass(entid_t id_PTR, const char *name);
+    const char *Entity_GetAttribute(entid_t id_PTR, const char *name);
     uint32_t Entity_GetAttributeAsDword(entid_t id_PTR, const char *name, uint32_t def = 0);
     FLOAT Entity_GetAttributeAsFloat(entid_t id_PTR, const char *name, FLOAT def = 0);
     bool Entity_SetAttribute(entid_t id_PTR, const char *name, const char *attribute);
     bool Entity_SetAttributeUseDword(entid_t id_PTR, const char *name, uint32_t val);
     bool Entity_SetAttributeUseFloat(entid_t id_PTR, const char *name, FLOAT val);
-    void Entity_SetAttributePointer(entid_t id_PTR, ATTRIBUTES *pA);
-    uint32_t Entity_AttributeChanged(entid_t id_PTR, ATTRIBUTES *);
-    ATTRIBUTES *Entity_GetAttributePointer(entid_t id_PTR);
+    void Entity_SetAttributePointer(entid_t id_PTR, Attribute *pA);
+    uint32_t Entity_AttributeChanged(entid_t id_PTR, Attribute *);
+    Attribute *Entity_GetAttributePointer(entid_t id_PTR);
 
     // messeges system
 

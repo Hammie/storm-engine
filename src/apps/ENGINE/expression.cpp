@@ -434,7 +434,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
     DATA Access;
     Access.SetVCompiler(this);
     DATA *pFuncResult;
-    ATTRIBUTES *pRoot;
+    Attribute *pRoot;
     const char *pString;
     uint32_t func_code, ip;
     S_TOKEN_TYPE vtype;
@@ -759,7 +759,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                     }
                     return;
                 }
-                pRoot = pRoot->GetAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
+                pRoot = &pRoot->getProperty(*((long *)&pRunCodeBase[TLR_DataOffset]));
                 if (pRoot == nullptr)
                 {
                     value->Set("");
@@ -783,7 +783,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                     }
                     return;
                 }
-                pRoot = pRoot->GetAttributeClass((char *)&pRunCodeBase[TLR_DataOffset]);
+                pRoot = &pRoot->getProperty((char *)&pRunCodeBase[TLR_DataOffset]);
                 if (pRoot == nullptr)
                 {
                     value->Set("");
@@ -831,7 +831,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 TempData.Convert(VAR_STRING);
                 TempData.Get(pString);
 
-                pRoot = pRoot->FindAClass(pRoot, pString);
+                pRoot = &pRoot->getProperty(pString);
                 if (pRoot == nullptr)
                 {
                     value->Set("");
@@ -848,7 +848,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             {
             }
         }
-        pString = pRoot->GetThisAttr();
+        pString = pRoot->get<const char*>();
         value->Set(pString);
         break;
     }

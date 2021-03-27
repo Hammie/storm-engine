@@ -122,10 +122,10 @@ void CXI_SCROLLBAR::Draw(bool bSelected, uint32_t Delta_Time)
         auto *pA = ptrOwner->AttributesPointer;
         if (pA)
         {
-            pA = pA->GetAttributeClass(m_nodeName);
-            if (pA)
+            const Attribute &attrNode = pA->getProperty(m_nodeName);
+            if (!attrNode.empty())
             {
-                auto *const pcStr = pA->GetAttribute("str");
+                const char* pcStr = attrNode["str"].get<const char*>();
                 if (pcStr)
                 {
                     m_rs->ExtPrint(m_nFontID, m_dwFontColor, 0, PR_ALIGN_CENTER, true, m_fFontScale, m_screenSize.x,
@@ -269,10 +269,10 @@ void CXI_SCROLLBAR::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, con
     m_fSpeedMultiplay = GetIniFloat(ini1, name1, ini2, name2, "valueStepMultiply", 10.f);
     m_fCurValue = m_fStartValue;
     auto *pA = ptrOwner->AttributesPointer;
-    if (pA)
-        pA = pA->GetAttributeClass(m_nodeName);
-    if (pA)
-        m_fCurValue = pA->GetAttributeAsFloat("str", m_fStartValue);
+    if (pA) {
+        const Attribute &attrNode = pA->getProperty(m_nodeName);
+        attrNode["str"].get_to(m_fCurValue, m_fStartValue);
+    }
     WriteDataToAttribute();
 }
 
@@ -592,12 +592,8 @@ void CXI_SCROLLBAR::WriteDataToAttribute() const
     auto *pRoot = ptrOwner->AttributesPointer;
     if (!pRoot)
         return;
-    ATTRIBUTES *pA = pRoot->GetAttributeClass(m_nodeName);
-    if (!pA)
-        pA = pRoot->CreateSubAClass(pRoot, m_nodeName);
-    if (!pA)
-        return;
-    pA->SetAttributeUseFloat("str", m_fCurValue);
+    Attribute& attr = pRoot->getProperty(m_nodeName);
+    attr["str"] = m_fCurValue;
 }
 
 void CXI_SCROLLBAR::ChangeValue(bool bGrowing, bool bMultiply)

@@ -20,8 +20,8 @@ class MESSAGE_ICONS
     {
         m_bShowMsgIcon = m_vMsgIconBufID >= 0 ? bShow : false;
     }
-    void StartData(ATTRIBUTES *pAData[MESSAGE_ICONS_COLUMN_QUANTITY], long pLeft[MESSAGE_ICONS_COLUMN_QUANTITY]);
-    bool InitData(entid_t host_eid, VDX9RENDER *_rs, ATTRIBUTES *pARoot);
+    void StartData(Attribute *pAData[MESSAGE_ICONS_COLUMN_QUANTITY], long pLeft[MESSAGE_ICONS_COLUMN_QUANTITY]);
+    bool InitData(entid_t host_eid, VDX9RENDER *_rs, Attribute *pARoot);
 
   protected:
     // message icons
@@ -40,7 +40,7 @@ class MESSAGE_ICONS
     long m_nHorzTextureSize; // size in icons
     long m_nVertTextureSize; // size in icons
 
-    ATTRIBUTES *m_pIconsAttr[MESSAGE_ICONS_COLUMN_QUANTITY];
+    Attribute *m_pIconsAttr[MESSAGE_ICONS_COLUMN_QUANTITY];
 
     float m_fNormalStateTime; // Icon highlighting time, sec
     float m_fBlendTime;       // Icon disappearance time, sec

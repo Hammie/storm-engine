@@ -270,8 +270,8 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
     entid_t TempEid;
     entid_t pEid = 0;
     uint32_t n;
-    ATTRIBUTES *pA;
-    ATTRIBUTES *pRoot;
+    Attribute *pA;
+    Attribute *pRoot;
     Entity *pE;
     MESSAGE_SCRIPT ms;
     uint32_t s_off;
@@ -2324,7 +2324,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError("AClass ERROR n1");
             break;
         }
-        pRoot->Copy(pA);
+        *pRoot = *pA;
         break;
     case FUNC_DELETE_ATTRIBUTE:
         pV2 = SStack.Pop();
@@ -2348,8 +2348,8 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError("AClass ERROR n1");
             break;
         }
-        pA = pRoot->FindAClass(pRoot, pChar);
-        pRoot->DeleteAttributeClassX(pA);
+        pA = &pRoot->getProperty(pChar);
+        pA->clear();
         break;
     case FUNC_CHECK_ATTRIBUTE:
         pV2 = SStack.Pop();
@@ -2384,8 +2384,8 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
                 pRoot = pV->GetAClass();
                 if (pRoot)
                 {
-                    pA = pRoot->FindAClass(pRoot, pChar);
-                    if (pA)
+                    pA = &pRoot->getProperty(pChar);
+                    if (!pA->empty())
                         TempLong1 = 1;
                     else
                         TempLong1 = 0;
@@ -2414,7 +2414,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         pA = pV->GetAClass();
         if (pA)
-            TempLong1 = pA->GetAttributesNum();
+            TempLong1 = std::distance(pA->begin(), pA->end());
         else
             TempLong1 = 0;
         pV = SStack.Push();
@@ -2445,7 +2445,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         pA = pV->GetAClass();
 
         if (pA)
-            pA = pA->GetAttributeClass(TempLong1);
+            pA = &pA->getProperty(TempLong1);
         if (pA == nullptr)
         {
             SetError("incorrect argument index");
@@ -2471,7 +2471,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         pA = pV->GetAClass();
         if (pA)
-            pChar = pA->GetThisAttr();
+            pChar = pA->get<const char*>();
         else
             pChar = "AClass ERROR n1";
         pV = SStack.Push();
@@ -2493,7 +2493,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         pA = pV->GetAClass();
         if (pA)
-            pChar = pA->GetThisName();
+            pChar = pA->getName().data();
         else
             pChar = "AClass ERROR n1";
         pV = SStack.Push();
@@ -2640,7 +2640,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
     return nullptr;
 }
 
-void COMPILER::DumpAttributes(ATTRIBUTES *pA, long level)
+void COMPILER::DumpAttributes(Attribute *pA, long level)
 {
     char buffer[128];
     if (pA == nullptr)
@@ -2652,10 +2652,9 @@ void COMPILER::DumpAttributes(ATTRIBUTES *pA, long level)
         memset(buffer, ' ', level);
     buffer[level] = 0;
 
-    for (uint32_t n = 0; n < pA->GetAttributesNum(); n++)
-    {
-        DTrace("%s%s = %s", buffer, pA->GetAttributeName(n), pA->GetAttribute(n));
-        DumpAttributes(pA->GetAttributeClass(pA->GetAttributeName(n)), level + 2);
+    for (Attribute& attr : *pA) {
+        DTrace("%s%s = %s", buffer, attr.getName().data(), attr.get<const char*>());
+        DumpAttributes(&attr, level + 2);
     }
 }
 
@@ -2666,7 +2665,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
     long TempLong1;
     float TempFloat1;
     entid_t TempEid;
-    ATTRIBUTES *pA;
+    Attribute *pA;
     const char *Format_string;
     const char *pChar;
 

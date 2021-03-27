@@ -30,11 +30,13 @@ void AIFort::SetDevice()
 
 float AIFort::GetSpeedV0(uint32_t dwFortIndex)
 {
-    ATTRIBUTES *pACannon, *pACharacter;
+    Attribute *pACannon, *pACharacter;
     pACharacter = aForts[dwFortIndex]->GetACharacter();
-    pACannon = pACharacter->FindAClass(pACharacter, "Ship.Cannons");
-    Assert(pACannon);
-    return pACannon->GetAttributeAsFloat("SpeedV0");
+
+    Assert(pACharacter != nullptr);
+    const Attribute& aCharacter = *pACharacter;
+    const Attribute& aCannon = aCharacter["Ship"]["Cannons"];
+    return aCannon["SpeedV0"].get<float>();
 }
 
 // float fAngF = 0.0f;
@@ -46,7 +48,10 @@ void AIFort::Execute(uint32_t Delta_Time)
     CVECTOR vDst = -CVECTOR(vSrc.x, yyy, vSrc.z);
     vDst.y = yyy;
     Trace(vSrc, vDst);*/
-    fMinCannonDamageDistance = AttributesPointer->GetAttributeAsFloat("MinCannonDamageDistance");
+
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+    attr["MinCannonDamageDistance"].get_to(fMinCannonDamageDistance);
 
     const auto fDeltaTime = static_cast<float>(Delta_Time) * 0.001f;
     if (!aForts.size())
@@ -75,11 +80,8 @@ void AIFort::Execute(uint32_t Delta_Time)
             if (dwCurrentCannonType != dwNewCurrentCannonType)
             {
                 dwCurrentCannonType = dwNewCurrentCannonType;
-                auto *pACannons = pF->GetACharacter()->FindAClass(pF->GetACharacter(), "Ship.Cannons");
-                if (!pACannons)
-                    pACannons = pF->GetACharacter()->CreateSubAClass(pF->GetACharacter(), "Ship.Cannons");
-                Assert(pACannons);
-                pACannons->SetAttributeUseDword("type", dwCurrentCannonType);
+                Attribute &aCannons = pF->GetACharacter()->getProperty("Ship")["Cannons"];
+                aCannons["type"] = dwCurrentCannonType;
                 core.Event(CANNON_RECALCULATE_PARAMETERS, "l", GetIndex(pF->GetACharacter()));
 
                 fSpeedV0 = GetSpeedV0(k);
@@ -170,25 +172,22 @@ bool AIFort::LoadState(ENTITY_STATE *state)
     return true;
 }
 
-bool AIFort::AddFort(ATTRIBUTES *pIslandAP, ATTRIBUTES *pFortLabelAP, ATTRIBUTES *pFortCharacter, entid_t eidModel,
+bool AIFort::AddFort(Attribute *pIslandAP, Attribute *pFortLabelAP, Attribute *pFortCharacter, entid_t eidModel,
                      entid_t eidBlot)
 {
-    Assert(pFortLabelAP);
+    Assert(pFortLabelAP != nullptr);
+    const Attribute& aFort = pFortLabelAP->getProperty("fort");
+    const Attribute& aModel = aFort["model"];
+    const Attribute& aLocators = aFort["locators"];
 
-    auto *pFortAP = pFortLabelAP->FindAClass(pFortLabelAP, "fort");
-    Assert(pFortAP);
-    auto *const pModelAP = pFortAP->FindAClass(pFortAP, "model");
-    Assert(pModelAP);
-    auto *const pLocatorsAP = pFortAP->FindAClass(pFortAP, "locators");
-    Assert(pLocatorsAP);
-    auto *const pModelsDirAP = pIslandAP->FindAClass(pIslandAP, "filespath.models");
-    Assert(pModelsDirAP);
+    Assert(pIslandAP != nullptr);
+    const Attribute& aModelDir = pIslandAP->getProperty("filespath")["models"];
 
-    auto *const pModelName = pModelAP->GetThisAttr();
+    auto *const pModelName = aModel.get<const char*>();
     Assert(pModelName);
-    auto *const pLocatorsName = pLocatorsAP->GetThisAttr();
+    auto *const pLocatorsName = aLocators.get<const char*>();
     Assert(pLocatorsName);
-    auto *const pModelsDir = pModelsDirAP->GetThisAttr();
+    auto *const pModelsDir = aModelDir.get<const char*>();
     Assert(pModelsDir);
 
     auto *pFort = new AI_FORT(pFortLabelAP);
@@ -198,25 +197,24 @@ bool AIFort::AddFort(ATTRIBUTES *pIslandAP, ATTRIBUTES *pFortLabelAP, ATTRIBUTES
     // pFort->pFortLabelAP = pFortLabelAP;
     aForts.push_back(pFort);
 
-    auto *pACannonsType1 = pFortCharacter->FindAClass(pFortCharacter, "Fort.Cannons.Type.1");
-    Assert(pACannonsType1);
-    auto *pACannonsType2 = pFortCharacter->FindAClass(pFortCharacter, "Fort.Cannons.Type.2");
-    Assert(pACannonsType2);
-    auto *pACannonsType3 = pFortCharacter->FindAClass(pFortCharacter, "Fort.Cannons.Type.3");
-    Assert(pACannonsType3);
-    pFort->dwCannonType = pACannonsType1->GetAttributeAsDword();
-    pFort->dwCulverinType = pACannonsType2->GetAttributeAsDword();
-    pFort->dwMortarType = pACannonsType3->GetAttributeAsDword();
+    Assert(pFortCharacter != nullptr);
+    const Attribute& aFortCharacter = *pFortCharacter;
+    const Attribute& aCannonsType1 = aFortCharacter["Fort"]["Cannons"]["Type"]["1"];
+    const Attribute& aCannonsType2 = aFortCharacter["Fort"]["Cannons"]["Type"]["2"];
+    const Attribute& aCannonsType3 = aFortCharacter["Fort"]["Cannons"]["Type"]["3"];
+    aCannonsType1.get_to(pFort->dwCannonType);
+    aCannonsType2.get_to(pFort->dwCulverinType);
+    aCannonsType3.get_to(pFort->dwMortarType);
 
     pFort->mOldMatrix = pFort->GetModel()->mtx;
 
     ScanFortForCannons(pFort, pModelsDir, pLocatorsName);
 
-    auto *pALights = pFortCharacter->FindAClass(GetACharacter(), "ship.lights");
-    auto *pAFlares = pFortCharacter->FindAClass(GetACharacter(), "ship.flares");
+    const Attribute& aLights = aFortCharacter["ship"]["lights"];
+    const Attribute& aFlares = aFortCharacter["ship"]["flares"];
 
-    const auto bLights = (pALights) ? pALights->GetAttributeAsDword() != 0 : false;
-    const auto bFlares = (pAFlares) ? pAFlares->GetAttributeAsDword() != 0 : false;
+    const auto bLights = aLights.get<bool>(false);
+    const auto bFlares = aFlares.get<bool>(false);
 
     const auto eidTmp = EntityManager::GetEntityId("shiplights");
     pShipsLights = static_cast<IShipLights *>(EntityManager::GetEntityPointer(eidTmp));
@@ -278,7 +276,7 @@ uint64_t AIFort::ProcessMessage(MESSAGE &message)
     CVECTOR vHit;
     long iCharacterIndex;
     entid_t eidFortModel, eidBlot;
-    ATTRIBUTES *pFortAPLabel, *pCharacter, *pIslandAP;
+    Attribute *pFortAPLabel, *pCharacter, *pIslandAP;
     AI_FORT *pFort = nullptr;
 
     switch (message.Long())
@@ -313,17 +311,17 @@ uint64_t AIFort::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t AIFort::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t AIFort::AttributeChanged(Attribute &pAttribute)
 {
     return 0;
 }
 
-bool AIFort::Mount(ATTRIBUTES *pAttribute)
+bool AIFort::Mount(Attribute *pAttribute)
 {
     return true;
 }
 
-bool AIFort::ScanFortForCannons(AI_FORT *pFort, char *pModelsDir, char *pLocatorsName) const
+bool AIFort::ScanFortForCannons(AI_FORT *pFort, const char *pModelsDir, const char *pLocatorsName) const
 {
     entid_t model_id;
     GEOS::LABEL label;
@@ -399,7 +397,7 @@ float AIFort::GetPower()
     return 10000.0f;
 }
 
-ATTRIBUTES *AIFort::GetACharacter()
+Attribute *AIFort::GetACharacter()
 {
     if (pLastTraceFort)
         return pLastTraceFort->GetACharacter();
@@ -454,7 +452,7 @@ float AIFort::Cannon_Trace(long iBallOwner, const CVECTOR &vSrc, const CVECTOR &
     return fBestRes;
 }
 
-AIFort::AI_FORT *AIFort::FindFort(ATTRIBUTES *pACharacter)
+AIFort::AI_FORT *AIFort::FindFort(Attribute *pACharacter)
 {
     for (uint32_t i = 0; i < GetNumForts(); i++)
     {

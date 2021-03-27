@@ -103,12 +103,12 @@ uint64_t ItemEntity::ProcessMessage(MESSAGE &message)
 
 bool ItemEntity::ReadAndCreate()
 {
-    BIUtils::ReadVectorFormAttr(AttributesPointer, "pos", m_mtxpos.Pos(), CVECTOR(0.f));
-    BIUtils::ReadVectorFormAttr(AttributesPointer, "pos.vx", m_mtxpos.Vx(), CVECTOR(0.f));
-    BIUtils::ReadVectorFormAttr(AttributesPointer, "pos.vy", m_mtxpos.Vy(), CVECTOR(0.f));
-    BIUtils::ReadVectorFormAttr(AttributesPointer, "pos.vz", m_mtxpos.Vz(), CVECTOR(0.f));
-    auto *const pcModelName = BIUtils::GetStringFromAttr(AttributesPointer, "model", "");
-    auto *const pcTechnique = BIUtils::GetStringFromAttr(AttributesPointer, "technique", "");
+    BIUtils::ReadVectorFormAttr(*AttributesPointer, "pos", m_mtxpos.Pos(), CVECTOR(0.f));
+    BIUtils::ReadVectorFormAttr(*AttributesPointer, "pos.vx", m_mtxpos.Vx(), CVECTOR(0.f));
+    BIUtils::ReadVectorFormAttr(*AttributesPointer, "pos.vy", m_mtxpos.Vy(), CVECTOR(0.f));
+    BIUtils::ReadVectorFormAttr(*AttributesPointer, "pos.vz", m_mtxpos.Vz(), CVECTOR(0.f));
+    auto *const pcModelName = BIUtils::GetStringFromAttr(*AttributesPointer, "model", "");
+    auto *const pcTechnique = BIUtils::GetStringFromAttr(*AttributesPointer, "technique", "");
     if (pcModelName)
     {
         if (m_eidModel = EntityManager::CreateEntity("modelr"))
@@ -193,10 +193,11 @@ void ItemEntity::EndEventProcess()
     UnTieFromLocator();
     if (!AttributesPointer)
         return;
-    if (AttributesPointer->GetAttributeAsDword("hide_after_using", 0) != 0)
+    const Attribute& hide_after_use = AttributesPointer->getProperty("hide_after_using");
+    if (hide_after_use.get<bool>())
     {
         m_bVisible = false;
-        AttributesPointer->SetAttributeUseDword("hide", 1);
+        AttributesPointer->getProperty("hide") = 1;
     }
 }
 
@@ -308,7 +309,7 @@ bool ItemEntity::CreateParticle()
 
     if (m_bVisible)
     {
-        auto *const pcParticleName = BIUtils::GetStringFromAttr(AttributesPointer, "particle", "");
+        auto *const pcParticleName = BIUtils::GetStringFromAttr(*AttributesPointer, "particle", "");
         if (pcParticleName && pcParticleName[0])
         {
             const auto eidParticle = EntityManager::GetEntityId("particles");

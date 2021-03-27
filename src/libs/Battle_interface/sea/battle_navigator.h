@@ -68,7 +68,7 @@ class BATTLE_NAVIGATOR
     void ReleaseAll();
     void UpdateMiniMap();
     void UpdateFireRangeBuffer() const;
-    void FillOneSideFireRange(BI_NOTEXTURE_VERTEX *pv, ATTRIBUTES *pShip, ATTRIBUTES *pChar, const char *pstr) const;
+    void FillOneSideFireRange(BI_NOTEXTURE_VERTEX *pv, Attribute *pShip, Attribute *pChar, const char *pstr) const;
     void UpdateCurrentCharge();
 
     void UpdateWindParam();
@@ -200,7 +200,7 @@ class BATTLE_NAVIGATOR
     long m_xWindSpeed;
 
     WEATHER_BASE *m_wb;
-    ATTRIBUTES *m_pAWeather;
+    Attribute *m_pAWeather;
 
     // icon of the current cannon charge type
     POINT m_ChargeGreed;

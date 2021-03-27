@@ -287,18 +287,20 @@ void ILogAndActions::Create(bool bFastComShow, bool bLogStringShow)
 
     // Set parameters for the active action icon
     auto *pA = core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
+
     if (pA != nullptr)
     {
-        m_idIconTexture = rs->TextureCreate(pA->GetAttribute("TextureName"));
-        m_horzDiv = pA->GetAttributeAsDword("horzQ", 1);
-        m_vertDiv = pA->GetAttributeAsDword("vertQ", 1);
-        m_nIconWidth = pA->GetAttributeAsDword("width", 64);
-        m_nIconHeight = pA->GetAttributeAsDword("height", 64);
-        m_nIconLeft = pA->GetAttributeAsDword("left", 0);
-        m_nIconUp = pA->GetAttributeAsDword("top", 0);
+        const Attribute& attr = *pA;
+        m_idIconTexture = BIUtils::GetTextureFromAttr(rs, attr, "TextureName");
+        attr["horzQ"].get_to(m_horzDiv, 1l);
+        attr["vertQ"].get_to(m_vertDiv, 1l);
+        attr["width"].get_to(m_nIconWidth, 64l);
+        attr["height"].get_to(m_nIconHeight, 64l);
+        attr["left"].get_to(m_nIconLeft, 0l);
+        attr["top"].get_to(m_nIconUp, 0l);
 
-        m_ActionHint1.Init(rs, pA->GetAttributeClass("text1"));
-        m_ActionHint2.Init(rs, pA->GetAttributeClass("text2"));
+        m_ActionHint1.Init(rs, attr["text1"]);
+        m_ActionHint2.Init(rs, attr["text2"]);
     }
     else
     {
@@ -323,20 +325,20 @@ void ILogAndActions::Create(bool bFastComShow, bool bLogStringShow)
     m_IconVertex[1].tv = m_IconVertex[3].tv = 1.f / static_cast<float>(m_vertDiv);
 
     // set parameters for the previous action lines
-    pA = core.Entity_GetAttributeClass(g_ILogAndActions, "Log");
-    if (pA != nullptr)
+    const Attribute& log_attr = *core.Entity_GetAttributeClass(g_ILogAndActions, "Log");
+    if (!log_attr.empty())
     {
-        m_nWindowWidth = pA->GetAttributeAsDword("width", 200);
-        m_nWindowHeight = pA->GetAttributeAsDword("height", 128);
-        m_nWindowLeft = pA->GetAttributeAsDword("left", -1);
-        m_nWindowRight = pA->GetAttributeAsDword("right", -1);
-        m_nWindowUp = pA->GetAttributeAsDword("up", 0);
-        m_fontID = rs->LoadFont(pA->GetAttribute("font"));
-        m_fFontScale = pA->GetAttributeAsFloat("fontscale", 1.f);
-        m_dwColor = pA->GetAttributeAsDword("color", 0x00FFFFFF);
-        m_nStringOffset = pA->GetAttributeAsDword("offsetString", 24);
-        m_fShiftSpeed = pA->GetAttributeAsFloat("speed", 1.f / 50.f);
-        m_fBlendSpeed = pA->GetAttributeAsFloat("color_speed", 1.f / 50.f);
+        log_attr["width"].get_to(m_nWindowWidth, 200l);
+        log_attr["height"].get_to(m_nWindowHeight, 128l);
+        log_attr["left"].get_to(m_nWindowLeft, -1l);
+        log_attr["right"].get_to(m_nWindowRight, -1l);
+        log_attr["up"].get_to(m_nWindowUp, 0l);
+        m_fontID = BIUtils::GetFontIDFromAttr(log_attr, "font", rs).value_or(-1);
+        log_attr["fontscale"].get_to(m_fFontScale, 1.f);
+        log_attr["color"].get_to(m_dwColor, 0x00FFFFFFu);
+        log_attr["offsetString"].get_to(m_nStringOffset, 24l);
+        log_attr["speed"].get_to(m_fShiftSpeed, 1.f / 50.f);
+        log_attr["color_speed"].get_to(m_fBlendSpeed, 1.f / 50.f);
     }
     else
     {
@@ -365,19 +367,19 @@ void ILogAndActions::ActionChange(bool bFastComShow, bool bLogStringShow)
     TEXTURE_RELEASE(rs, m_idIconTexture);
 
     // Set parameters for the active action icon
-    ATTRIBUTES *pA = core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
-    if (pA != nullptr)
+    const Attribute& active_actions = *core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
+    if (!active_actions.empty())
     {
-        m_idIconTexture = rs->TextureCreate(pA->GetAttribute("TextureName"));
-        m_horzDiv = pA->GetAttributeAsDword("horzQ", 1);
-        m_vertDiv = pA->GetAttributeAsDword("vertQ", 1);
-        m_nIconWidth = pA->GetAttributeAsDword("width", 64);
-        m_nIconHeight = pA->GetAttributeAsDword("height", 64);
-        m_nIconLeft = pA->GetAttributeAsDword("left", 0);
-        m_nIconUp = pA->GetAttributeAsDword("top", 0);
+        m_idIconTexture = BIUtils::GetTextureFromAttr(rs, active_actions, "TextureName");
+        active_actions["horzQ"].get_to(m_horzDiv, 1l);
+        active_actions["vertQ"].get_to(m_vertDiv, 1l);
+        active_actions["width"].get_to(m_nIconWidth, 64l);
+        active_actions["height"].get_to(m_nIconHeight, 64l);
+        active_actions["left"].get_to(m_nIconLeft, 0l);
+        active_actions["top"].get_to(m_nIconUp, 0l);
 
-        m_ActionHint1.Init(rs, pA->GetAttributeClass("text1"));
-        m_ActionHint2.Init(rs, pA->GetAttributeClass("text2"));
+        m_ActionHint1.Init(rs, active_actions["text1"]);
+        m_ActionHint2.Init(rs, active_actions["text2"]);
     }
     else
     {
@@ -487,8 +489,6 @@ void ILogAndActions::SetString(char *str, bool immortal)
 
 void ILogAndActions::SetAction(char *actionName)
 {
-    ATTRIBUTES *pA;
-
     if (actionName == nullptr)
         return;
     if ((strlen(actionName) + 1) > sizeof(m_sActionName))
@@ -496,15 +496,16 @@ void ILogAndActions::SetAction(char *actionName)
         core.Trace("Action name: %s  - overup size of name");
         return;
     }
-    pA = core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
-    if (pA != nullptr)
-        pA = pA->GetAttributeClass(actionName);
-    if (pA == nullptr)
+
+    const Attribute& active_actions = *core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
+    const Attribute& action = active_actions[actionName];
+    if (action.empty())
         return;
+
     strcpy_s(m_sActionName, actionName);
     // set texture coordinates for this action icon
     FRECT texRect;
-    const long curIconNum = pA->GetAttributeAsDword("IconNum", 0);
+    const auto curIconNum = action["IconNum"].get<long>(0);
     if (curIconNum == -1)
     {
         m_bThatRealAction = false;
@@ -517,15 +518,6 @@ void ILogAndActions::SetAction(char *actionName)
     m_IconVertex[0].tv = m_IconVertex[2].tv = texRect.top;
     m_IconVertex[1].tv = m_IconVertex[3].tv = texRect.bottom;
 
-    pA = core.Entity_GetAttributeClass(g_ILogAndActions, "ActiveActions");
-    if (pA)
-    {
-        m_ActionHint1.Init(rs, pA->GetAttributeClass("text1"));
-        m_ActionHint2.Init(rs, pA->GetAttributeClass("text2"));
-    }
-    else
-    {
-        m_ActionHint1.Init(rs, nullptr);
-        m_ActionHint2.Init(rs, nullptr);
-    }
+    m_ActionHint1.Init(rs, active_actions["text1"]);
+    m_ActionHint2.Init(rs, active_actions["text2"]);
 }

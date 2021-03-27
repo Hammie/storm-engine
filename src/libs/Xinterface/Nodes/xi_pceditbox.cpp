@@ -270,12 +270,6 @@ void CXI_PCEDITBOX::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, con
             STORM_DELETE(m_pMiddleImage);
         }
     }
-
-    auto *pA = ptrOwner->AttributesPointer->GetAttributeClass(m_nodeName);
-    if (!pA)
-        pA = ptrOwner->AttributesPointer->CreateSubAClass(ptrOwner->AttributesPointer, m_nodeName);
-    if (pA && !pA->GetAttribute("str"))
-        pA->CreateAttribute("str", "");
 }
 
 void CXI_PCEDITBOX::UpdateString(std::string &str)
@@ -283,7 +277,7 @@ void CXI_PCEDITBOX::UpdateString(std::string &str)
     str = "";
     m_nFirstShowCharacterIndex = 0;
 
-    ATTRIBUTES *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
+    Attribute *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (!pA)
     {
         core.Entity_SetAttribute(g_idInterface, m_nodeName, "");
@@ -291,7 +285,7 @@ void CXI_PCEDITBOX::UpdateString(std::string &str)
     }
     if (!pA)
         return;
-    str = pA->GetAttribute("str");
+    str = pA->getProperty("str").get<const char*>();
     int strLength = utf8::Utf8StringLength(str.c_str());
     if (m_nEditPos < 0)
         m_nEditPos = strLength;
@@ -343,7 +337,7 @@ void CXI_PCEDITBOX::UpdateString(std::string &str)
                     InsertSymbol(str, pKeys[n].ucVKey);
             }
             if (pA)
-                pA->SetAttribute("str", (char *)str.c_str());
+                pA->getProperty("str") = str;
             /*char chr = GetInputSymbol();
             if( chr )
             {

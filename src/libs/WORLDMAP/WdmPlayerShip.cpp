@@ -184,43 +184,37 @@ void WdmPlayerShip::Update(float dltTime)
             }
         }
     }
-    if (wdmObjects->wm && wdmObjects->wm->AttributesPointer)
-    {
-        wdmObjects->wm->AttributesPointer->SetAttributeUseFloat("playerShipX", mtx.Pos().x);
-        wdmObjects->wm->AttributesPointer->SetAttributeUseFloat("playerShipZ", mtx.Pos().z);
-        wdmObjects->wm->AttributesPointer->SetAttributeUseFloat("playerShipAY", ay);
-    }
 
-    const long nOldIslandVal = wdmObjects->wm->AttributesPointer->GetAttributeAsDword("encounter_island", 0);
-    const long nOldEncounterType = wdmObjects->wm->AttributesPointer->GetAttributeAsDword("encounter_type", 0);
+    Assert(wdmObjects->wm->AttributesPointer != nullptr);
+    Attribute& attr = *wdmObjects->wm->AttributesPointer;
+
+    attr["playerShipX"] = mtx.Pos().x;
+    attr["playerShipZ"] = mtx.Pos().z;
+    attr["playerShipAY"] = ay;
+
+    const long nOldIslandVal = attr["encounter_island"].get<long>(0);
+    const long nOldEncounterType = attr["encounter_type"].get<long>(0);
     // note hitting the island
-    if (wdmObjects->curIsland)
-    {
-        wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_island", 1);
-    }
-    else
-    {
-        wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_island", 0);
-    }
+    attr["encounter_island"] = wdmObjects->curIsland ? 1 : 0;
     // mark hitting the encounter
     if (wdmObjects->enemyShip)
     {
         switch (wdmObjects->enemyShip->shipType)
         {
         case wdmest_unknow:
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", 0);
+            attr["encounter_type"] = 0;
             break;
         case wdmest_merchant:
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", 1);
+            attr["encounter_type"] = 1;
             break;
         case wdmest_warring:
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", 2);
+            attr["encounter_type"] = 2;
             break;
         case wdmest_follow:
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", 3);
+            attr["encounter_type"] = 3;
             break;
         default:
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", -1);
+            attr["encounter_type"] = -1;
         }
     }
     else
@@ -228,15 +222,15 @@ void WdmPlayerShip::Update(float dltTime)
         // mark hitting the storm
         if (wdmObjects->playarInStorm)
         {
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", 4);
+            attr["encounter_type"] = 4;
         }
         else
         {
-            wdmObjects->wm->AttributesPointer->SetAttributeUseDword("encounter_type", -1);
+            attr["encounter_type"] = -1;
         }
     }
-    if (nOldIslandVal != wdmObjects->wm->AttributesPointer->GetAttributeAsDword("encounter_island", 0) ||
-        nOldEncounterType != wdmObjects->wm->AttributesPointer->GetAttributeAsDword("encounter_type", 0))
+    if (nOldIslandVal != attr["encounter_island"].get<long>(0) ||
+        nOldEncounterType != attr["encounter_type"].get<long>(0))
         core.Event("WM_UpdateCurrentAction");
 }
 
@@ -281,6 +275,9 @@ bool WdmPlayerShip::ExitFromMap()
 
 long WdmPlayerShip::TestInStorm() const
 {
+    Assert(wdmObjects->wm->AttributesPointer != nullptr);
+    Attribute& attr = *wdmObjects->wm->AttributesPointer;
+
     auto inStormZone = false;
     auto isTornado = false;
     for (long i = 0; i < wdmObjects->storms.size(); i++)
@@ -289,16 +286,16 @@ long WdmPlayerShip::TestInStorm() const
             continue;
         if (wdmObjects->storms[i]->CheckIntersection(mtx.Pos().x, mtx.Pos().z, actionRadius))
         {
-            wdmObjects->wm->AttributesPointer->SetAttribute("playerInStorm", "1");
+            attr["playerInStorm"] = "1";
             if (wdmObjects->storms[i]->isTornado)
             {
-                wdmObjects->wm->AttributesPointer->SetAttribute("stormWhithTornado", "1");
+                attr["stormWhithTornado"] = "1";
             }
             else
             {
-                wdmObjects->wm->AttributesPointer->SetAttribute("stormWhithTornado", "0");
+                attr["stormWhithTornado"] = "0";
             }
-            wdmObjects->wm->AttributesPointer->SetAttribute("stormId", wdmObjects->storms[i]->GetId());
+            attr["stormId"] = wdmObjects->storms[i]->GetId();
             return i;
         }
         float x, z;
@@ -318,20 +315,20 @@ long WdmPlayerShip::TestInStorm() const
     }
     if (inStormZone)
     {
-        wdmObjects->wm->AttributesPointer->SetAttribute("playerInStorm", "1");
+        attr["playerInStorm"] = "1";
         if (isTornado)
         {
-            wdmObjects->wm->AttributesPointer->SetAttribute("stormWhithTornado", "1");
+            attr["stormWhithTornado"] = "1";
         }
         else
         {
-            wdmObjects->wm->AttributesPointer->SetAttribute("stormWhithTornado", "0");
+            attr["stormWhithTornado"] = "0";
         }
-        wdmObjects->wm->AttributesPointer->SetAttribute("stormId", "");
+        attr["stormId"] = "";
         return -2;
     }
-    wdmObjects->wm->AttributesPointer->SetAttribute("playerInStorm", "0");
-    wdmObjects->wm->AttributesPointer->SetAttribute("stormWhithTornado", "0");
+    attr["playerInStorm"] = "0";
+    attr["stormWhithTornado"] = "0";
     return -1;
 }
 

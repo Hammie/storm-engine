@@ -60,7 +60,7 @@ void DECK_CAMERA::Execute(uint32_t Delta_Time)
     if (!FindShip() || !FindPath())
         return;
 
-    SetPerspective(AttributesPointer->GetAttributeAsFloat("Perspective"));
+    SetPerspective(AttributesPointer->getProperty("Perspective").get<float>());
 
     Move(Delta_Time);
 }
@@ -303,7 +303,7 @@ void DECK_CAMERA::Move(uint32_t DeltaTime)
     RenderService->SetCamera(s_pos, s_ang, GetPerspective());
 }
 
-void DECK_CAMERA::SetCharacter(ATTRIBUTES *_pACharacter)
+void DECK_CAMERA::SetCharacter(Attribute *_pACharacter)
 {
     pACharacter = _pACharacter;
 }
@@ -562,34 +562,34 @@ bool DECK_CAMERA::GetCrossXZ(CVECTOR &spos, CVECTOR &dv, CVECTOR &p1, CVECTOR &p
     return true;
 }
 
-uint32_t DECK_CAMERA::AttributeChanged(ATTRIBUTES *pAttr)
+uint32_t DECK_CAMERA::AttributeChanged(Attribute &attr)
 {
-    if (*pAttr == "SensivityDistance")
-        fSensivityDistance = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "SensivityHeightAngle")
-        fSensivityHeightAngle = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "SensivityAzimuthAngle")
-        fSensivityAzimuthAngle = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "StepUp")
-        MEN_STEP_UP = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "StepMin")
-        MEN_STEP_MIN = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "h_max")
-        HEIGHT_MAX = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "h_min")
-        HEIGHT_MIN = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "h_step")
-        HEIGHT_STEP = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "h_def")
-        DEFAULT_HEIGHT = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MaxAngleX")
-        CAMERA_MAX_X = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MinAngleX")
-        CAMERA_MIN_X = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "RockingX")
-        fRockingX = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "RockingZ")
-        fRockingZ = pAttr->GetAttributeAsFloat();
+    if (attr == "SensivityDistance")
+        attr.get_to(fSensivityDistance);
+    if (attr == "SensivityHeightAngle")
+        attr.get_to(fSensivityHeightAngle);
+    if (attr == "SensivityAzimuthAngle")
+        attr.get_to(fSensivityAzimuthAngle);
+    if (attr == "StepUp")
+        attr.get_to(MEN_STEP_UP);
+    if (attr == "StepMin")
+        attr.get_to(MEN_STEP_MIN);
+    if (attr == "h_max")
+        attr.get_to(HEIGHT_MAX);
+    if (attr == "h_min")
+        attr.get_to(HEIGHT_MIN);
+    if (attr == "h_step")
+        attr.get_to(HEIGHT_STEP);
+    if (attr == "h_def")
+        attr.get_to(DEFAULT_HEIGHT);
+    if (attr == "MaxAngleX")
+        attr.get_to(CAMERA_MAX_X);
+    if (attr == "MinAngleX")
+        attr.get_to(CAMERA_MIN_X);
+    if (attr == "RockingX")
+        attr.get_to(fRockingX);
+    if (attr == "RockingZ")
+        attr.get_to(fRockingZ);
 
     return 0;
 }

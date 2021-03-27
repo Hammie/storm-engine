@@ -19,18 +19,18 @@ AIShipCameraController::~AIShipCameraController()
 
 bool AIShipCameraController::Init()
 {
-    pACrosshair = AIHelper::pASeaCameras->GetAttributeClass("Crosshair");
+    pACrosshair = &AIHelper::pASeaCameras->getProperty("Crosshair");
     Assert(pACrosshair);
-    iCrosshairTex = AIHelper::pRS->TextureCreate(pACrosshair->GetAttribute("Texture"));
-    dwSubTexturesX = pACrosshair->GetAttributeAsDword("SubTexX");
-    dwSubTexturesY = pACrosshair->GetAttributeAsDword("SubTexY");
-    auto *pAColors = pACrosshair->GetAttributeClass("colors");
-    if (pAColors)
+    iCrosshairTex = AIHelper::pRS->TextureCreate(pACrosshair->getProperty("Texture").get<const char*>());
+    pACrosshair->getProperty("SubTexX").get_to(dwSubTexturesX);
+    pACrosshair->getProperty("SubTexY").get_to(dwSubTexturesY);
+    const Attribute &aColors = pACrosshair->getProperty("colors");
+    if (!aColors.empty())
     {
-        Colors[RELATION_UNKNOWN] = pAColors->GetAttributeAsDword("default");
-        Colors[RELATION_ENEMY] = pAColors->GetAttributeAsDword("enemy");
-        Colors[RELATION_FRIEND] = pAColors->GetAttributeAsDword("friend");
-        Colors[RELATION_NEUTRAL] = pAColors->GetAttributeAsDword("neutral");
+        Colors[RELATION_UNKNOWN] = aColors["default"].get<uint32_t>();
+        Colors[RELATION_ENEMY] = aColors["enemy"].get<uint32_t>();
+        Colors[RELATION_FRIEND] = aColors["friend"].get<uint32_t>();
+        Colors[RELATION_NEUTRAL] = aColors["neutral"].get<uint32_t>();
     }
     else
         core.Trace("AIShipCameraController:: Attributes Crosshair.Colors not found!");
@@ -39,7 +39,7 @@ bool AIShipCameraController::Init()
 
 void AIShipCameraController::Execute(float fDeltaTime)
 {
-    bCameraOutside = pACrosshair->GetAttributeAsDword("OutsideCamera") != 0;
+    bCameraOutside = pACrosshair->getProperty("OutsideCamera").get<bool>();
 
     pTargetAPointer = nullptr;
     dwTarget = RELATION_UNKNOWN;
@@ -185,13 +185,13 @@ void AIShipCameraController::Realize(float fDeltaTime)
 
     rCam.fAngle = 0.0f;
     const auto fSizeMultiply = 0.9f + (0.2f * ((fDelta > 1.0f) ? fDelta : (2.0f - fDelta)));
-    rCam.fSize = fSizeMultiply * pACrosshair->GetAttributeAsFloat("Size");
+    rCam.fSize = fSizeMultiply * pACrosshair->getProperty("Size").get<float>();
     // rCam.vPos = campos + m * CVECTOR(0.0f,0.0f,1.0f);
     rCam.vPos = m * CVECTOR(0.0f, 0.0f, 1.0f);
     rCam.dwSubTexture = 0;
 
     AIHelper::pRS->TextureSet(0, iCrosshairTex);
-    AIHelper::pRS->DrawRects(&rCam, 1, pACrosshair->GetAttribute("Technique"), dwSubTexturesX, dwSubTexturesY);
+    AIHelper::pRS->DrawRects(&rCam, 1, pACrosshair->getProperty("Technique").get<const char*>(), dwSubTexturesX, dwSubTexturesY);
 
     AIHelper::pRS->SetTransform(D3DTS_VIEW, mOldView);
 }
@@ -211,5 +211,5 @@ void AIShipCameraController::Load(CSaveLoad *pSL)
     fDelta = pSL->LoadFloat();
     bCameraOutside = pSL->LoadDword() != 0;
 
-    pACrosshair->SetAttributeUseDword("OutsideCamera", bCameraOutside);
+    pACrosshair->getProperty("OutsideCamera") = bCameraOutside;
 }

@@ -188,7 +188,7 @@ void DATA::SetReference(DATA *pRef)
     // if(pRef) Data_type = pRef->GetType();
 }
 
-void DATA::SetAReference(ATTRIBUTES *pARef)
+void DATA::SetAReference(Attribute *pARef)
 {
     if (Data_type != VAR_AREFERENCE)
     {
@@ -336,9 +336,9 @@ void DATA::Set(const char *attribute_name, const char *attribute_value)
             return;
         }
 
-        AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
+        AttributesClass = new Attribute(*pVCompiler->GetVSC(), "<data>");
     }
-    AttributesClass->SetAttribute(attribute_name, attribute_value);
+    AttributesClass->getProperty(attribute_name) = attribute_value;
     // Attributes.SetAttribute(attribute_name,attribute_value);
 }
 
@@ -517,7 +517,7 @@ bool DATA::Get(const char *attribute_name, const char *&value)
     if (AttributesClass == nullptr)
         return false;
     // pAValue = Attributes.GetAttribute(attribute_name);
-    auto *const pAValue = AttributesClass->GetAttribute(attribute_name);
+    auto *const pAValue = AttributesClass->getProperty(attribute_name).get<const char*>();
     if (pAValue == nullptr)
         return false;
     value = pAValue;
@@ -785,7 +785,7 @@ bool DATA::Set(const char *attribute_name, const char *attribute_value, uint32_t
     /*
       OBJECT_DESC * pOD;
       pOD = (OBJECT_DESC *)ArrayPointer;
-      if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new ATTRIBUTES;
+      if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new Attribute;
       pOD[index].pAttributes->SetAttribute(attribute_name,attribute_value);
       return true;*/
 }
@@ -823,7 +823,7 @@ bool DATA::Get(const char *attribute_name, const char *&value, uint32_t index)
       OBJECT_DESC * pOD;
       pOD = (OBJECT_DESC *)ArrayPointer;
       if(pOD[index].pAttributes == null ) {value = null; return false;}
-      value = pOD[index].pAttributes->GetAttribute(attribute_name);
+      value = pOD[index].pAttributes->getProperty(attribute_name).get<const char*>();
       if(value == null) return false;
       return true;*/
 }
@@ -1061,18 +1061,18 @@ bool DATA::Convert(S_TOKEN_TYPE type)
         case VAR_STRING:
             if (!AttributesClass)
                 break;
-            if (!AttributesClass->GetThisAttr())
+            if (AttributesClass->empty())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(AttributesClass->get<const char*>());
             AttributesClass = nullptr;
             return true;
         case NUMBER:
         case VAR_INTEGER:
             if (!AttributesClass)
                 break;
-            if (!AttributesClass->GetThisAttr())
+            if (AttributesClass->empty())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(AttributesClass->get<const char*>());
             AttributesClass = nullptr;
             Data_type = VAR_INTEGER;
             lValue = static_cast<long>(atoll(sValue));
@@ -1081,9 +1081,9 @@ bool DATA::Convert(S_TOKEN_TYPE type)
         case VAR_FLOAT:
             if (!AttributesClass)
                 break;
-            if (!AttributesClass->GetThisAttr())
+            if (AttributesClass->empty())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(AttributesClass->get<const char*>());
             AttributesClass = nullptr;
             Data_type = VAR_FLOAT;
             fValue = static_cast<float>(atof(sValue));
@@ -1631,22 +1631,22 @@ bool DATA::Plus(DATA *pV)
         case VAR_AREFERENCE:
             if (!pV->AttributesClass)
                 break;
-            if (!pV->AttributesClass->GetThisAttr())
+            if (pV->AttributesClass->empty())
                 break;
             if (sValue != nullptr)
             {
-                size = strlen(sValue) + strlen(pV->AttributesClass->GetThisAttr()) + 1;
+                size = strlen(sValue) + strlen(pV->AttributesClass->get<const char*>()) + 1;
 
                 sTemp = new char[size];
                 strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, pV->AttributesClass->GetThisAttr());
+                strcat_s(sTemp, size, pV->AttributesClass->get<const char*>());
             }
             else
             {
-                size = strlen(pV->AttributesClass->GetThisAttr()) + 1;
+                size = strlen(pV->AttributesClass->get<const char*>()) + 1;
 
                 sTemp = new char[size];
-                strcpy_s(sTemp, size, pV->AttributesClass->GetThisAttr());
+                strcpy_s(sTemp, size, pV->AttributesClass->get<const char*>());
             }
             Set(sTemp);
             delete[] sTemp;
@@ -2172,8 +2172,8 @@ bool DATA::Copy(DATA *pV)
                 return false;
             }
             if (pVV->AttributesClass == nullptr)
-                pVV->AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
-            pVV->AttributesClass->Copy(pV->AttributesClass);
+                pVV->AttributesClass = new Attribute(*pVCompiler->GetVSC(), "<reference>");
+            *pVV->AttributesClass = *pV->AttributesClass;
         }
         else
         {
@@ -2184,8 +2184,8 @@ bool DATA::Copy(DATA *pV)
             else
             {
                 if (AttributesClass == nullptr)
-                    AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
-                AttributesClass->Copy(pV->AttributesClass);
+                    AttributesClass = new Attribute(*pVCompiler->GetVSC(), "<object>");
+                *AttributesClass = *pV->AttributesClass;
             }
         }
         break;
@@ -2303,7 +2303,7 @@ bool DATA::Copy(DATA *pV, uint32_t index)
         pOD = (OBJECT_DESC *)pV->ArrayPointer;
         Set(pOD[index].object_id);
         //Attributes.Copy(pOD[index].pAttributes);
-        if(AttributesClass == 0) AttributesClass = new ATTRIBUTES;
+        if(AttributesClass == 0) AttributesClass = new Attribute;
         AttributesClass->Copy(pOD[index].pAttributes);
       break;
     }*/
@@ -2382,7 +2382,7 @@ bool DATA::CopyOnElement(DATA *pV, uint32_t index)
           Set(pV->object_id,index);
           if(pV->AttributesClass)
           {
-            if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new ATTRIBUTES;
+            if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new Attribute;
             //pOD[index].pAttributes->Copy(&pV->Attributes);
             pOD[index].pAttributes->Copy(pV->AttributesClass);
           }
@@ -2394,7 +2394,7 @@ bool DATA::CopyOnElement(DATA *pV, uint32_t index)
     */
 }
 
-ATTRIBUTES *DATA::GetAClass()
+Attribute *DATA::GetAClass()
 {
     // if(bRef)
     if (Data_type == VAR_REFERENCE)
@@ -2415,12 +2415,12 @@ ATTRIBUTES *DATA::GetAClass()
             return nullptr;
         }
 
-        AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
+        AttributesClass = new Attribute(*pVCompiler->GetVSC(), "<data>");
     }
     return AttributesClass;
 }
 
-ATTRIBUTES *DATA::GetAClass(uint32_t index)
+Attribute *DATA::GetAClass(uint32_t index)
 {
     // if(bRef)
     if (Data_type == VAR_REFERENCE)
@@ -2447,7 +2447,7 @@ ATTRIBUTES *DATA::GetAClass(uint32_t index)
     /*
       OBJECT_DESC * pOD;
       pOD = (OBJECT_DESC *)ArrayPointer;
-      if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new ATTRIBUTES;
+      if(pOD[index].pAttributes == null ) pOD[index].pAttributes = new Attribute;
       return pOD[index].pAttributes;*/
 }
 

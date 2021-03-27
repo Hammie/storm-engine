@@ -58,7 +58,7 @@ void SHIP_CAMERA::Execute(uint32_t dwDeltaTime)
     if (!FindShip())
         return;
 
-    SetPerspective(AttributesPointer->GetAttributeAsFloat("Perspective"));
+    SetPerspective(AttributesPointer->getProperty("Perspective").get<float>());
 
     const auto fDeltaTime = 0.001f * static_cast<float>(core.GetDeltaTime());
 
@@ -193,41 +193,41 @@ void SHIP_CAMERA::Realize(uint32_t dwDeltaTime)
 {
 }
 
-void SHIP_CAMERA::SetCharacter(ATTRIBUTES *_pACharacter)
+void SHIP_CAMERA::SetCharacter(Attribute *_pACharacter)
 {
     entid_t eidTemp;
 
     pACharacter = _pACharacter;
 }
 
-uint32_t SHIP_CAMERA::AttributeChanged(ATTRIBUTES *pAttr)
+uint32_t SHIP_CAMERA::AttributeChanged(Attribute &attr)
 {
-    if (*pAttr == "SensivityDistance")
-        fSensivityDistance = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "SensivityAzimuthAngle")
-        fSensivityAzimuthAngle = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "SensivityHeightAngle")
-        fSensivityHeightAngle = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "SensivityHeightAngleOnShip")
-        fSensivityHeightAngleOnShip = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MaxAngleX")
-        fMaxAngleX = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MinAngleX")
-        fMinAngleX = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MaxHeightOnShip")
-        fMaxHeightOnShip = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MinHeightOnSea")
-        fMinHeightOnSea = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MaxDistance")
-        fMaxDistance = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "MinDistance")
-        fMinDistance = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "Distance")
-        fDistance = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "InvertMouseX")
-        fInvertMouseX = pAttr->GetAttributeAsFloat();
-    if (*pAttr == "InvertMouseY")
-        fInvertMouseY = pAttr->GetAttributeAsFloat();
+    if (attr == "SensivityDistance")
+        attr.get_to(fSensivityDistance);
+    if (attr == "SensivityHeightAngle")
+        attr.get_to(fSensivityHeightAngle);
+    if (attr == "SensivityAzimuthAngle")
+        attr.get_to(fSensivityAzimuthAngle);
+    if (attr == "SensivityHeightAngleOnShip")
+        attr.get_to(fSensivityHeightAngleOnShip);
+    if (attr == "MaxAngleX")
+        attr.get_to(fMaxAngleX);
+    if (attr == "MinAngleX")
+        attr.get_to(fMinAngleX);
+    if (attr == "MaxHeightOnShip")
+        attr.get_to(fMaxHeightOnShip);
+    if (attr == "MinHeightOnSea")
+        attr.get_to(fMinHeightOnSea);
+    if (attr == "MaxDistance")
+        attr.get_to(fMaxDistance);
+    if (attr == "MinDistance")
+        attr.get_to(fMinDistance);
+    if (attr == "Distance")
+        attr.get_to(fDistance);
+    if (attr == "InvertMouseX")
+        attr.get_to(fInvertMouseX);
+    if (attr == "InvertMouseY")
+        attr.get_to(fInvertMouseY);
 
     return 0;
 }

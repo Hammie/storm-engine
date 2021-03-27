@@ -33,9 +33,9 @@ class Player : public NPCharacter
     void Update(float dltTime) override;
 
     // Save parameters
-    void SetSaveData(ATTRIBUTES *sdata) override;
+    void SetSaveData(Attribute *sdata) override;
     // Restore parameters
-    void GetSaveData(ATTRIBUTES *sdata) override;
+    void GetSaveData(Attribute *sdata) override;
 
     bool IsPlayer() override
     {

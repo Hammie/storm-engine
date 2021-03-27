@@ -72,10 +72,10 @@ uint64_t Blots::ProcessMessage(MESSAGE &message)
         pCharAttributeRoot = message.AttributePointer();
         if (pCharAttributeRoot)
         {
-            blotsInfo = pCharAttributeRoot->CreateSubAClass(pCharAttributeRoot, "ship.blots");
-            char buf[32];
-            sprintf_s(buf, "%i", BLOTS_MAX);
-            blotsInfo->SetValue(buf);
+            Attribute& char_attr = *pCharAttributeRoot;
+            blotsInfo = &char_attr["ship"]["blots"];
+            *blotsInfo = BLOTS_MAX;
+
             for (long i = 0; i < BLOTS_MAX; i++)
                 LoadBlot(i);
         }
@@ -294,19 +294,19 @@ void Blots::SaveBlot(long i)
     sprintf_s(name, "b%.3i", i);
     if (blot[i].isUsed)
     {
-        auto *blt = blotsInfo->CreateSubAClass(blotsInfo, name);
-        blt->SetAttributeUseDword("rnd", blot[i].rnd);
-        blt->SetAttributeUseFloat("x", blot[i].pos.x);
-        blt->SetAttributeUseFloat("y", blot[i].pos.y);
-        blt->SetAttributeUseFloat("z", blot[i].pos.z);
-        blt->SetAttributeUseFloat("vx", blot[i].dir.x);
-        blt->SetAttributeUseFloat("vy", blot[i].dir.y);
-        blt->SetAttributeUseFloat("vz", blot[i].dir.z);
-        blt->SetAttributeUseFloat("time", blot[i].liveTime);
+        Attribute& blt = blotsInfo->getProperty(name);
+        blt["rnd"] = blot[i].rnd;
+        blt["x"] = blot[i].pos.x;
+        blt["y"] = blot[i].pos.y;
+        blt["z"] = blot[i].pos.z;
+        blt["vx"] = blot[i].dir.x;
+        blt["vy"] = blot[i].dir.y;
+        blt["vz"] = blot[i].dir.z;
+        blt["time"] = blot[i].liveTime;
     }
     else
     {
-        blotsInfo->DeleteAttributeClassX(blotsInfo->FindAClass(blotsInfo, name));
+        blotsInfo->clear();
     }
 }
 
@@ -318,33 +318,17 @@ void Blots::LoadBlot(long i)
     // Attribute name
     char name[16];
     sprintf_s(name, "b%.3i", i);
-    auto *blt = blotsInfo->FindAClass(blotsInfo, name);
-    if (blt)
+    const Attribute& blt = blotsInfo->getProperty(name);
+    if (!blt.empty())
     {
-        if (!blt->GetAttribute("rnd"))
-            return;
-        if (!blt->GetAttribute("x"))
-            return;
-        if (!blt->GetAttribute("y"))
-            return;
-        if (!blt->GetAttribute("z"))
-            return;
-        if (!blt->GetAttribute("vx"))
-            return;
-        if (!blt->GetAttribute("vy"))
-            return;
-        if (!blt->GetAttribute("vz"))
-            return;
-        if (!blt->GetAttribute("time"))
-            return;
-        const long rnd = blt->GetAttributeAsDword("rnd");
-        const auto x = blt->GetAttributeAsFloat("x");
-        const auto y = blt->GetAttributeAsFloat("y");
-        const auto z = blt->GetAttributeAsFloat("z");
-        const auto vx = blt->GetAttributeAsFloat("vx");
-        const auto vy = blt->GetAttributeAsFloat("vy");
-        const auto vz = blt->GetAttributeAsFloat("vz");
-        const auto time = blt->GetAttributeAsFloat("time");
+        const long rnd = blt["rnd"].get<uint32_t>();
+        const auto x = blt["x"].get<float>();
+        const auto y = blt["y"].get<float>();
+        const auto z = blt["z"].get<float>();
+        const auto vx = blt["vx"].get<float>();
+        const auto vy = blt["vy"].get<float>();
+        const auto vz = blt["vz"].get<float>();
+        const auto time = blt["time"].get<float>();
         AddBlot(i, rnd, CVECTOR(x, y, z), CVECTOR(vx, vy, vz), time);
     }
 }
@@ -353,7 +337,7 @@ void Blots::LoadBlot(long i)
 void Blots::Realize(uint32_t delta_time)
 {
     // Updating the state
-    blotsInfo = pCharAttributeRoot->FindAClass(pCharAttributeRoot, "ship.blots");
+    blotsInfo = &pCharAttributeRoot->getProperty("ship")["blots"];
     updateBlot++;
     if (updateBlot >= BLOTS_MAX)
         updateBlot = 0;

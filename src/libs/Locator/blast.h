@@ -37,7 +37,7 @@ class BLAST : public Entity
     BLAST();
     bool Init();
     uint64_t ProcessMessage(MESSAGE &message);
-    uint32_t AttributeChanged(ATTRIBUTES *);
+    uint32_t AttributeChanged(Attribute &);
     void Realize(uint32_t Delta_Time);
     void ProcessTime(uint32_t Delta_Time);
     void SetBlastCenter(CVECTOR pos, CVECTOR ang);

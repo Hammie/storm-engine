@@ -61,37 +61,37 @@ void CXI_SCROLLEDPICTURE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini
     auto *pAttribute = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (pAttribute)
     {
-        auto *pAttr = pAttribute->GetAttributeClass("imagelist");
-        if (pAttr)
+        const Attribute &pAttr = pAttribute->getProperty("imagelist");
+        if (!pAttr.empty())
         {
-            const long q = pAttr->GetAttributesNum();
+            const long q = std::distance(pAttr.begin(), pAttr.end());
             for (n = 0; n < q; n++)
             {
-                auto *pA = pAttr->GetAttributeClass(n);
-                if (pA)
+                const Attribute &pA = *(pAttr.begin() + n);
+                if (!pA.empty())
                 {
                     // long i = m_aImg.Add();
                     m_aImg.push_back(BuildinImage{});
                     const long i = m_aImg.size() - 1;
                     m_aImg[i].bShow = false;
-                    m_aImg[i].fpPos.x = pA->GetAttributeAsFloat("x", 0.f);
-                    m_aImg[i].fpPos.y = pA->GetAttributeAsFloat("y", 0.f);
-                    m_aImg[i].fpSize.x = pA->GetAttributeAsFloat("width", -1.f);
-                    m_aImg[i].fpSize.y = pA->GetAttributeAsFloat("height", -1.f);
+                    pA["x"].get_to(m_aImg[i].fpPos.x, 0.f);
+                    pA["y"].get_to(m_aImg[i].fpPos.y, 0.f);
+                    pA["width"].get_to(m_aImg[i].fpSize.x, -1.f);
+                    pA["height"].get_to(m_aImg[i].fpSize.y, -1.f);
 
                     m_aImg[i].pImg = new CXI_IMAGE;
                     Assert(m_aImg[i].pImg);
-                    const char *pcGroupName = pA->GetAttribute("group");
+                    const char *pcGroupName = pA["group"].get<const char*>();
                     if (pcGroupName)
                     {
-                        m_aImg[i].pImg->LoadFromBase(pcGroupName, pA->GetAttribute("pic"), true);
+                        m_aImg[i].pImg->LoadFromBase(pcGroupName, pA["pic"].get<const char*>(), true);
                         if (m_aImg[i].fpSize.x > 0.f && m_aImg[i].fpSize.y > 0.f)
                             m_aImg[i].pImg->SetSize(static_cast<long>(m_aImg[i].fpSize.x),
                                                     static_cast<long>(m_aImg[i].fpSize.y));
                     }
                     else
                     {
-                        m_aImg[i].pImg->LoadFromFile(pA->GetAttribute("file"));
+                        m_aImg[i].pImg->LoadFromFile(pA["file"].get<const char*>());
                     }
                     m_aImg[i].fpSize.x = static_cast<float>(m_aImg[i].pImg->GetWidth());
                     m_aImg[i].fpSize.y = static_cast<float>(m_aImg[i].pImg->GetHeight());
@@ -99,10 +99,10 @@ void CXI_SCROLLEDPICTURE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini
             }
         }
 
-        m_nScaleNum = pAttribute->GetAttributeAsDword("scale", m_nScaleNum);
+        pAttribute->getProperty("scale").get_to(m_nScaleNum, m_nScaleNum);
 
-        const auto fx = pAttribute->GetAttributeAsFloat("centerX", m_fpBaseSize.x * .5f);
-        const auto fy = pAttribute->GetAttributeAsFloat("centerY", m_fpBaseSize.y * .5f);
+        const auto fx = pAttribute->getProperty("centerX").get<float>(m_fpBaseSize.x * .5f);
+        const auto fy = pAttribute->getProperty("centerY").get<float>(m_fpBaseSize.y * .5f);
         SetPosToCenter(fx, fy);
     }
 
@@ -206,32 +206,17 @@ void CXI_SCROLLEDPICTURE::ChangeUV(FXYRECT &frNewUV)
     auto *pAttribute = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (pAttribute)
     {
-        auto *pA = pAttribute->GetAttributeClass("offset");
-        if (!pA)
-            pA = pAttribute->CreateSubAClass(pAttribute, "offset");
-        if (pA)
-        {
-            pA->SetAttributeUseFloat("x", frNewUV.left * m_fpBaseSize.x);
-            pA->SetAttributeUseFloat("y", frNewUV.top * m_fpBaseSize.y);
-        }
-        pA = pAttribute->GetAttributeClass("size");
-        if (!pA)
-            pA = pAttribute->CreateSubAClass(pAttribute, "size");
-        if (pA)
-        {
-            pA->SetAttributeUseFloat("x", (frNewUV.right - frNewUV.left) * m_fpBaseSize.x);
-            pA->SetAttributeUseFloat("y", (frNewUV.bottom - frNewUV.top) * m_fpBaseSize.y);
-        }
-        pA = pAttribute->GetAttributeClass("scale");
-        if (!pA)
-            pA = pAttribute->CreateSubAClass(pAttribute, "scale");
-        if (pA)
-        {
-            pA->SetAttributeUseFloat("x", (frNewUV.right - frNewUV.left) * m_fpBaseSize.x /
-                                              static_cast<float>(m_rect.right - m_rect.left));
-            pA->SetAttributeUseFloat("y", (frNewUV.bottom - frNewUV.top) * m_fpBaseSize.y /
-                                              static_cast<float>(m_rect.bottom - m_rect.top));
-        }
+        Assert(pAttribute != nullptr);
+        Attribute& attr = *pAttribute;
+
+        attr["offset"]["x"] = frNewUV.left * m_fpBaseSize.x;
+        attr["offset"]["y"] = frNewUV.top * m_fpBaseSize.y;
+        attr["size"]["x"] = (frNewUV.right - frNewUV.left) * m_fpBaseSize.x;
+        attr["size"]["y"] = (frNewUV.bottom - frNewUV.top) * m_fpBaseSize.y;
+        attr["scale"]["x"] =
+            (frNewUV.right - frNewUV.left) * m_fpBaseSize.x / static_cast<float>(m_rect.right - m_rect.left);
+        attr["scale"]["y"] =
+            (frNewUV.bottom - frNewUV.top) * m_fpBaseSize.y / static_cast<float>(m_rect.bottom - m_rect.top);
     }
 }
 

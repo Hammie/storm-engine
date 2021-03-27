@@ -27,7 +27,7 @@ class BISignIcon
     virtual ~BISignIcon();
 
     virtual void Draw();
-    virtual void Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA);
+    virtual void Init(Attribute *pRoot, Attribute *pA);
 
     void Recollect();
     void SetUpdate()
@@ -105,8 +105,8 @@ class BISignIcon
     bool m_bMakeUpdate;
     bool m_bActive;
 
-    ATTRIBUTES *m_pARoot;
-    ATTRIBUTES *m_pAData;
+    Attribute *m_pARoot;
+    Attribute *m_pAData;
     entid_t m_idHostEntity;
 
     struct SignDescr

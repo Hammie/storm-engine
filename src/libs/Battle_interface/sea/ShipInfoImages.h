@@ -12,7 +12,7 @@ struct SII_VERTEX
 class ShipInfoImages
 {
   public:
-    ShipInfoImages(VDX9RENDER *rs, ATTRIBUTES *pAttr);
+    ShipInfoImages(VDX9RENDER *rs, Attribute &pAttr);
     ~ShipInfoImages();
 
     void Draw();
@@ -23,7 +23,7 @@ class ShipInfoImages
 
   protected:
     void Release();
-    void Init(ATTRIBUTES *pAttr);
+    void Init(Attribute &pAttr);
     void CheckAndRecreateBuffers(long nShipQ);
     void UpdateShipList();
     void UpdateShipData(long nShipNum, SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD);

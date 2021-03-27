@@ -40,14 +40,14 @@ struct TOUCH_PARAMS
 class SHIP_BASE : public VAI_OBJBASE
 {
   protected:
-    ATTRIBUTES *pAShip;
+    Attribute *pAShip;
 
   public:
     SHIP_STATE State;
 
     virtual ~SHIP_BASE() = default;
 
-    virtual ATTRIBUTES *GetAShip()
+    virtual Attribute *GetAShip()
     {
         return pAShip;
     }

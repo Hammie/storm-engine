@@ -271,4 +271,6 @@ template <class T> T Sqr(T t1)
         }                                                                                                              \
     }
 
+constexpr size_t TSE_MAX_EVENT_LENGTH = 64;
+
 //#include "inlines.h"

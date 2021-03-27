@@ -221,7 +221,7 @@ class SEA : public SEA_BASE
 
     bool EditMode_Update();
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute);
+    uint32_t AttributeChanged(Attribute &attribute);
     void ProcessStage(Stage stage, uint32_t delta) override
     {
         switch (stage)

@@ -64,8 +64,9 @@ bool SHIPPOINTER::Init()
     }
 
     //"battle_interface\\shippointer.tga");
-    m_idFriendTex = rs->TextureCreate(pA->GetAttribute("friend"));
-    m_idEnemyTex = rs->TextureCreate(pA->GetAttribute("enemy"));
+    const Attribute& attr = *pA;
+    m_idFriendTex = rs->TextureCreate(attr["friend"].get<std::string_view>().data());
+    m_idEnemyTex = rs->TextureCreate(attr["enemy"].get<std::string_view>().data());
 
     return true;
 }
@@ -173,7 +174,8 @@ VAI_OBJBASE *SHIPPOINTER::FindShipByChrIndex(long chrIdx) const
         VAI_OBJBASE *ps = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(ship));
         if (ps != nullptr && ps->GetACharacter() != nullptr)
         {
-            if (static_cast<long>(ps->GetACharacter()->GetAttributeAsDword("index", -2)) == chrIdx)
+            const Attribute& char_attr = *ps->GetACharacter();
+            if (static_cast<long>(char_attr["index"].get<uint32_t>(-2)) == chrIdx)
                 return ps;
         }
     }

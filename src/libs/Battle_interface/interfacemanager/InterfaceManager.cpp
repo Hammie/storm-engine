@@ -33,21 +33,26 @@ bool BI_InterfaceManager::Init()
     Assert(m_pRS);
     m_pImgRender = new BIImageRender(m_pRS);
     Assert(m_pImgRender);
-    m_pMouse = new MousePointer(this, AttributesPointer);
+    m_pMouse = new MousePointer(this, *AttributesPointer);
     Assert(m_pMouse);
 
     auto [nBaseWidth, nBaseHeight] = core.getScreenSize();
     long nBaseXOffset = 0;
     long nBaseYOffset = 0;
-    if (AttributesPointer)
+    if (AttributesPointer && AttributesPointer->hasProperty("BaseWindow"))
     {
-        auto *pA = AttributesPointer->GetAttributeClass("BaseWindow");
-        if (pA)
-        {
-            nBaseWidth = pA->GetAttributeAsDword("width", nBaseWidth);
-            nBaseHeight = pA->GetAttributeAsDword("height", nBaseHeight);
-            nBaseXOffset = pA->GetAttributeAsDword("xoffset", nBaseXOffset);
-            nBaseYOffset = pA->GetAttributeAsDword("yoffset", nBaseYOffset);
+        Attribute& pA = AttributesPointer->getProperty("BaseWindow");
+        if (pA.hasProperty("width")) {
+            nBaseWidth = pA["width"].get<uint32_t>();
+        }
+        if (pA.hasProperty("height")) {
+            nBaseHeight = pA["height"].get<uint32_t>();
+        }
+        if (pA.hasProperty("xoffset")) {
+            nBaseXOffset = pA["xoffset"].get<uint32_t>();
+        }
+        if (pA.hasProperty("yoffset")) {
+            nBaseYOffset = pA["yoffset"].get<uint32_t>();
         }
     }
     m_pImgRender->SetBaseScreenSize(nBaseWidth, nBaseHeight, nBaseXOffset, nBaseYOffset);

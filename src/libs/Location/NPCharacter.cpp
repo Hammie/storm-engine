@@ -232,8 +232,11 @@ void NPCharacter::Move(float dltTime)
 // Update character position
 void NPCharacter::Update(float dltTime)
 {
-    bMusketer = AttributesPointer->GetAttributeAsDword("isMusketer", 0) != 0;
-    fMusketerDistance = AttributesPointer->GetAttributeAsFloat("MusketerDistance", 20.0f);
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    attr["isMusketer"].get_to(bMusketer, false);
+    attr["MusketerDistance"].get_to(fMusketerDistance, 20.0f);
     bMusketerNoMove = fMusketerDistance <= 0.0f;
 
     AICharacter::bMusketer = bMusketer;
@@ -273,17 +276,13 @@ void NPCharacter::Update(float dltTime)
         const auto isDebugEx = location->IsExDebugView();
         // if(AttributesPointer && AttributesPointer->GetAttributeAsDword("hideInfo", 0)) return;
         const auto rad = 25.0f;
-        const char *id = nullptr;
-        if (AttributesPointer)
-            id = AttributesPointer->GetAttribute("id");
-        if (!id)
-            id = "<none>";
+        const char *id = attr["id"].get<const char*>("<none>");
         const char *fid = nullptr;
         auto *chr = static_cast<Character *>(EntityManager::GetEntityPointer(task.target));
         if (chr)
         {
             if (chr->AttributesPointer)
-                fid = chr->AttributesPointer->GetAttribute("id");
+                fid = chr->AttributesPointer->getProperty("id").get<const char*>(nullptr);
         }
         if (!fid)
             fid = "<none>";
@@ -307,46 +306,43 @@ void NPCharacter::Update(float dltTime)
                             "goto(%.2f, %.2f, %.2f)", command.pnt.x, command.pnt.y, command.pnt.z);
         if (isDebugEx && AttributesPointer)
         {
-            auto *atr = AttributesPointer->FindAClass(AttributesPointer, "chr_ai.tmpl");
-            if (atr)
+            const Attribute& ai_tmpl = attr["chr_ai.tmpl"];
+            if (!ai_tmpl.empty())
             {
-                for (long i = atr->GetAttributesNum() - 1; i >= 0; i--)
-                {
-                    fid = atr->GetAttributeName(i);
-                    id = atr->GetAttribute(i);
+                for (const Attribute& entry : ai_tmpl) {
+                    fid = entry.getName().data();
+                    id = entry.get<const char*>();
                     if (fid && id)
                         location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f,
                                         "tmpl.%s(%s)", fid, id);
                 }
-                id = atr->GetThisAttr();
+                id = ai_tmpl.get<const char*>(nullptr);
                 if (id)
                     location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f, "tmpl(%s)",
                                     id);
             }
-            atr = AttributesPointer->FindAClass(AttributesPointer, "chr_ai.type");
-            if (atr)
+            const Attribute& ai_type = attr["chr_ai.type"];
+            if (!ai_type.empty())
             {
-                for (long i = atr->GetAttributesNum() - 1; i >= 0; i--)
-                {
-                    fid = atr->GetAttributeName(i);
-                    id = atr->GetAttribute(i);
+                for (const Attribute& entry : ai_type) {
+                    fid = entry.getName().data();
+                    id = entry.get<const char*>();
                     if (fid && id)
                         location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f,
                                         "type.%s(%s)", fid, id);
                 }
-                id = atr->GetThisAttr();
+                id = ai_type.get<const char*>(nullptr);
                 if (id)
                     location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f, "type(%s)",
                                     id);
             }
-            atr = AttributesPointer->FindAClass(AttributesPointer, "chr_ai.group");
-            if (atr)
+            const Attribute& ai_group = attr["chr_ai.group"];
+            if (!ai_group.empty())
             {
-                id = atr->GetThisAttr();
-                if (!id)
-                    id = "";
-                location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f,
-                                "group(\"%s\")", id);
+                id = ai_group.get<const char*>(nullptr);
+                if (id)
+                    location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f,
+                                    "group(\"%s\")", id);
             }
         }
         location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f, "wantToAttack = %s",
@@ -469,7 +465,7 @@ bool NPCharacter::InitFollowChartacter(entid_t eid)
     Character *c = static_cast<Character *>(EntityManager::GetEntityPointer(eid));
     if (c)
     {
-        const char *id = c->AttributesPointer->GetAttribute("id");
+        const char *id = c->AttributesPointer->getProperty("id").get<const char*>();
     }
     task.isFollowInit = 0;
     return true;

@@ -155,7 +155,7 @@ class Sailors : public Entity
     virtual void Realize(uint32_t dltTime);
 
     uint64_t ProcessMessage(MESSAGE &message) override;
-    uint32_t AttributeChanged(ATTRIBUTES *_newAttr) override;
+    uint32_t AttributeChanged(Attribute &_newAttr) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {

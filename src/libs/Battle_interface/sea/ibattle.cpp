@@ -176,25 +176,25 @@ void BATTLE_INTERFACE::Realize(uint32_t delta_time)
 void BATTLE_INTERFACE::LoadIniFile()
 {
     m_fBlinkSpeed = .003f;
+
     if (AttributesPointer != nullptr)
-        m_fBlinkSpeed = AttributesPointer->GetAttributeAsFloat("blindSpeed", m_fBlinkSpeed);
+        m_fBlinkSpeed = AttributesPointer->getProperty("blindSpeed").get<float>(m_fBlinkSpeed);
     m_fCurBlinkTime = 0;
 
     BattleNavigator.Init(rs, this);
 
-    ATTRIBUTES *pA = nullptr;
     if (AttributesPointer != nullptr)
     {
-        m_bShowCommandMenu = AttributesPointer->GetAttributeAsDword("ShowCommands", 1) != 0;
-        m_bShowBattleNavigator = AttributesPointer->GetAttributeAsDword("ShowNavigator", 1) != 0;
-        pA = AttributesPointer->FindAClass(AttributesPointer, "MessageIcons");
+        m_bShowCommandMenu = AttributesPointer->getProperty("ShowCommands").get<bool>(true);
+        m_bShowBattleNavigator = AttributesPointer->getProperty("ShowNavigator").get<bool>(true);
 
-        BIUtils::FillTextInfoArray(rs, AttributesPointer->GetAttributeClass("TextInfo"), m_TextArray);
-        m_LinesInfo.Init(rs, AttributesPointer->GetAttributeClass("LineInfo"));
+        BIUtils::FillTextInfoArray(rs, &(AttributesPointer->getProperty("TextInfo")), m_TextArray);
 
-        m_BattleBorder.Init(rs, AttributesPointer->GetAttributeClass("battleborder"));
+        m_LinesInfo.Init(rs, &(AttributesPointer->getProperty("LineInfo")));
 
-        m_ImagesInfo.Init(rs, AttributesPointer->GetAttributeClass("imageslist"));
+        m_BattleBorder.Init(rs, &(AttributesPointer->getProperty("battleborder")));
+
+        m_ImagesInfo.Init(rs, &(AttributesPointer->getProperty("imageslist")));
     }
 
     /*STORM_DELETE( m_pMessageIcons );
@@ -207,19 +207,23 @@ void BATTLE_INTERFACE::LoadIniFile()
     STORM_DELETE(m_pShipIcon);
     m_pShipIcon = new BIShipIcon(GetId(), rs);
     Assert(m_pShipIcon);
-    m_pShipIcon->Init(AttributesPointer,
-                      AttributesPointer ? AttributesPointer->GetAttributeClass("ShipIcon") : nullptr);
+    m_pShipIcon->Init(AttributesPointer, AttributesPointer ? &(AttributesPointer->getProperty("ShipIcon")) : nullptr);
 
-    m_pShipInfoImages =
-        new ShipInfoImages(rs, AttributesPointer ? AttributesPointer->GetAttributeClass("ShipInfoImages") : nullptr);
+    if (AttributesPointer != nullptr)
+    {
+        if (Attribute& property = AttributesPointer->getProperty("ShipInfoImages"); !property.empty())
+        {
+            m_pShipInfoImages = new ShipInfoImages(rs, property);
+        }
+    }
     if (m_pShipInfoImages)
     {
-        m_pShipInfoImages->SetVisible(
-            AttributesPointer ? (AttributesPointer->GetAttributeAsDword("ShifInfoVisible", 0) != 0) : false);
+        m_pShipInfoImages->SetVisible(AttributesPointer != nullptr &&
+                                      (AttributesPointer->getProperty("ShifInfoVisible").get<bool>(false)));
     }
 }
 
-uint32_t BATTLE_INTERFACE::AttributeChanged(ATTRIBUTES *pAttr)
+uint32_t BATTLE_INTERFACE::AttributeChanged(Attribute &pAttr)
 {
     return 0;
 }
@@ -237,12 +241,14 @@ uint64_t BATTLE_INTERFACE::ProcessMessage(MESSAGE &message)
     {
         const auto chIdx = message.Long();
         auto *const pChAttr = message.AttributePointer();
+        Assert(pChAttr != nullptr);
         auto *const pShipAttr = message.AttributePointer();
+        Assert(pShipAttr != nullptr);
         const auto bMyShip = (message.Long() != 0L);
         const auto relation = message.Long();
         const uint32_t dwShipColor = message.GetCurrentFormatType() ? message.Long() : 0;
-        g_ShipList.Add(AttributesPointer ? AttributesPointer->GetAttributeAsDword("MainChrIndex", -1) : -1, chIdx,
-                       pChAttr, pShipAttr, bMyShip, relation, dwShipColor);
+        g_ShipList.Add(AttributesPointer ? AttributesPointer->getProperty("MainChrIndex").get<long>(-1) : -1, chIdx,
+                       *pChAttr, *pShipAttr, bMyShip, relation, dwShipColor);
         if (m_pShipIcon)
             m_pShipIcon->SetUpdate();
     }
@@ -380,7 +386,7 @@ void BATTLE_INTERFACE::EnableMessageIcons(VDATA *pvdat)
     if(!pvdat) return;
     m_pMessageIcons->SetShowMsg(true);
 
-    ATTRIBUTES * pAttr[4];
+    Attribute * pAttr[4];
     long pLeft[4];
 
     int nCommandos = 0;

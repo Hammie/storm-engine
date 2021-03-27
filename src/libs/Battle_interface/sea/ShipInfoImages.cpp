@@ -6,7 +6,7 @@
 #define SPV_FORMAT (D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXTUREFORMAT2)
 #define MAX_SHIPINFO_DIST_IN_POW2 1000000.f
 
-ShipInfoImages::ShipInfoImages(VDX9RENDER *rs, ATTRIBUTES *pAttr)
+ShipInfoImages::ShipInfoImages(VDX9RENDER *rs, Attribute &pAttr)
 {
     pRS = rs;
     m_bVisible = true;
@@ -78,7 +78,7 @@ void ShipInfoImages::Release()
     m_nCurMaxQuantity = 0;
 }
 
-void ShipInfoImages::Init(ATTRIBUTES *pAttr)
+void ShipInfoImages::Init(Attribute &pAttr)
 {
     // set deafault values
     CheckAndRecreateBuffers(30);
@@ -316,7 +316,7 @@ float ShipInfoImages::GetProgressHull(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD)
         return 0.f;
     if (pSD->maxHP <= 0)
         return 0.f;
-    auto f = pSD->pAttr->GetAttributeAsFloat("HP", 0.f) / static_cast<float>(pSD->maxHP);
+    auto f = (*pSD->pAttr)["HP"].get<float>() / static_cast<float>(pSD->maxHP);
     if (f < 0.f)
         f = 0.f;
     if (f > 1.f)
@@ -330,7 +330,7 @@ float ShipInfoImages::GetProgressSail(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD)
         return 0.f;
     if (pSD->maxSP <= 0)
         return 0.f;
-    auto f = pSD->pAttr->GetAttributeAsFloat("SP", 0.f) / static_cast<float>(pSD->maxSP);
+    auto f = (*pSD->pAttr)["SP"].get<float>() / static_cast<float>(pSD->maxSP);
     if (f < 0.f)
         f = 0.f;
     if (f > 1.f)
@@ -344,15 +344,16 @@ float ShipInfoImages::GetProgressCrew(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD)
         return 0.f;
     if (pSD->maxCrew <= 0)
         return 0.f;
-    auto *pA = pSD->pAttr->GetAttributeClass("crew");
-    if (!pA)
-        return 0.f;
-    auto f = pA->GetAttributeAsFloat("quantity", 0.f) / static_cast<float>(pSD->maxCrew);
-    if (f < 0.f)
-        f = 0.f;
-    if (f > 1.f)
-        f = 1.f;
-    return f;
+
+    if (const Attribute& property = pSD->pAttr->getProperty("crew"); !property.empty()) {
+        auto f = property["quantity"].get<float>() / static_cast<float>(pSD->maxCrew);
+        if (f < 0.f)
+            f = 0.f;
+        if (f > 1.f)
+            f = 1.f;
+        return f;
+    }
+    return 0;
 }
 
 void ShipInfoImages::CalculateDirectingVectors(const CVECTOR &pos)

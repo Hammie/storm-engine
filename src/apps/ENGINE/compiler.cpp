@@ -3893,8 +3893,8 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
     //    DATA * pRef;
     DATA *pVar;
     entid_t eid;
-    //    ATTRIBUTES * pRoot;
-    ATTRIBUTES *pLeftOperandAClass;
+    //    Attribute * pRoot;
+    Attribute *pLeftOperandAClass;
     bool bDebugWaitForThisFunc;
     DATA *pVDst;
     DATA *pVSrc;
@@ -4120,8 +4120,8 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                     SetError("AClass ERROR n1");
                     return false;
                 }
-                pLeftOperandAClass =
-                    pLeftOperandAClass->VerifyAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
+                const StringReference name_code = *((long *)&pRunCodeBase[TLR_DataOffset]);
+                pLeftOperandAClass = &pLeftOperandAClass->getProperty(pLeftOperandAClass->getStringCodec().Convert(name_code));
                 break;
             }
             if (pLeftOperandAClass == nullptr)
@@ -4151,9 +4151,10 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 SetError("AClass ERROR n1");
                 return false;
             }
-            pLeftOperandAClass =
-                pLeftOperandAClass->VerifyAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
-            break;
+            {
+                const StringReference name_code = *((long *)&pRunCodeBase[TLR_DataOffset]);
+                pLeftOperandAClass = &pLeftOperandAClass->getProperty(pLeftOperandAClass->getStringCodec().Convert(name_code));
+            }
             break;
         case ACCESS_WORD:
             if (nLeftOperandCode == INVALID_VAR_CODE)
@@ -4190,7 +4191,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                     SetError("AClass ERROR n1");
                     return false;
                 }
-                pLeftOperandAClass = pLeftOperandAClass->VerifyAttributeClass((char *)&pRunCodeBase[TLR_DataOffset]);
+                pLeftOperandAClass = &pLeftOperandAClass->getProperty((char *)&pRunCodeBase[TLR_DataOffset]);
                 break;
             }
             if (pLeftOperandAClass == nullptr)
@@ -4220,7 +4221,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 SetError("AClass ERROR n1");
                 return false;
             }
-            pLeftOperandAClass = pLeftOperandAClass->VerifyAttributeClass((char *)&pRunCodeBase[TLR_DataOffset]);
+            pLeftOperandAClass = &pLeftOperandAClass->getProperty((char *)&pRunCodeBase[TLR_DataOffset]);
             break;
             break;
         case ACCESS_VAR:
@@ -4287,7 +4288,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 pVV->Get(pAccess_string);
 
                 // pLeftOperandAClass = pLeftOperandAClass->VerifyAttributeClass(pAccess_string);
-                pLeftOperandAClass = pLeftOperandAClass->CreateSubAClass(pLeftOperandAClass, pAccess_string);
+                pLeftOperandAClass = &pLeftOperandAClass->getProperty(pAccess_string);
                 break;
             }
             if (pLeftOperandAClass == nullptr)
@@ -4346,7 +4347,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
             pVV->Get(pAccess_string);
 
             // pLeftOperandAClass = pLeftOperandAClass->VerifyAttributeClass(pAccess_string);
-            pLeftOperandAClass = pLeftOperandAClass->CreateSubAClass(pLeftOperandAClass, pAccess_string);
+            pLeftOperandAClass = &pLeftOperandAClass->getProperty(pAccess_string);
 
             break;
             break;
@@ -5295,7 +5296,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 ExpressionResult.Convert(VAR_STRING);
                 if (!ExpressionResult.Get(pChar))
                     break;
-                pLeftOperandAClass->SetValue(pChar);
+                *pLeftOperandAClass = pChar;
 
                 if (nLeftOperandIndex != INVALID_ARRAY_INDEX)
                     pVDst = pVDst->GetArrayElement(nLeftOperandIndex);
@@ -5499,7 +5500,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                     pV->Set("error");
                     break; /*return false;*/
                 }
-                pV->Set(rAP->GetThisAttr());
+                pV->Set(rAP->get<const char*>());
                 break;
             default:
                 SetError("invalid argument for STACK_PUSH");
@@ -5714,14 +5715,16 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
             Token_type = BC_TokenGet();
             switch (Token_type)
             {
-            case ACCESS_WORD_CODE:
+            case ACCESS_WORD_CODE: {
+                const StringReference name_code = *((long *)&pRunCodeBase[TLR_DataOffset]);
                 if (sttV == VERIFY_AP)
-                    rAP = rAP->VerifyAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
+                    rAP = &rAP->getProperty(rAP->getStringCodec().Convert(name_code));
                 else
-                    rAP = rAP->GetAttributeClassByCode(*((long *)&pRunCodeBase[TLR_DataOffset]));
+                    rAP = &rAP->getProperty(rAP->getStringCodec().Convert(name_code));
                 if (!rAP)
                     SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
                 break;
+            }
             case VARIABLE:
                 if (!VarTab.GetVar(vi, *((long *)&pRunCodeBase[TLR_DataOffset])))
                 {
@@ -5737,9 +5740,9 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 }
                 ExpressionResult.Get(pChar);
                 if (sttV == VERIFY_AP)
-                    rAP = rAP->CreateSubAClass(rAP, pChar);
+                    rAP = &rAP->getProperty(pChar);
                 else
-                    rAP = rAP->FindAClass(rAP, pChar);
+                    rAP = &rAP->getProperty(pChar);
 
                 /*if(sttV == VERIFY_AP)
                 rAP = rAP->VerifyAttributeClass(pChar);
@@ -5766,9 +5769,9 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 ExpressionResult.Get(pChar);
 
                 if (sttV == VERIFY_AP)
-                    rAP = rAP->CreateSubAClass(rAP, pChar);
+                    rAP = &rAP->getProperty(pChar);
                 else
-                    rAP = rAP->FindAClass(rAP, pChar);
+                    rAP = &rAP->getProperty(pChar);
 
                 /*if(sttV == VERIFY_AP)
                   rAP = rAP->VerifyAttributeClass(pChar);
@@ -6081,7 +6084,7 @@ bool COMPILER::FindReferencedVariable(DATA *pRef, uint32_t &var_index, uint32_t 
     return false;
 }
 
-bool COMPILER::FindReferencedVariableByRootA(ATTRIBUTES *pA, uint32_t &var_index, uint32_t &array_index)
+bool COMPILER::FindReferencedVariableByRootA(Attribute *pA, uint32_t &var_index, uint32_t &array_index)
 {
     VARINFO vi;
 
@@ -6116,20 +6119,20 @@ bool COMPILER::FindReferencedVariableByRootA(ATTRIBUTES *pA, uint32_t &var_index
     return false;
 }
 
-ATTRIBUTES *COMPILER::TraceARoot(ATTRIBUTES *pA, const char *&pAccess)
+const Attribute *COMPILER::TraceARoot(const Attribute *pA, const char *&pAccess)
 {
     if (pA == nullptr)
         return nullptr; // error or invalid argument
-    if (pA->GetParent() == nullptr)
+    if (pA->getParent() == nullptr)
         return pA; // root found
-	if (pA->GetThisNameCode() == 0) 
+	if (pA->getNameCode() == 0)
 		return nullptr;	// fix crash at NewGame start
 
-    const long slen = strlen(pA->GetThisName()) + 1;
+    const long slen = strlen(pA->getName().data()) + 1;
 
     char *pAS = new char[slen];
 
-    memcpy(pAS, pA->GetThisName(), slen);
+    memcpy(pAS, pA->getName().data(), slen);
 
     if (pAccess == nullptr)
     {
@@ -6149,7 +6152,7 @@ ATTRIBUTES *COMPILER::TraceARoot(ATTRIBUTES *pA, const char *&pAccess)
         pAccess = pAS;
     }
 
-    return TraceARoot(pA->GetParent(), pAccess);
+    return TraceARoot(pA->getParent(), pAccess);
 }
 
 void COMPILER::WriteVDword(uint32_t v)
@@ -6236,7 +6239,7 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
     uint32_t var_index;
     uint32_t array_index;
     uint32_t nElementsNum;
-    ATTRIBUTES *pA;
+    Attribute *pA;
     S_TOKEN_TYPE eType;
     VARINFO vi;
     VARINFO viRef;
@@ -6340,12 +6343,12 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
             pV->Set(eid);
 
             if (pV->AttributesClass == nullptr)
-                pV->AttributesClass = new ATTRIBUTES(SCodec.get());
+                pV->AttributesClass = new Attribute(*SCodec, "<object>");
             ReadAttributesData(pV->AttributesClass, nullptr);
         }
         else
         {
-            ATTRIBUTES *pTA = new ATTRIBUTES(SCodec.get());
+            Attribute *pTA = new Attribute(*SCodec, "<object>");
             ReadAttributesData(pTA, nullptr);
             delete pTA;
         }
@@ -6394,10 +6397,10 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
         }
 
         if (pVRef->AttributesClass == nullptr)
-            pVRef->AttributesClass = new ATTRIBUTES(SCodec.get());
+            pVRef->AttributesClass = new Attribute(*SCodec, "<reference>");
         if (pString)
         {
-            pA = pVRef->AttributesClass->CreateSubAClass(pVRef->AttributesClass, pString);
+            pA = &pVRef->AttributesClass->getProperty(pString);
             delete[] pString;
         }
         pV->SetAReference(pA);
@@ -6419,7 +6422,7 @@ void COMPILER::SaveVariable(DATA *pV, bool bdim)
     uint32_t var_index;
     uint32_t array_index;
     uint32_t n;
-    ATTRIBUTES *pA;
+    Attribute *pA;
     S_TOKEN_TYPE eType;
     entid_t eid;
 
@@ -6504,7 +6507,7 @@ void COMPILER::SaveVariable(DATA *pV, bool bdim)
         pString = nullptr;
         try
         {
-            pA = TraceARoot(pV->AttributesClass, pString);
+            pA = const_cast<Attribute*>(TraceARoot(pV->AttributesClass, pString));
         }
         catch (...)
         {
@@ -6724,7 +6727,7 @@ bool COMPILER::LoadState(HANDLE fh)
     return true;
 }
 
-void COMPILER::ReadAttributesData(ATTRIBUTES *pRoot, ATTRIBUTES *pParent)
+void COMPILER::ReadAttributesData(Attribute *pRoot, Attribute *pParent)
 {
     uint32_t nSubClassesNum;
     uint32_t n;
@@ -6739,8 +6742,9 @@ void COMPILER::ReadAttributesData(ATTRIBUTES *pRoot, ATTRIBUTES *pParent)
 
         // DTrace(SCodec.Convert(nNameCode));
         pValue = ReadString();
-        pParent->SetAttribute(nNameCode, pValue);
-        pRoot = pParent->GetAttributeClassByCode(nNameCode);
+        const std::string_view name = SCodec->Convert(nNameCode);
+        pParent->getProperty(name) = pValue;
+        pRoot = &pParent->getProperty(name);
         delete pValue;
         for (n = 0; n < nSubClassesNum; n++)
         {
@@ -6755,8 +6759,8 @@ void COMPILER::ReadAttributesData(ATTRIBUTES *pRoot, ATTRIBUTES *pParent)
     pValue = ReadString();
     // pRoot->SetAttribute(nNameCode,pValue);
 
-    pRoot->SetNameCode(nNameCode);
-    pRoot->SetValue(pValue);
+//    pRoot->SetNameCode(nNameCode);
+    *pRoot = pValue;
 
     for (n = 0; n < nSubClassesNum; n++)
     {
@@ -6768,7 +6772,7 @@ void COMPILER::ReadAttributesData(ATTRIBUTES *pRoot, ATTRIBUTES *pParent)
     delete pValue;
 }
 
-void COMPILER::SaveAttributesData(ATTRIBUTES *pRoot)
+void COMPILER::SaveAttributesData(Attribute *pRoot)
 {
     if (pRoot == nullptr)
     {
@@ -6777,17 +6781,18 @@ void COMPILER::SaveAttributesData(ATTRIBUTES *pRoot)
         SaveString(nullptr); // attribute value
         return;
     }
-    WriteVDword(pRoot->GetAttributesNum()); // number of subclasses
+
+    uint32_t attrCount = std::distance(pRoot->begin(), pRoot->end());
+    WriteVDword(attrCount); // number of subclasses
 
     // save attribute name
     // SaveString(pRoot->GetThisName());
-    WriteVDword(pRoot->GetThisNameCode());
+    WriteVDword(pRoot->getNameCode());
 
     // save attribute value
-    SaveString(pRoot->GetThisAttr());
-    for (uint32_t n = 0; n < pRoot->GetAttributesNum(); n++)
-    {
-        SaveAttributesData(pRoot->GetAttributeClass(n));
+    SaveString(pRoot->get<const char*>());
+    for (Attribute& attr : *pRoot) {
+        SaveAttributesData(&attr);
     }
 }
 

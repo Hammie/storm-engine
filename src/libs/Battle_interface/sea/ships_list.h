@@ -13,7 +13,7 @@ class SHIP_DESCRIBE_LIST
         bool isDead;
         long relation;
         long characterIndex;
-        ATTRIBUTES *pAttr; // ship attributes
+        Attribute *pAttr; // ship attributes
         long maxHP;
         long maxSP;
         long maxCrew;
@@ -30,13 +30,13 @@ class SHIP_DESCRIBE_LIST
     SHIP_DESCRIBE_LIST();
     ~SHIP_DESCRIBE_LIST();
 
-    void Add(long mainChrIndex, long chIdx, ATTRIBUTES *pChAttr, ATTRIBUTES *pShipAttr, bool bMyShip, long relation,
+    void Add(long mainChrIndex, long chIdx, Attribute &pChAttr, Attribute &pShipAttr, bool bMyShip, long relation,
              uint32_t dwShipColor);
     SHIP_DESCR *GetMainCharacterShip() const
     {
         return mainCharacter;
     }
-    ATTRIBUTES *GetMainCharacterShipAttr() const
+    Attribute *GetMainCharacterShipAttr() const
     {
         return pMainShipAttr;
     }
@@ -53,7 +53,7 @@ class SHIP_DESCRIBE_LIST
   protected:
     SHIP_DESCR *root;
     SHIP_DESCR *mainCharacter;
-    ATTRIBUTES *pMainShipAttr;
+    Attribute *pMainShipAttr;
 };
 
 extern SHIP_DESCRIBE_LIST g_ShipList;

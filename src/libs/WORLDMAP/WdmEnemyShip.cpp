@@ -111,7 +111,7 @@ void WdmEnemyShip::Update(float dltTime)
                 const auto *delEnc = "";
                 if (saveAttribute)
                 {
-                    delEnc = saveAttribute->GetThisName();
+                    delEnc = saveAttribute->getName().data();
                 }
                 VDATA *pVDat = nullptr;
                 if (!killMe && delEnc && delEnc[0])
@@ -283,65 +283,73 @@ void WdmEnemyShip::UpdateSaveData()
 {
     if (!saveAttribute)
         return;
-    saveAttribute->SetAttributeUseFloat("brnAlpha", brnAlpha);
-    saveAttribute->SetAttributeUseFloat("deleteAlpha", deleteAlpha);
-    saveAttribute->SetAttributeUseFloat("liveTime", liveTime);
-    saveAttribute->SetAttributeUseFloat("x", mtx.Pos().x);
-    saveAttribute->SetAttributeUseFloat("y", mtx.Pos().y);
-    saveAttribute->SetAttributeUseFloat("z", mtx.Pos().z);
-    saveAttribute->SetAttributeUseFloat("ax", ax);
-    saveAttribute->SetAttributeUseFloat("ay", ay);
-    saveAttribute->SetAttributeUseFloat("az", az);
-    saveAttribute->SetAttributeUseFloat("dltAx", dltAx);
-    saveAttribute->SetAttributeUseFloat("dltAz", dltAz);
-    saveAttribute->SetAttributeUseFloat("speed", speed);
-    saveAttribute->SetAttributeUseFloat("turnspd", turnspd);
-    saveAttribute->SetAttributeUseFloat("kMaxSpeed", kMaxSpeed);
-    saveAttribute->SetAttributeUseFloat("rspeed_x", rspeed.x);
-    saveAttribute->SetAttributeUseFloat("rspeed_y", rspeed.y);
-    saveAttribute->SetAttributeUseFloat("rspeed_z", rspeed.z);
-    saveAttribute->SetAttributeUseFloat("slope", slope);
-    saveAttribute->SetAttributeUseDword("enc_id", type);
-    saveAttribute->SetAttributeUseDword("isEnableKill", isEnableKill);
-    saveAttribute->SetAttributeUseDword("isEnemy", isEnemy);
-    saveAttribute->SetAttributeUseDword("killMe", killMe);
-    saveAttribute->SetAttributeUseFloat("canSkip", canSkip);
-    saveAttribute->SetAttribute("sec", wdmObjects->attrSec);
-    saveAttribute->SetAttribute("min", wdmObjects->attrMin);
-    saveAttribute->SetAttribute("hour", wdmObjects->attrHour);
-    saveAttribute->SetAttribute("day", wdmObjects->attrDay);
-    saveAttribute->SetAttribute("month", wdmObjects->attrMonth);
-    saveAttribute->SetAttribute("year", wdmObjects->attrYear);
+
+    Assert(saveAttribute != nullptr);
+    Attribute& attr = *saveAttribute;
+
+    attr["brnAlpha"] = brnAlpha;
+    attr["deleteAlpha"] = deleteAlpha;
+    attr["liveTime"] = liveTime;
+    attr["x"] = mtx.Pos().x;
+    attr["y"] = mtx.Pos().y;
+    attr["z"] = mtx.Pos().z;
+    attr["ax"] = ax;
+    attr["ay"] = ay;
+    attr["az"] = az;
+    attr["dltAx"] = dltAx;
+    attr["dltAz"] = dltAz;
+    attr["speed"] = speed;
+    attr["turnspd"] = turnspd;
+    attr["kMaxSpeed"] = kMaxSpeed;
+    attr["rspeed_x"] = rspeed.x;
+    attr["rspeed_y"] = rspeed.y;
+    attr["rspeed_z"] = rspeed.z;
+    attr["slope"] = slope;
+    attr["enc_id"] = type;
+    attr["isEnableKill"] = isEnableKill;
+    attr["isEnemy"] = isEnemy;
+    attr["killMe"] = killMe;
+    attr["canSkip"] = canSkip;
+    attr["sec"] = wdmObjects->attrSec;
+    attr["min"] = wdmObjects->attrMin;
+    attr["hour"] = wdmObjects->attrHour;
+    attr["day"] = wdmObjects->attrDay;
+    attr["month"] = wdmObjects->attrMonth;
+    attr["year"] = wdmObjects->attrYear;
 }
 
-void WdmEnemyShip::SetSaveAttribute(ATTRIBUTES *save)
+void WdmEnemyShip::SetSaveAttribute(Attribute *save)
 {
     saveAttribute = save;
     if (!saveAttribute)
         return;
-    brnAlpha = saveAttribute->GetAttributeAsFloat("brnAlpha", brnAlpha);
-    deleteAlpha = saveAttribute->GetAttributeAsFloat("deleteAlpha", deleteAlpha);
-    liveTime = saveAttribute->GetAttributeAsFloat("liveTime", liveTime);
-    mtx.Pos().x = saveAttribute->GetAttributeAsFloat("x", mtx.Pos().x);
-    mtx.Pos().y = saveAttribute->GetAttributeAsFloat("y", mtx.Pos().y);
-    mtx.Pos().z = saveAttribute->GetAttributeAsFloat("z", mtx.Pos().z);
-    ax = saveAttribute->GetAttributeAsFloat("ax", ax);
-    ay = saveAttribute->GetAttributeAsFloat("ay", ay);
-    az = saveAttribute->GetAttributeAsFloat("az", az);
-    dltAx = saveAttribute->GetAttributeAsFloat("dltAx", dltAx);
-    dltAz = saveAttribute->GetAttributeAsFloat("dltAz", dltAz);
-    speed = saveAttribute->GetAttributeAsFloat("speed", speed);
-    turnspd = saveAttribute->GetAttributeAsFloat("turnspd", turnspd);
-    kMaxSpeed = saveAttribute->GetAttributeAsFloat("kMaxSpeed", kMaxSpeed);
-    rspeed.x = saveAttribute->GetAttributeAsFloat("rspeed_x", rspeed.x);
-    rspeed.y = saveAttribute->GetAttributeAsFloat("rspeed_y", rspeed.y);
-    rspeed.z = saveAttribute->GetAttributeAsFloat("rspeed_z", rspeed.z);
-    slope = saveAttribute->GetAttributeAsFloat("slope", slope);
-    type = saveAttribute->GetAttributeAsDword("enc_id", type);
-    isEnableKill = saveAttribute->GetAttributeAsDword("isEnableKill", isEnableKill) != 0;
-    isEnemy = saveAttribute->GetAttributeAsDword("isEnemy", isEnemy) != 0;
-    killMe = saveAttribute->GetAttributeAsDword("killMe", killMe) != 0;
-    canSkip = saveAttribute->GetAttributeAsDword("canSkip", canSkip) != 0;
+
+    Assert(saveAttribute != nullptr);
+    Attribute& attr = *saveAttribute;
+
+    attr["brnAlpha"].get_to(brnAlpha);
+    attr["deleteAlpha"].get_to(deleteAlpha);
+    attr["liveTime"].get_to(liveTime);
+    attr["x"].get_to(mtx.Pos().x);
+    attr["y"].get_to(mtx.Pos().y);
+    attr["z"].get_to(mtx.Pos().z);
+    attr["ax"].get_to(ax);
+    attr["ay"].get_to(ay);
+    attr["az"].get_to(az);
+    attr["dltAx"].get_to(dltAx);
+    attr["dltAz"].get_to(dltAz);
+    attr["speed"].get_to(speed);
+    attr["turnspd"].get_to(turnspd);
+    attr["kMaxSpeed"].get_to(kMaxSpeed);
+    attr["rspeed_x"].get_to(rspeed.x);
+    attr["rspeed_y"].get_to(rspeed.y);
+    attr["rspeed_z"].get_to(rspeed.z);
+    attr["slope"].get_to(slope);
+    attr["enc_id"].get_to(type);
+    attr["isEnableKill"].get_to(isEnableKill);
+    attr["isEnemy"].get_to(isEnemy);
+    attr["killMe"].get_to(killMe);
+    attr["canSkip"].get_to(canSkip);
     if (killMe)
     {
         deleteAlpha = 0.001f;
@@ -353,7 +361,7 @@ void WdmEnemyShip::DeleteUpdate()
 {
     if (!saveAttribute)
         return;
-    const char *pnt = saveAttribute->GetAttribute("needDelete");
+    const char *pnt = saveAttribute->getProperty("needDelete").get<const char*>();
     if (pnt)
     {
         isEnableKill = true;
@@ -420,7 +428,7 @@ const char *WdmEnemyShip::GetAttributeName() const
 {
     if (saveAttribute)
     {
-        return saveAttribute->GetThisName();
+        return saveAttribute->getName().data();
     }
     return "";
 }

@@ -230,13 +230,10 @@ void XINTERFACE::SetDevice()
 
     if (AttributesPointer)
     {
-        auto *pA = AttributesPointer->GetAttributeClass("GameTime");
-        if (pA)
-        {
-            m_dwGameTimeSec = pA->GetAttributeAsDword("sec", 0);
-            m_dwGameTimeMin = pA->GetAttributeAsDword("min", 0);
-            m_dwGameTimeHour = pA->GetAttributeAsDword("hour", 0);
-        }
+        const Attribute &attr = AttributesPointer->getProperty("GameTime");
+        attr["sec"].get_to(m_dwGameTimeSec, 0);
+        attr["min"].get_to(m_dwGameTimeMin, 0);
+        attr["hour"].get_to(m_dwGameTimeHour, 0);
     }
 
     m_pMouseWeel = core.Event("evGetMouseWeel");
@@ -412,10 +409,10 @@ void XINTERFACE::Realize(uint32_t Delta_Time)
             for (auto i = 0; i < m_nStringQuantity; i++)
                 if (m_stringes[i].bUsed)
                 {
-                    auto *tmps = tmpAttr->GetAttribute(m_stringes[i].sStringName);
+                    const auto tmpStr = tmpAttr->getProperty(m_stringes[i].sStringName).get<const char*>();
                     pRenderService->ExtPrint(m_stringes[i].fontNum, m_stringes[i].dwColor, 0, m_stringes[i].eAlignment,
                                              true, m_stringes[i].fScale, dwScreenWidth, dwScreenHeight, m_stringes[i].x,
-                                             m_stringes[i].y, "%s", tmpAttr->GetAttribute(m_stringes[i].sStringName));
+                                             m_stringes[i].y, "%s", tmpStr);
                 }
     }
 
@@ -792,7 +789,7 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     case MSG_INTERFACE_SET_TITLE_STRINGS: {
         char param[256];
         message.String(sizeof(param) - 1, param);
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         int tn = message.Long();
         if (m_pNodes == nullptr)
             break;
@@ -803,15 +800,15 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     break;
     case MSG_INTERFACE_CHECK_QRECORD: {
         char param[256];
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         if (pA == nullptr)
             break;
         message.String(sizeof(param) - 1, param);
-        char *pText = pA->GetAttribute("Text");
+        const char *pText = pA->getProperty("Text").get<const char*>();
         if (pText == nullptr)
             break;
         char subText[256];
-        char *pCur = pText;
+        const char *pCur = pText;
         while (true)
         {
             subText[0] = 0;
@@ -830,7 +827,7 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     case MSG_INTERFACE_INIT_QTEXT_SHOW: {
         char param[256];
         message.String(sizeof(param) - 1, param);
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         int qn = message.Long();
         if (m_pNodes == nullptr)
             break;
@@ -998,7 +995,7 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     case MSG_INTERFACE_SAVEOPTIONS: {
         char param[256];
         message.String(sizeof(param) - 1, param);
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         SaveOptionsFile(param, pA);
     }
     break;
@@ -1006,7 +1003,7 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     case MSG_INTERFACE_LOADOPTIONS: {
         char param[256];
         message.String(sizeof(param) - 1, param);
-        ATTRIBUTES *pA = message.AttributePointer();
+        Attribute *pA = message.AttributePointer();
         LoadOptionsFile(param, pA);
     }
     break;
@@ -1027,35 +1024,58 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
     break;
 
     case MSG_INTERFACE_GETTIME: {
-        char param[1024];
-        message.String(sizeof(param) - 1, param);
-        char param2[1024];
-        SYSTEMTIME systTime;
-        if (param[0] == 0)
-            GetLocalTime(&systTime);
-        else
-        {
-            WIN32_FIND_DATA wfd;
-            HANDLE h = fio->_FindFirstFile(param, &wfd);
-            if (h != INVALID_HANDLE_VALUE)
-            {
-                FILETIME ftime;
-                FileTimeToLocalFileTime(&wfd.ftLastWriteTime, &ftime);
-                FileTimeToSystemTime(&ftime, &systTime);
-                fio->_FindClose(h);
-            }
-            else
-                GetLocalTime(&systTime);
-        }
-        sprintf_s(param2, "%2.2d:%2.2d:%2.2d", systTime.wHour, systTime.wMinute, systTime.wSecond);
-        VDATA *pvdat = message.ScriptVariablePointer();
-        if (pvdat)
-            pvdat->Set(param2);
+        message.Move2Start();
+        auto msg = message.Convert();
+        if (msg.CheckFormat("lsee")) {
+            const auto& [_, param, timeEntity, dateEntity] = msg.GetParams<"lsee">();
 
-        sprintf_s(param2, "%2.2d.%2.2d.%d", systTime.wDay, systTime.wMonth, systTime.wYear);
-        pvdat = message.ScriptVariablePointer();
-        if (pvdat)
-            pvdat->Set(param2);
+            SYSTEMTIME systTime;
+            if (param[0] == 0)
+                GetLocalTime(&systTime);
+            else
+            {
+                WIN32_FIND_DATA wfd;
+                HANDLE h = fio->_FindFirstFile(param.c_str(), &wfd);
+                if (h != INVALID_HANDLE_VALUE)
+                {
+                    FILETIME ftime;
+                    FileTimeToLocalFileTime(&wfd.ftLastWriteTime, &ftime);
+                    FileTimeToSystemTime(&ftime, &systTime);
+                    fio->_FindClose(h);
+                }
+                else
+                    GetLocalTime(&systTime);
+            }
+
+            const std::string time = fmt::format("{:2d}:{:2d}:{:2d}", systTime.wHour, systTime.wMinute, systTime.wSecond);
+            timeEntity->Set(time.c_str());
+            const std::string date = fmt::format("{:2d}:{:2d}:{:4d}", systTime.wDay, systTime.wMonth, systTime.wYear);
+            dateEntity->Set(time.c_str());
+        }
+        else if (msg.CheckFormat("lse")) {
+            const auto& [_, param, timeEntity] = msg.GetParams<"lse">();
+
+            SYSTEMTIME systTime;
+            if (param[0] == 0)
+                GetLocalTime(&systTime);
+            else
+            {
+                WIN32_FIND_DATA wfd;
+                HANDLE h = fio->_FindFirstFile(param.c_str(), &wfd);
+                if (h != INVALID_HANDLE_VALUE)
+                {
+                    FILETIME ftime;
+                    FileTimeToLocalFileTime(&wfd.ftLastWriteTime, &ftime);
+                    FileTimeToSystemTime(&ftime, &systTime);
+                    fio->_FindClose(h);
+                }
+                else
+                    GetLocalTime(&systTime);
+            }
+
+            const std::string time = fmt::format("{:2d}:{:2d}:{:2d}", systTime.wHour, systTime.wMinute, systTime.wSecond);
+            timeEntity->Set(time.c_str());
+        }
     }
     break;
 
@@ -2215,9 +2235,8 @@ void XINTERFACE::DoControl()
         //
         if (AttributesPointer)
         {
-            ATTRIBUTES *pA = AttributesPointer->GetAttributeClass("KeyStates");
-            if (pA)
-                pA->SetAttributeUseDword("shift", curKS.shiftButton);
+            Attribute &pA = AttributesPointer->getProperty("KeyStates");
+            pA["shift"] = curKS.shiftButton;
         }
 
         if (oldKeyState.dwKeyCode == -1)
@@ -2398,14 +2417,9 @@ void XINTERFACE::MouseMove()
             m_pCurToolTipNode->CheckByToolTip(fXMousePos + m_lXMouse, fYMousePos + m_lYMouse);
     }
 
-    ATTRIBUTES *pA = AttributesPointer->GetAttributeClass("mousepos");
-    if (!pA)
-        pA = AttributesPointer->CreateSubAClass(AttributesPointer, "mousepos");
-    if (pA)
-    {
-        pA->SetAttributeUseFloat("x", fXMousePos + m_lXMouse);
-        pA->SetAttributeUseFloat("y", fYMousePos + m_lYMouse);
-    }
+    Attribute &pA = AttributesPointer->getProperty("mousepos");
+    pA["x"] = fXMousePos + m_lXMouse;
+    pA["y"] = fYMousePos + m_lYMouse;
 
     if (fXMousePos < m_fpMouseOutZoneOffset.x)
         fOutX += fXMousePos - m_fpMouseOutZoneOffset.x;
@@ -2652,14 +2666,14 @@ bool XINTERFACE::SetCurNode(CINODE *pNod)
     return true;
 }
 
-uint32_t XINTERFACE::AttributeChanged(ATTRIBUTES *patr)
+uint32_t XINTERFACE::AttributeChanged(Attribute &patr)
 {
-    if (patr != nullptr && patr->GetParent() != nullptr && patr->GetParent()->GetParent() != nullptr)
+    if (patr != nullptr && patr.getParent() != nullptr && patr.getParent()->getParent() != nullptr)
     {
-        const char *sParentName = patr->GetParent()->GetParent()->GetThisName();
+        const char *sParentName = patr.getParent()->getParent()->getName().data();
         if (sParentName == nullptr || _stricmp(sParentName, "pictures") != 0)
             return 0;
-        const char *sImageName = patr->GetParent()->GetThisName();
+        const char *sImageName = patr.getParent()->getName().data();
         if (sImageName == nullptr)
             return 0;
         // find this picture
@@ -2689,39 +2703,39 @@ uint32_t XINTERFACE::AttributeChanged(ATTRIBUTES *patr)
             pImList->next = m_imgLists;
             m_imgLists = pImList;
         }
-        if (patr->GetThisName() == nullptr)
+        if (patr.getName().data() == nullptr)
             return 0;
         // set picture
-        if (_stricmp(patr->GetThisName(), "pic") == 0)
+        if (_stricmp(patr.getName().data(), "pic") == 0)
         {
             STORM_DELETE(pImList->sPicture);
-            if (patr->GetThisAttr() != nullptr)
+            if (patr.get<const char*>() != nullptr)
             {
-                const auto len = strlen(patr->GetThisAttr()) + 1;
+                const auto len = strlen(patr.get<const char*>()) + 1;
                 if ((pImList->sPicture = new char[len]) == nullptr)
                 {
                     throw std::exception("Allocate memory error");
                 }
-                memcpy(pImList->sPicture, patr->GetThisAttr(), len);
+                memcpy(pImList->sPicture, patr.get<const char*>(), len);
             }
             if (pImList->sImageListName == nullptr)
                 return 0;
             pImList->imageID = pPictureService->GetImageNum(pImList->sImageListName, pImList->sPicture);
         }
         // set texture
-        if (_stricmp(patr->GetThisName(), "tex") == 0)
+        if (_stricmp(patr.getName().data(), "tex") == 0)
         {
             if (pImList->sImageListName != nullptr)
                 pPictureService->ReleaseTextureID(pImList->sImageListName);
             STORM_DELETE(pImList->sImageListName);
-            if (patr->GetThisAttr() != nullptr)
+            if (patr.get<const char*>() != nullptr)
             {
-                const auto len = strlen(patr->GetThisAttr()) + 1;
+                const auto len = strlen(patr.get<const char*>()) + 1;
                 if ((pImList->sImageListName = new char[len]) == nullptr)
                 {
                     throw std::exception("Allocate memory error");
                 }
-                memcpy(pImList->sImageListName, patr->GetThisAttr(), len);
+                memcpy(pImList->sImageListName, patr.get<const char*>(), len);
             }
             pImList->idTexture = pPictureService->GetTextureID(pImList->sImageListName);
             pImList->imageID = pPictureService->GetImageNum(pImList->sImageListName, pImList->sPicture);
@@ -2882,7 +2896,7 @@ char *XINTERFACE::SaveFileFind(long saveNum, char *buffer, size_t bufSize, long 
         WIN32_FIND_DATA wfd;
         // get file name for searching (whith full path)
         char param[1024];
-        char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+        const char *sSavePath = AttributesPointer->getProperty("SavePath").get<const char*>();
         if (sSavePath == nullptr)
             sprintf_s(param, "*");
         else
@@ -2939,10 +2953,10 @@ bool XINTERFACE::NewSaveFileName(char *fileName) const
     if (fileName == nullptr)
         return false;
 
-    char *sSavePath;
+    const char *sSavePath;
     char param[256];
     WIN32_FIND_DATA wfd;
-    sSavePath = AttributesPointer->GetAttribute("SavePath");
+    sSavePath = AttributesPointer->getProperty("SavePath").get<const char*>();
 
     if (sSavePath == nullptr)
         sprintf_s(param, "%s", fileName);
@@ -2962,7 +2976,7 @@ void XINTERFACE::DeleteSaveFile(char *fileName)
     if (fileName == nullptr)
         return;
     char param[256];
-    char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+    const char *sSavePath = AttributesPointer->getProperty("SavePath").get<const char*>();
     WIN32_FIND_DATA wfd;
     if (sSavePath == nullptr)
         sprintf_s(param, "%s", fileName);
@@ -3204,21 +3218,21 @@ void XINTERFACE::IncrementGameTime(uint32_t dwDeltaTime)
         core.Event("ievent_SetGameTime", "lll", m_dwGameTimeHour, m_dwGameTimeMin, m_dwGameTimeSec);
 }
 
-char *AddAttributesStringsToBuffer(char *inBuffer, char *prevStr, ATTRIBUTES *pAttr)
+char *AddAttributesStringsToBuffer(char *inBuffer, const char *prevStr, Attribute *pAttr)
 {
     size_t prevLen = 0;
     if (prevStr != nullptr)
         prevLen = strlen(prevStr) + _countof(".") - 1;
 
-    const int q = pAttr->GetAttributesNum();
+    const int q = std::distance(pAttr->begin(), pAttr->end());
     for (int k = 0; k < q; k++)
     {
-        ATTRIBUTES *pA = pAttr->GetAttributeClass(k);
-        if (pA == nullptr)
+        Attribute &pA = *(pAttr->begin() + k);
+        if (pA.empty())
             continue;
 
-        const char *attrVal = pA->GetThisAttr();
-        const char *attrName = pA->GetThisName();
+        const char *attrVal = pA.get<const char*>();
+        const char *attrName = pA.getName().data();
         if (attrName && attrVal && attrVal[0])
         {
             int nadd = _countof("\n") - 1 + strlen(attrName) + _countof("=") - 1 + strlen(attrVal) + 1;
@@ -3251,21 +3265,20 @@ char *AddAttributesStringsToBuffer(char *inBuffer, char *prevStr, ATTRIBUTES *pA
             inBuffer = pNew;
         }
 
-        if (pA->GetAttributesNum() != 0)
+        if (!pA.empty())
         {
-            char param[512];
-            param[0] = 0;
+            std::string param;
             if (prevStr)
-                sprintf_s(param, "%s.", prevStr);
-            strcat_s(param, pA->GetThisName());
-            inBuffer = AddAttributesStringsToBuffer(inBuffer, param, pA);
+                param = std::string(prevStr) + ".";
+            param += pA.getName();
+            inBuffer = AddAttributesStringsToBuffer(inBuffer, param.c_str(), &pA);
         }
     }
 
     return inBuffer;
 }
 
-void XINTERFACE::SaveOptionsFile(char *fileName, ATTRIBUTES *pAttr)
+void XINTERFACE::SaveOptionsFile(char *fileName, Attribute *pAttr)
 {
     HANDLE fh;
     char FullPath[MAX_PATH];
@@ -3295,7 +3308,7 @@ void XINTERFACE::SaveOptionsFile(char *fileName, ATTRIBUTES *pAttr)
     fio->_CloseHandle(fh);
 }
 
-void XINTERFACE::LoadOptionsFile(char *fileName, ATTRIBUTES *pAttr)
+void XINTERFACE::LoadOptionsFile(char *fileName, Attribute *pAttr)
 {
     HANDLE fh;
     char FullPath[MAX_PATH];
@@ -3334,8 +3347,7 @@ void XINTERFACE::LoadOptionsFile(char *fileName, ATTRIBUTES *pAttr)
                 sscanf(pBuf, "%[^=]=%[^\n]", param1, param2);
                 if (param1[0] != '\0' && param2[0] != '\0')
                 {
-                    ATTRIBUTES *pA = pAttr->CreateSubAClass(pAttr, param1);
-                    pA->SetValue(param2);
+                    pAttr->getProperty(param1) = param2;
                 }
                 // pBuf += strlen(param1)+strlen(param2);
                 while (*pBuf && *pBuf != 13 && *pBuf != 10)
@@ -3430,7 +3442,7 @@ int XINTERFACE::LoadIsExist()
 
     WIN32_FIND_DATA wfd;
     char param[1024];
-    char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+    const char *sSavePath = AttributesPointer->getProperty("SavePath").get<const char*>();
     if (sSavePath == nullptr)
         sprintf_s(param, "*");
     else
@@ -3599,28 +3611,21 @@ uint64_t CONTROLS_CONTAINER::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-bool CONTROLS_CONTAINER::CreateConteinerList(ATTRIBUTES *pA)
+bool CONTROLS_CONTAINER::CreateConteinerList(Attribute *pA)
 {
     if (!pA)
         return false;
 
-    const int q = pA->GetAttributesNum();
-    for (int i = 0; i < q; i++)
-    {
-        ATTRIBUTES *pAttr = pA->GetAttributeClass(i);
-        if (!pAttr)
+    for (const Attribute &attr : *pA) {
+        if (attr.empty())
             continue;
-        const char *containerName = pAttr->GetThisName();
-        if (!containerName)
-            continue;
+        const char *containerName = attr.getName().data();
         AddContainer(containerName);
-        SetContainerLimitVal(containerName, static_cast<float>(atof(pAttr->GetThisAttr())));
+        SetContainerLimitVal(containerName, attr.get<float>());
 
-        const int cntSize = pAttr->GetAttributesNum();
-        for (int n = 0; n < cntSize; n++)
-        {
-            AddControlsToContainer(containerName, pAttr->GetAttributeName(n),
-                                   static_cast<float>(atof(pAttr->GetAttribute(n))));
+        for (const Attribute &attrChild : attr) {
+            AddControlsToContainer(containerName, attrChild.getName().data(),
+                                   attrChild.get<float>());
         }
     }
 

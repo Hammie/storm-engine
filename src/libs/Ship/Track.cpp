@@ -111,33 +111,32 @@ ShipTracks::ShipTrack::~ShipTrack()
 bool ShipTracks::ShipTrack::Update(SHIP_BASE *pShip)
 {
     auto *pAChar = pShip->GetACharacter();
-    Assert(pAChar);
-    auto *pATrack = pAChar->FindAClass(pAChar, "Ship.Track");
-    auto *pATrack1 = pAChar->FindAClass(pAChar, "Ship.Track1");
-    auto *pATrack2 = pAChar->FindAClass(pAChar, "Ship.Track2");
+    Assert(pAChar != nullptr);
+    const Attribute &attr = *pAChar;
+    const Attribute &aTrack = attr["Ship"]["Track"];
+    const Attribute &attrTrack1 = attr["Ship"]["Track1"];
+    const Attribute &attrTrack2 = attr["Ship"]["Track2"];
 
-    if (!pATrack || !pATrack1 || !pATrack2)
+    if (!aTrack["Enable"].get<bool>())
         return false;
-    if (!pATrack->GetAttributeAsDword("Enable", 0))
-        return false;
 
-    fTrackDistance = pATrack->GetAttributeAsFloat("TrackDistance");
-    fUP1 = pATrack->GetAttributeAsFloat("WaveHeight1");
-    fUP2 = pATrack->GetAttributeAsFloat("WaveHeight2");
+    aTrack["TrackDistance"].get_to(fTrackDistance);
+    aTrack["WaveHeight1"].get_to(fUP1);
+    aTrack["WaveHeight2"].get_to(fUP2);
 
-    const std::string sTex1 = pATrack1->GetAttribute("Texture");
-    fZStart1 = pATrack1->GetAttributeAsFloat("ZStart");
-    fLifeTime1 = pATrack1->GetAttributeAsFloat("LifeTime");
-    sscanf(pATrack1->GetAttribute("Width"), "%f, %f", &fWidth11, &fWidth12);
-    sscanf(pATrack1->GetAttribute("Speed"), "%f, %f", &fSpeed11, &fSpeed12);
-    fTrackStep1 = pATrack1->GetAttributeAsFloat("TrackWidthSteps");
+    const auto sTex1 = attrTrack1["Texture"].get<std::string>();
+    attrTrack1["ZStart"].get_to(fZStart1);
+    attrTrack1["LifeTime"].get_to(fLifeTime1);
+    sscanf(attrTrack1["Width"].get<const char*>(), "%f, %f", &fWidth11, &fWidth12);
+    sscanf(attrTrack1["Speed"].get<const char*>(), "%f, %f", &fSpeed11, &fSpeed12);
+    attrTrack1["TrackWidthSteps"].get_to(fTrackStep1);
 
-    const std::string sTex2 = pATrack2->GetAttribute("Texture");
-    fZStart2 = pATrack2->GetAttributeAsFloat("ZStart");
-    fLifeTime2 = pATrack2->GetAttributeAsFloat("LifeTime");
-    sscanf(pATrack2->GetAttribute("Width"), "%f, %f", &fWidth21, &fWidth22);
-    sscanf(pATrack2->GetAttribute("Speed"), "%f, %f", &fSpeed21, &fSpeed22);
-    fTrackStep2 = pATrack2->GetAttributeAsFloat("TrackWidthSteps");
+    const auto sTex2 = attrTrack2["Texture"].get<std::string>();
+    attrTrack2["ZStart"].get_to(fZStart2);
+    attrTrack2["LifeTime"].get_to(fLifeTime2);
+    sscanf(attrTrack2["Width"].get<const char*>(), "%f, %f", &fWidth21, &fWidth22);
+    sscanf(attrTrack2["Speed"].get<const char*>(), "%f, %f", &fSpeed21, &fSpeed22);
+    attrTrack2["TrackWidthSteps"].get_to(fTrackStep2);
 
     dwTrackStep1 = static_cast<long>(fTrackStep1);
     dwTrackStep2 = static_cast<long>(fTrackStep2);
@@ -424,9 +423,9 @@ void ShipTracks::ShipTrack::Reset()
     aTrack2.clear();
 }
 
-uint32_t ShipTracks::AttributeChanged(ATTRIBUTES *pA)
+uint32_t ShipTracks::AttributeChanged(Attribute &pA)
 {
-    if (*pA == "ResetTracks")
+    if (pA == "ResetTracks")
     {
         for (long i = 0; i < aShips.size(); i++)
         {

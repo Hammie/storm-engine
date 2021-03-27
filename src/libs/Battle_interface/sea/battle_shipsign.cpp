@@ -110,7 +110,7 @@ void BIShipIcon::Draw()
                             // shadow
                             static_cast<long>(m_Ship[n].pntPos.x) + m_SailorFontOffset.x,
                             static_cast<long>(m_Ship[n].pntPos.y) + m_SailorFontOffset.y, "%d",
-                            static_cast<long>(atof(m_Ship[n].pASailorQuantity->GetThisAttr())));
+                            static_cast<long>(m_Ship[n].pASailorQuantity->get<float>()));
         }
         if (!m_Ship[n].sShipName.empty())
         {
@@ -126,15 +126,13 @@ void BIShipIcon::Draw()
         m_pCommandList->Draw();
 }
 
-void BIShipIcon::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
+void BIShipIcon::Init(Attribute *pRoot, Attribute *pA)
 {
     long n;
-    char *pcTmp;
-    char param[256];
 
     m_pARoot = pRoot;
 
-    m_pCommandList = new BIShipCommandList(m_idHostEntity, pRoot, m_pRS);
+    m_pCommandList = new BIShipCommandList(m_idHostEntity, *pRoot, m_pRS);
 
     // default value
     m_nBackTextureID = -1;
@@ -186,109 +184,145 @@ void BIShipIcon::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
 
     if (pA)
     {
-        pcTmp = pA->GetAttribute("sailorfontid");
-        if (pcTmp)
-            m_idSailorFont = m_pRS->LoadFont(pcTmp);
-        m_dwSailorFontColor = pA->GetAttributeAsDword("sailorfontcolor", m_dwSailorFontColor);
-        m_fSailorFontScale = pA->GetAttributeAsFloat("sailorfontscale", m_fSailorFontScale);
+        const Attribute& attr = *pA;
 
-        // ugeen 150920
-        pcTmp = pA->GetAttribute("sailorfontoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%ld,%ld", &m_SailorFontOffset.x, &m_SailorFontOffset.y);
+        m_idSailorFont = BIUtils::GetFontIDFromAttr(attr, "sailorfontid", m_pRS).value_or(-1);
 
-        pcTmp = pA->GetAttribute("shipnamefontid");
-        if (pcTmp)
-            m_idShipNameFont = m_pRS->LoadFont(pcTmp);
-        m_dwShipNameFontColor = pA->GetAttributeAsDword("shipnamefontcolor", m_dwShipNameFontColor);
-        m_fShipNameFontScale = pA->GetAttributeAsFloat("shipnamefontscale", m_fShipNameFontScale);
-
-        pcTmp = pA->GetAttribute("shipnamefontoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%ld,%ld", &m_ShipNameFontOffset.x, &m_ShipNameFontOffset.y);
-
-        pcTmp = pA->GetAttribute("backtexturename");
-        if (pcTmp)
-            m_nBackTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwBackColor = pA->GetAttributeAsDword("backcolor", m_dwBackColor);
-        pcTmp = pA->GetAttribute("backuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rBackUV.left, &m_rBackUV.top, &m_rBackUV.right, &m_rBackUV.bottom);
-        pcTmp = pA->GetAttribute("backoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackOffset.x, &m_pntBackOffset.y);
-        pcTmp = pA->GetAttribute("backiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntBackIconSize.x, &m_pntBackIconSize.y);
-
-        pcTmp = pA->GetAttribute("shipstatetexturename");
-        if (pcTmp)
-            m_nShipStateTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwShipStateColor = pA->GetAttributeAsDword("shipstatecolor", m_dwShipStateColor);
-        pcTmp = pA->GetAttribute("shiphpuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rShipHPUV.left, &m_rShipHPUV.top, &m_rShipHPUV.right, &m_rShipHPUV.bottom);
-        pcTmp = pA->GetAttribute("shiphpoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipHPOffset.x, &m_pntShipHPOffset.y);
-        pcTmp = pA->GetAttribute("shiphpiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipHPIconSize.x, &m_pntShipHPIconSize.y);
-        pcTmp = pA->GetAttribute("shipspuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rShipSPUV.left, &m_rShipSPUV.top, &m_rShipSPUV.right, &m_rShipSPUV.bottom);
-        pcTmp = pA->GetAttribute("shipspoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipSPOffset.x, &m_pntShipSPOffset.y);
-        pcTmp = pA->GetAttribute("shipspiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipSPIconSize.x, &m_pntShipSPIconSize.y);
-
-        pcTmp = pA->GetAttribute("shipclasstexturename");
-        if (pcTmp)
-            m_nShipClassTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwShipClassColor = pA->GetAttributeAsDword("shipclasscolor", m_dwShipClassColor);
-        pcTmp = pA->GetAttribute("shipclassuv");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f,%f,%f", &m_rShipClassUV.left, &m_rShipClassUV.top, &m_rShipClassUV.right,
-                   &m_rShipClassUV.bottom);
-        pcTmp = pA->GetAttribute("shipclassoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipClassOffset.x, &m_pntShipClassOffset.y);
-        pcTmp = pA->GetAttribute("shipclassiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipClassIconSize.x, &m_pntShipClassIconSize.y);
-        pcTmp = pA->GetAttribute("gunchargeprogress");
-        if (pcTmp)
-        {
-            do
-            {
-                m_aClassProgress.push_back(BIUtils::GetFromStr_Float((const char *&)pcTmp, 0.f));
-            } while (pcTmp[0]);
+        if (const Attribute& property = attr.getProperty("sailorfontcolor"); !property.empty()) {
+            property.get_to(m_dwSailorFontColor);
         }
 
-        m_nCommandListVerticalOffset = pA->GetAttributeAsDword("commandlistverticaloffset");
+        if (const Attribute& property = attr.getProperty("sailorfontscale"); !property.empty()) {
+            property.get_to(m_fSailorFontScale);
+        }
 
-        pcTmp = pA->GetAttribute("shiptexturename");
-        if (pcTmp)
-            m_nShipTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwShipColor = pA->GetAttributeAsDword("shipcolor", m_dwShipColor);
+        // ugeen 150920
+        if (const Attribute& property = attr.getProperty("sailorfontoffset"); !property.empty()) {
+            property.get_to(m_SailorFontOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipnamefontid"); !property.empty()) {
+            property.get_to(m_idShipNameFont);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipnamefontcolor"); !property.empty()) {
+            property.get_to(m_dwShipNameFontColor);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipnamefontscale"); !property.empty()) {
+            property.get_to(m_fShipNameFontScale);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipnamefontoffset"); !property.empty()) {
+            property.get_to(m_ShipNameFontOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("backtexturename"); !property.empty()) {
+            m_nBackTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "backtexturename");
+        }
+
+        if (const Attribute& property = attr.getProperty("backcolor"); !property.empty()) {
+            property.get_to(m_dwBackColor);
+        }
+
+        if (const Attribute& property = attr.getProperty("backuv"); !property.empty()) {
+            property.get_to(m_rBackUV);
+        }
+
+        if (const Attribute& property = attr.getProperty("backoffset"); !property.empty()) {
+            property.get_to(m_pntBackOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("backiconsize"); !property.empty()) {
+            property.get_to(m_pntBackIconSize);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipstatetexturename"); !property.empty()) {
+            m_nShipStateTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "shipstatetexturename");
+        }
+
+        if (const Attribute& property = attr.getProperty("shipstatetexturename"); !property.empty()) {
+            property.get_to(m_dwShipStateColor);
+        }
+
+        if (const Attribute& property = attr.getProperty("shiphpuv"); !property.empty()) {
+            property.get_to(m_rShipHPUV);
+        }
+
+        if (const Attribute& property = attr.getProperty("shiphpoffset"); !property.empty()) {
+            property.get_to(m_pntShipHPOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shiphpiconsize"); !property.empty()) {
+            property.get_to(m_pntShipHPIconSize);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipspuv"); !property.empty()) {
+            property.get_to(m_rShipSPUV);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipspoffset"); !property.empty()) {
+            property.get_to(m_pntShipSPOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipspiconsize"); !property.empty()) {
+            property.get_to(m_pntShipSPIconSize);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipclasstexturename"); !property.empty()) {
+            m_nShipClassTextureID = BIUtils::GetTextureFromAttr(m_pRS, attr, "shipclasstexturename");
+        }
+
+        if (const Attribute& property = attr.getProperty("shipclasscolor"); !property.empty()) {
+            property.get_to(m_dwShipClassColor);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipclassuv"); !property.empty()) {
+            property.get_to(m_rShipClassUV);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipclassoffset"); !property.empty()) {
+            property.get_to(m_pntShipClassOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipclassiconsize"); !property.empty()) {
+            property.get_to(m_pntShipClassIconSize);
+        }
+
+        if (const Attribute& property = attr.getProperty("gunchargeprogress"); !property.empty()) {
+            property.get_to(m_aClassProgress);
+        }
+
+        if (const Attribute& property = attr.getProperty("commandlistverticaloffset"); !property.empty()) {
+            property.get_to(m_nCommandListVerticalOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shiptexturename"); !property.empty()) {
+            property.get_to(m_nShipTextureID);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipcolor"); !property.empty()) {
+            property.get_to(m_dwShipColor);
+        }
+
         /*pcTmp = pA->GetAttribute( "shipuv" );
         if( pcTmp ) sscanf( pcTmp, "%f,%f,%f,%f", &m_rShipClassUV.left,&m_rShipClassUV.top,
         &m_rShipClassUV.right,&m_rShipClassUV.bottom );*/
-        pcTmp = pA->GetAttribute("shipoffset");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipOffset.x, &m_pntShipOffset.y);
-        pcTmp = pA->GetAttribute("shipiconsize");
-        if (pcTmp)
-            sscanf(pcTmp, "%f,%f", &m_pntShipIconSize.x, &m_pntShipIconSize.y);
+
+        if (const Attribute& property = attr.getProperty("shipoffset"); !property.empty()) {
+            property.get_to(m_pntShipOffset);
+        }
+
+        if (const Attribute& property = attr.getProperty("shipiconsize"); !property.empty()) {
+            property.get_to(m_pntShipIconSize);
+        }
 
         for (n = 0; n < MAX_SHIP_QUANTITY; n++)
         {
-            sprintf_s(param, sizeof(param), "iconoffset%d", n + 1);
-            pcTmp = pA->GetAttribute(param);
-            if (pcTmp)
-                sscanf(pcTmp, "%f,%f", &m_Ship[n].pntPos.x, &m_Ship[n].pntPos.y);
+            const std::string param = fmt::format("iconoffset{}", n + 1);
+            if (const Attribute& property = attr.getProperty(param); !property.empty()) {
+                property.get_to<FPOINT>(m_Ship[n].pntPos);
+            }
         }
     }
 
@@ -463,7 +497,7 @@ long BIShipIcon::CalculateShipQuantity()
         m_Ship[0].nMaxSP = pSD->maxSP;
         m_Ship[0].nShipClass = GetShipClass(m_Ship[0].nCharacterIndex);
         GetShipUVFromPictureIndex(pSD->pictureNum, m_Ship[0].rUV);
-        m_Ship[0].sShipName = pSD->pAttr ? pSD->pAttr->GetAttribute("name") : "noname";
+        m_Ship[0].sShipName = pSD->pAttr ? pSD->pAttr->getProperty("name").get<std::string_view>("noname") : "noname";
         m_nShipQuantity++;
     }
 
@@ -481,7 +515,7 @@ long BIShipIcon::CalculateShipQuantity()
             m_Ship[m_nShipQuantity].nMaxSP = pSD->maxSP;
             m_Ship[m_nShipQuantity].nShipClass = GetShipClass(m_Ship[m_nShipQuantity].nCharacterIndex);
             GetShipUVFromPictureIndex(pSD->pictureNum, m_Ship[m_nShipQuantity].rUV);
-            m_Ship[m_nShipQuantity].sShipName = pSD->pAttr ? pSD->pAttr->GetAttribute("name") : "noname";
+            m_Ship[m_nShipQuantity].sShipName = pSD->pAttr ? pSD->pAttr->getProperty("name").get<std::string_view>("noname") : "noname";
             m_nShipQuantity++;
         }
     }
@@ -719,21 +753,23 @@ long BIShipIcon::GetCurrentCommandMode() const
     return m_nCommandMode;
 }
 
-ATTRIBUTES *BIShipIcon::GetSailorQuantityAttribute(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD)
+Attribute *BIShipIcon::GetSailorQuantityAttribute(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD)
 {
     if (!pSD || !pSD->pAttr)
         return nullptr;
-    ATTRIBUTES *pA = pSD->pAttr->GetAttributeClass("Crew");
-    if (pA)
-        pA = pA->GetAttributeClass("quantity");
-    return pA;
+
+    if (Attribute& crew = pSD->pAttr->getProperty("Crew"); !crew.empty()) {
+        return &(crew.getProperty("quantity"));
+    }
+
+    return nullptr;
 }
 
 float BIShipIcon::GetProgressShipHP(long nShipNum) const
 {
     if (m_Ship[nShipNum].nMaxHP <= 0.f && !m_Ship[nShipNum].pAShip)
         return 0.f;
-    float f = m_Ship[nShipNum].pAShip->GetAttributeAsFloat("HP", 0.f) / m_Ship[nShipNum].nMaxHP;
+    float f = m_Ship[nShipNum].pAShip->getProperty("HP").get<float>(0.f) / m_Ship[nShipNum].nMaxHP;
     if (f < 0.f)
         f = 0.f;
     if (f > 1.f)
@@ -745,7 +781,7 @@ float BIShipIcon::GetProgressShipSP(long nShipNum)
 {
     if (m_Ship[nShipNum].nMaxSP <= 0.f && !m_Ship[nShipNum].pAShip)
         return 0.f;
-    float f = m_Ship[nShipNum].pAShip->GetAttributeAsFloat("SP", 0.f) / m_Ship[nShipNum].nMaxSP;
+    float f = m_Ship[nShipNum].pAShip->getProperty("SP").get<float>(0.f) / m_Ship[nShipNum].nMaxSP;
     if (f < 0.f)
         f = 0.f;
     if (f > 1.f)

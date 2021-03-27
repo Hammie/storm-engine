@@ -36,22 +36,22 @@ void Astronomy::Realize(uint32_t Delta_Time)
     Planets.Realize(dDeltaTime, dHour);
 }
 
-uint32_t Astronomy::AttributeChanged(ATTRIBUTES *pA)
+uint32_t Astronomy::AttributeChanged(Attribute &pA)
 {
-    if (*pA == "isDone")
+    if (pA == "isDone")
     {
         Stars.Init(AttributesPointer);
         Planets.Init(AttributesPointer);
         return 0;
     }
 
-    if (*pA == "TimeScale")
+    if (pA == "TimeScale")
     {
-        dTimeScale = static_cast<double>(pA->GetAttributeAsFloat());
+        pA.get_to(dTimeScale);
         return 0;
     }
 
-    if (*pA == "TimeUpdate")
+    if (pA == "TimeUpdate")
     {
         Planets.TimeUpdate(AttributesPointer);
         Stars.TimeUpdate(AttributesPointer);

@@ -9,7 +9,7 @@ class CXPICTURES
     CXPICTURES();
     ~CXPICTURES();
 
-    void SetPictures(ATTRIBUTES *pAttributes);
+    void SetPictures(Attribute *pAttributes);
     void ChangePicture(char *sAttributeName, char *sNewImageName);
     void ReleaseAllPictures();
 };

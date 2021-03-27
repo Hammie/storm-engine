@@ -117,7 +117,7 @@ class RAIN : public Entity
     bool CreateState(ENTITY_STATE_GEN *state_gen);
     bool LoadState(ENTITY_STATE *state);
     uint64_t ProcessMessage(MESSAGE &message) override;
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {

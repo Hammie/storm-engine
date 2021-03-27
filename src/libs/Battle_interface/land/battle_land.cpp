@@ -141,27 +141,24 @@ void BATTLE_LAND_INTERFACE::EndShow()
 
 void BATTLE_LAND_INTERFACE::SetShowParameters()
 {
-    auto *const pA = AttributesPointer ? AttributesPointer->GetAttributeClass("Parameters") : nullptr;
-    m_bShowCommandos = 0 != BIUtils::GetLongFromAttr(pA, "DoShowCommandos", true);
+    m_bShowCommandos = true;
+    if (AttributesPointer && AttributesPointer->hasProperty("Parameters")) {
+        AttributesPointer->getProperty("Parameters").get_to(m_bShowCommandos, true);
+    }
 
     m_pManSign = new BIManSign(GetId(), m_pRS);
     Assert(m_pManSign);
-    m_pManSign->Init(AttributesPointer,
-                     (AttributesPointer ? AttributesPointer->GetAttributeClass("ManSign") : nullptr));
+    m_pManSign->Init(AttributesPointer, (AttributesPointer ? &(AttributesPointer->getProperty("ManSign")) : nullptr));
 
-    BIUtils::FillTextInfoArray(m_pRS, AttributesPointer ? AttributesPointer->GetAttributeClass("textinfo") : nullptr,
+    BIUtils::FillTextInfoArray(m_pRS, AttributesPointer ? &(AttributesPointer->getProperty("textinfo")) : nullptr,
                                m_TextInfo);
 
-    m_Images.Init(m_pRS, AttributesPointer ? AttributesPointer->GetAttributeClass("imageslist") : nullptr);
+    m_Images.Init(m_pRS, AttributesPointer ? &(AttributesPointer->getProperty("imageslist")) : nullptr);
 }
 
 void BATTLE_LAND_INTERFACE::UpdateCommandos() const
 {
-    auto *pA = AttributesPointer ? AttributesPointer->GetAttributeClass("data") : nullptr;
-    if (pA)
-        pA = pA->GetAttributeClass("icons");
-    if (!pA)
-        return;
+
 }
 
 void BATTLE_LAND_INTERFACE::UpdateAlarm()

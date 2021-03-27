@@ -7,7 +7,7 @@ AIHelper Helper;
 VDX9RENDER *AIHelper::pRS = nullptr;
 ISLAND_BASE *AIHelper::pIsland = nullptr;
 COLLIDE *AIHelper::pCollide = nullptr;
-ATTRIBUTES *AIHelper::pASeaCameras = nullptr;
+Attribute *AIHelper::pASeaCameras = nullptr;
 
 float AIHelper::fGravity = 9.81f;
 
@@ -51,7 +51,7 @@ bool AIHelper::Init() const
     return true;
 }
 
-ATTRIBUTES *AIHelper::GetMainCharacter(ATTRIBUTES *pACharacter)
+Attribute *AIHelper::GetMainCharacter(Attribute *pACharacter)
 {
     /*uint32_t dwIdx = aCharacters.Find(pACharacter);
     if (dwIdx != INVALID_ARRAY_INDEX)
@@ -61,7 +61,7 @@ ATTRIBUTES *AIHelper::GetMainCharacter(ATTRIBUTES *pACharacter)
     return it != aCharacters.end() ? aMainCharacters[it - aCharacters.begin()] : nullptr;
 }
 
-void AIHelper::AddCharacter(ATTRIBUTES *pACharacter, ATTRIBUTES *pAMainCharacter)
+void AIHelper::AddCharacter(Attribute *pACharacter, Attribute *pAMainCharacter)
 {
     // uint32_t dwIdx = aCharacters.Find(pACharacter);
     // if (dwIdx != INVALID_ARRAY_INDEX)
@@ -101,7 +101,7 @@ void AIHelper::CalculateRelations()
             }
 }
 
-uint32_t AIHelper::FindIndex(ATTRIBUTES *pACharacter) const
+uint32_t AIHelper::FindIndex(Attribute *pACharacter) const
 {
     const auto it = std::find(aCharacters.begin(), aCharacters.end(), pACharacter);
     return it != aCharacters.end() ? it - aCharacters.begin() : -1;
@@ -113,7 +113,7 @@ uint32_t *AIHelper::GetRelation(uint32_t x, uint32_t y) const
     return &pRelations[x + y * dwRelationSize];
 }
 
-uint32_t AIHelper::GetRelationSafe(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
+uint32_t AIHelper::GetRelationSafe(Attribute *pA1, Attribute *pA2) const
 {
     Assert(pA1 && pA2);
     if (dwRelationSize == 0)
@@ -127,7 +127,7 @@ uint32_t AIHelper::GetRelationSafe(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
     return *GetRelation(dw1, dw2);
 }
 
-uint32_t AIHelper::GetRelation(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
+uint32_t AIHelper::GetRelation(Attribute *pA1, Attribute *pA2) const
 {
     Assert(pA1 && pA2);
     const auto dw1 = FindIndex(pA1);
@@ -137,22 +137,22 @@ uint32_t AIHelper::GetRelation(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
     return *GetRelation(dw1, dw2);
 }
 
-bool AIHelper::isFriend(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
+bool AIHelper::isFriend(Attribute *pA1, Attribute *pA2) const
 {
     return GetRelation(pA1, pA2) == RELATION_FRIEND;
 }
 
-bool AIHelper::isEnemy(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
+bool AIHelper::isEnemy(Attribute *pA1, Attribute *pA2) const
 {
     return GetRelation(pA1, pA2) == RELATION_ENEMY;
 }
 
-bool AIHelper::isNeutral(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const
+bool AIHelper::isNeutral(Attribute *pA1, Attribute *pA2) const
 {
     return GetRelation(pA1, pA2) == RELATION_NEUTRAL;
 }
 
-VAI_INNEROBJ *AIHelper::FindAIInnerObj(ATTRIBUTES *pACharacter)
+VAI_INNEROBJ *AIHelper::FindAIInnerObj(Attribute *pACharacter)
 {
     VAI_INNEROBJ *pObj = nullptr;
     if (AIFort::pAIFort)

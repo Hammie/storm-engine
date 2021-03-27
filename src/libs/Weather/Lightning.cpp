@@ -173,13 +173,13 @@ void LIGHTNING::CalcFlashPower(lightning_t *pL) const
     pL->fPower = fPower;
 }
 
-uint32_t LIGHTNING::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t LIGHTNING::AttributeChanged(Attribute &pAttribute)
 {
     // std::string sTextureName;
 
-    auto *const pParent = pAttribute->GetParent();
+    const Attribute* pParent = pAttribute.getParent();
 
-    if (*pAttribute == "Clear")
+    if (pAttribute == "Clear")
     {
         aLightnings.clear();
         return 0;
@@ -187,35 +187,35 @@ uint32_t LIGHTNING::AttributeChanged(ATTRIBUTES *pAttribute)
 
     if (*pParent == "Flash")
     {
-        if (*pAttribute == "Texture")
+        if (pAttribute == "Texture")
         {
             if (iFlashTexture >= 0)
                 pRS->TextureRelease(iFlashTexture);
-            iFlashTexture = pRS->TextureCreate(pAttribute->GetThisAttr());
+            iFlashTexture = pRS->TextureCreate(pAttribute.get<const char*>());
             return 0;
         }
         return 0;
     }
 
-    if (*pAttribute == "Texture")
+    if (pAttribute == "Texture")
     {
         if (iLightningTexture >= 0)
             pRS->TextureRelease(iLightningTexture);
-        iLightningTexture = pRS->TextureCreate(pAttribute->GetThisAttr());
+        iLightningTexture = pRS->TextureCreate(pAttribute.get<const char*>());
         return 0;
     }
 
-    if (*pAttribute == "SubTexX")
+    if (pAttribute == "SubTexX")
     {
-        dwSubTexX = pAttribute->GetAttributeAsDword();
+        pAttribute.get_to(dwSubTexX);
         return 0;
     }
-    if (*pAttribute == "SubTexY")
+    if (pAttribute == "SubTexY")
     {
-        dwSubTexY = pAttribute->GetAttributeAsDword();
+        pAttribute.get_to(dwSubTexY);
         return 0;
     }
-    if (*pAttribute == "isDone")
+    if (pAttribute == "isDone")
         return 0;
     return 0;
 }

@@ -670,11 +670,9 @@ bool Character::Init()
     // The sea
     sea = EntityManager::GetEntityId("sea");
     // save the identifier
-    const char *id = nullptr;
+    const char *id = "<none>";
     if (AttributesPointer)
-        id = AttributesPointer->GetAttribute("id");
-    if (!id)
-        id = "<none>";
+        id = AttributesPointer->getProperty("id").get<const char*>("<none>");
     const long len = strlen(id) + 1;
     characterID = new char[len];
     strcpy_s(characterID, len, id);
@@ -808,23 +806,23 @@ uint64_t Character::ProcessMessage(MESSAGE &message)
 }
 
 // Changing an attribute
-uint32_t Character::AttributeChanged(ATTRIBUTES *apnt)
+uint32_t Character::AttributeChanged(Attribute &apnt)
 {
     if (deadName || liveValue < 0)
         return 0;
-    if (!apnt || !apnt->GetThisName())
+    if (apnt.empty())
         return 0;
-    if (_stricmp(apnt->GetThisName(), "model") == 0)
+    if (_stricmp(apnt.getName().data(), "model") == 0)
     {
         SetSignModel();
     }
-    else if (_stricmp(apnt->GetThisName(), "technique") == 0)
+    else if (_stricmp(apnt.getName().data(), "technique") == 0)
     {
         SetSignTechnique();
     }
-    else if (_stricmp(apnt->GetThisName(), "id") == 0 && apnt->GetParent() && !apnt->GetParent()->GetParent())
+    else if (_stricmp(apnt.getName().data(), "id") == 0 && apnt.getParent() && !apnt.getParent()->getParent())
     {
-        const char *id = apnt->GetThisAttr();
+        const char *id = apnt.get<const char*>();
         if (!id)
             id = "<none>";
         delete characterID;
@@ -832,63 +830,62 @@ uint32_t Character::AttributeChanged(ATTRIBUTES *apnt)
         characterID = new char[len];
         strcpy_s(characterID, len, id);
     }
-    else if (_stricmp(apnt->GetThisName(), "actions") == 0 && apnt->GetParent() && !apnt->GetParent()->GetParent())
+    else if (_stricmp(apnt.getName().data(), "actions") == 0 && apnt.getParent() && !apnt.getParent()->getParent())
     {
         // Reading move actions
         // Simple
-        walk.ChangeName(apnt->GetAttribute("walk"));
-        backwalk.ChangeName(apnt->GetAttribute("backwalk"));
-        run.ChangeName(apnt->GetAttribute("run"));
-        backrun.ChangeName(apnt->GetAttribute("backrun"));
-        stsUp.ChangeName(apnt->GetAttribute("stsUp"));
-        stsDown.ChangeName(apnt->GetAttribute("stsDown"));
-        stsUpBack.ChangeName(apnt->GetAttribute("stsUpBack"));
-        stsDownBack.ChangeName(apnt->GetAttribute("stsDownBack"));
-        stsUpRun.ChangeName(apnt->GetAttribute("stsUpRun"));
-        stsDownRun.ChangeName(apnt->GetAttribute("stsDownRun"));
-        stsUpRunBack.ChangeName(apnt->GetAttribute("stsUpRunBack"));
-        stsDownRunBack.ChangeName(apnt->GetAttribute("stsDownRunBack"));
-        swim.ChangeName(apnt->GetAttribute("swim"));
-        nfhit.ChangeName(apnt->GetAttribute("HitNoFight"));
+        walk.ChangeName(apnt["walk"].get<const char*>());
+        backwalk.ChangeName(apnt["backwalk"].get<const char*>());
+        run.ChangeName(apnt["run"].get<const char*>());
+        backrun.ChangeName(apnt["backrun"].get<const char*>());
+        stsUp.ChangeName(apnt["stsUp"].get<const char*>());
+        stsDown.ChangeName(apnt["stsDown"].get<const char*>());
+        stsUpBack.ChangeName(apnt["stsUpBack"].get<const char*>());
+        stsDownBack.ChangeName(apnt["stsDownBack"].get<const char*>());
+        stsUpRun.ChangeName(apnt["stsUpRun"].get<const char*>());
+        stsDownRun.ChangeName(apnt["stsDownRun"].get<const char*>());
+        stsUpRunBack.ChangeName(apnt["stsUpRunBack"].get<const char*>());
+        stsDownRunBack.ChangeName(apnt["stsDownRunBack"].get<const char*>());
+        swim.ChangeName(apnt["swim"].get<const char*>());
+        nfhit.ChangeName(apnt["HitNoFight"].get<const char*>());
         // Reading turn actions
-        actionTurnL.ChangeName(apnt->GetAttribute("turnLeft"));
-        actionTurnR.ChangeName(apnt->GetAttribute("turnRight"));
+        actionTurnL.ChangeName(apnt["turnLeft"].get<const char*>());
+        actionTurnR.ChangeName(apnt["turnRight"].get<const char*>());
         // read the actions of death
-        ATTRIBUTES *at = apnt->FindAClass(apnt, "dead");
-        if (at)
+        Attribute& dead = apnt["dead"];
+        if (!dead.empty())
         {
-            const long num = at->GetAttributesNum();
             long j = 0;
-            for (long i = 0; i < num && j < sizeof(actionDead) / sizeof(ActionDead); i++)
-            {
-                const char *iname = at->GetAttribute(i);
-                if (!iname || !iname[0])
-                    continue;
-                if (j == 0)
-                    actionDead[j++].ChangeName(iname);
-                else
-                    actionDead[j++].SetName(iname);
+            for (const Attribute& attr : dead) {
+                if (j >= sizeof(actionDead) / sizeof(actionDead)) {
+                    break;
+                }
+                if (!attr.empty()) {
+                    if (j == 0)
+                        actionDead[j++].ChangeName(attr.get<const char*>());
+                    else
+                        actionDead[j++].SetName(attr.get<const char*>());
+                }
             }
             if (j < 1)
                 j = 1;
             numActionDead = j;
         }
-        // Reading simple standing actions
-        at = apnt->FindAClass(apnt, "idle");
-        if (at)
+        Attribute& idle = apnt["idle"];
+        if (!idle.empty())
         {
             curIdleIndex = -1;
-            const long num = at->GetAttributesNum();
             long j = 0;
-            for (long i = 0; i < num && j < sizeof(actionIdle) / sizeof(ActionIdle); i++)
-            {
-                const char *iname = at->GetAttribute(i);
-                if (!iname || !iname[0])
-                    continue;
-                if (j == 0)
-                    actionIdle[j++].ChangeName(iname);
-                else
-                    actionIdle[j++].SetName(iname);
+            for (const Attribute& attr : idle) {
+                if (j >= sizeof(actionIdle) / sizeof(ActionIdle)) {
+                    break;
+                }
+                if (!attr.empty()) {
+                    if (j == 0)
+                        actionIdle[j++].ChangeName(attr.get<const char*>());
+                    else
+                        actionIdle[j++].SetName(attr.get<const char*>());
+                }
             }
             if (j < 1)
                 j = 1;
@@ -896,71 +893,71 @@ uint32_t Character::AttributeChanged(ATTRIBUTES *apnt)
         }
         // Reading actions in battle mode
         // Moving
-        fightwalk.ChangeName(apnt->GetAttribute("fightwalk"));
-        fightbackwalk.ChangeName(apnt->GetAttribute("fightbackwalk"));
-        fightrun.ChangeName(apnt->GetAttribute("fightrun"));
-        fightbackrun.ChangeName(apnt->GetAttribute("fightbackrun"));
+        fightwalk.ChangeName(apnt["fightwalk"].get<const char*>());
+        fightbackwalk.ChangeName(apnt["fightbackwalk"].get<const char*>());
+        fightrun.ChangeName(apnt["fightrun"].get<const char*>());
+        fightbackrun.ChangeName(apnt["fightbackrun"].get<const char*>());
         // Direct attacks
-        ReadFightActions(apnt->FindAClass(apnt, "attack_fast"), attackFast, numAttackFast);
-        ReadFightActions(apnt->FindAClass(apnt, "attack_force"), attackForce, numAttackForce);
-        ReadFightActions(apnt->FindAClass(apnt, "attack_round"), attackRound, numAttackRound);
-        ReadFightActions(apnt->FindAClass(apnt, "attack_break"), attackBreak, numAttackBreak);
+        ReadFightActions(&apnt["attack_fast"], attackFast, numAttackFast);
+        ReadFightActions(&apnt["attack_force"], attackForce, numAttackForce);
+        ReadFightActions(&apnt["attack_round"], attackRound, numAttackRound);
+        ReadFightActions(&apnt["attack_break"], attackBreak, numAttackBreak);
         long fnt1, fnt2;
-        ReadFightActions(apnt->FindAClass(apnt, "attack_feint"), attackFeint, fnt1);
-        ReadFightActions(apnt->FindAClass(apnt, "attack_feintc"), attackFeintC, fnt2);
+        ReadFightActions(&apnt["attack_feint"], attackFeint, fnt1);
+        ReadFightActions(&apnt["attack_feintc"], attackFeintC, fnt2);
         numAttackFeint = std::min(fnt1, fnt2);
-        ReadFightActions(apnt->FindAClass(apnt, "hit_attack"), hit, numHits);
-        ReadFightActions(apnt->FindAClass(apnt, "parry"), parry, numParry);
+        ReadFightActions(&apnt["hit_attack"], hit, numHits);
+        ReadFightActions(&apnt["parry"], parry, numParry);
         // Shot
-        shot.ChangeName(apnt->GetAttribute("shot"));
+        shot.ChangeName(apnt["shot"].get<const char*>());
         // Hits
-        hitFeint.ChangeName(apnt->GetAttribute("hit_feint"));
-        hitParry.ChangeName(apnt->GetAttribute("hit_parry"));
-        hitRound.ChangeName(apnt->GetAttribute("hit_round"));
-        hitFire.ChangeName(apnt->GetAttribute("hit_shot"));
-        block.ChangeName(apnt->GetAttribute("block"));
-        blockaxe.ChangeName(apnt->GetAttribute("block_axe"));
-        blockhit.ChangeName(apnt->GetAttribute("blockhit"));
-        blockaxehit.ChangeName(apnt->GetAttribute("blockaxehit"));
-        blockbreak.ChangeName(apnt->GetAttribute("blockbreak"));
-        recoil.ChangeName(apnt->GetAttribute("recoil"));
-        strafe_l.ChangeName(apnt->GetAttribute("strafeleft"));
-        strafe_r.ChangeName(apnt->GetAttribute("straferight"));
+        hitFeint.ChangeName(apnt["hit_feint"].get<const char*>());
+        hitParry.ChangeName(apnt["hit_parry"].get<const char*>());
+        hitRound.ChangeName(apnt["hit_round"].get<const char*>());
+        hitFire.ChangeName(apnt["hit_shot"].get<const char*>());
+        block.ChangeName(apnt["block"].get<const char*>());
+        blockaxe.ChangeName(apnt["block_axe"].get<const char*>());
+        blockhit.ChangeName(apnt["blockhit"].get<const char*>());
+        blockaxehit.ChangeName(apnt["blockaxehit"].get<const char*>());
+        blockbreak.ChangeName(apnt["blockbreak"].get<const char*>());
+        recoil.ChangeName(apnt["recoil"].get<const char*>());
+        strafe_l.ChangeName(apnt["strafeleft"].get<const char*>());
+        strafe_r.ChangeName(apnt["straferight"].get<const char*>());
         // read the actions of death
-        at = apnt->FindAClass(apnt, "fightdead");
-        if (at)
+        Attribute& fightdead = apnt["fightdead"];
+        if (!fightdead.empty())
         {
-            const long num = at->GetAttributesNum();
             long j = 0;
-            for (long i = 0; i < num && j < sizeof(actionFightDead) / sizeof(ActionDead); i++)
-            {
-                const char *iname = at->GetAttribute(i);
-                if (!iname || !iname[0])
-                    continue;
-                if (j == 0)
-                    actionFightDead[j++].ChangeName(iname);
-                else
-                    actionFightDead[j++].SetName(iname);
+            for (const Attribute& attr : fightdead) {
+                if (j >= sizeof(actionFightDead) / sizeof(ActionDead)) {
+                    break;
+                }
+                if (!attr.empty()) {
+                    if (j == 0)
+                        actionFightDead[j++].ChangeName(attr.get<const char*>());
+                    else
+                        actionFightDead[j++].SetName(attr.get<const char*>());
+                }
             }
             if (j < 1)
                 j = 1;
             numActionFightDead = j;
         }
         // Standing
-        at = apnt->FindAClass(apnt, "fightidle");
-        if (at)
+        Attribute& fightidle = apnt["fightidle"];
+        if (!fightidle.empty())
         {
-            const long num = at->GetAttributesNum();
             long j = 0;
-            for (long i = 0; i < num && j < sizeof(actionFightIdle) / sizeof(ActionIdle); i++)
-            {
-                const char *iname = at->GetAttribute(i);
-                if (!iname || !iname[0])
-                    continue;
-                if (j == 0)
-                    actionFightIdle[j++].ChangeName(iname);
-                else
-                    actionFightIdle[j++].SetName(iname);
+            for (const Attribute& attr : fightidle) {
+                if (j >= sizeof(actionFightIdle) / sizeof(ActionIdle)) {
+                    break;
+                }
+                if (!attr.empty()) {
+                    if (j == 0)
+                        actionFightIdle[j++].ChangeName(attr.get<const char*>());
+                    else
+                        actionFightIdle[j++].SetName(attr.get<const char*>());
+                }
             }
             if (j < 1)
                 j = 1;
@@ -976,14 +973,11 @@ uint32_t Character::AttributeChanged(ATTRIBUTES *apnt)
 
 void Character::SetSignModel()
 {
-    ATTRIBUTES *apnt = AttributesPointer->FindAClass(AttributesPointer, "quest.questflag.model");
-    const char *signModelName = "";
-    if (apnt)
-    {
-        signModelName = apnt->GetThisAttr();
-    }
-    if (!signModelName)
-        signModelName = "";
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    const Attribute& apnt = attr["quest"]["questflag"]["model"];
+    const char *signModelName = apnt.get<const char*>("");
     if (signName == signModelName)
     {
         return;
@@ -1029,14 +1023,14 @@ void Character::SetSignModel()
 
 void Character::SetSignTechnique()
 {
-    // set technique
-    ATTRIBUTES *pATechnique = AttributesPointer->FindAClass(AttributesPointer, "quest.questflag.technique");
-    if (!pATechnique)
-        return;
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
 
-    char *pcTechniqueName = pATechnique->GetThisAttr();
-    if (!pcTechniqueName)
+    const Attribute& pATechnique = attr["quest"]["questflag"]["technique"];
+    if (pATechnique.empty()) {
         return;
+    }
+    const char *pcTechniqueName = pATechnique.get<const char*>();
 
     if (signTechniqueName == pcTechniqueName)
         return;
@@ -1045,24 +1039,24 @@ void Character::SetSignTechnique()
     core.Send_Message(sign, "ls", MSG_MODEL_SET_TECHNIQUE, pcTechniqueName);
 }
 
-void Character::ReadFightActions(ATTRIBUTES *at, ActionCharacter actions[4], long &counter)
+void Character::ReadFightActions(Attribute *at, ActionCharacter actions[4], long &counter)
 {
     if (at)
     {
-        const long num = at->GetAttributesNum();
         long j = 0;
-        for (long i = 0; i < num && j < 4; i++)
-        {
-            const char *iname = at->GetAttribute(i);
-            if (!iname || !iname[0])
-                continue;
-            if (j == 0)
-            {
-                actions[j++].ChangeName(iname);
+        for (const Attribute& attr : *at) {
+            if (j >= 4) {
+                break;
             }
-            else
-            {
-                actions[j++].SetName(iname);
+            if (!attr.empty()) {
+                if (j == 0)
+                {
+                    actions[j++].ChangeName(attr.get<const char*>());
+                }
+                else
+                {
+                    actions[j++].SetName(attr.get<const char*>());
+                }
             }
         }
         if (j < 1)
@@ -1192,13 +1186,14 @@ void Character::SetSavePosition()
 {
     if (!AttributesPointer)
         return;
-    ATTRIBUTES *at = AttributesPointer->CreateSubAClass(AttributesPointer, "saveposition");
-    at->SetAttributeUseFloat("x", curPos.x);
-    at->SetAttributeUseFloat("y", curPos.y);
-    at->SetAttributeUseFloat("z", curPos.z);
-    at->SetAttributeUseFloat("ay", ay);
-    at = at->CreateSubAClass(at, "savedata");
-    SetSaveData(at);
+
+    Attribute& attr = *AttributesPointer;
+    Attribute& save_position= attr["saveposition"];
+    save_position["x"] = curPos.x;
+    save_position["y"] = curPos.y;
+    save_position["z"] = curPos.z;
+    save_position["ay"] = ay;
+    SetSaveData(&save_position["savedata"]);
 }
 
 // Delete positions for loading
@@ -1207,27 +1202,26 @@ void Character::DelSavePosition(bool isTeleport)
     if (!AttributesPointer)
         return;
 
-    ATTRIBUTES *aPosLocator = AttributesPointer->FindAClass(AttributesPointer, "location");
+    Attribute *aPosLocator = &AttributesPointer->getProperty("location");
     if (aPosLocator)
     {
-        const char *pcLocGroupName = aPosLocator->GetAttribute("group");
+        const char *pcLocGroupName = aPosLocator->getProperty("group").get<const char*>();
         if (pcLocGroupName && _stricmp(pcLocGroupName, "sit") == 0)
             isTeleport = false;
     }
 
-    ATTRIBUTES *at = AttributesPointer->FindAClass(AttributesPointer, "saveposition");
-    if (at)
+    Attribute& at = AttributesPointer->getProperty("saveposition");
+    if (!at.empty())
     {
         if (isTeleport)
         {
-            curPos.x = at->GetAttributeAsFloat("x", curPos.x);
-            curPos.y = at->GetAttributeAsFloat("y", curPos.y);
-            curPos.z = at->GetAttributeAsFloat("z", curPos.z);
-            ay = at->GetAttributeAsFloat("ay", ay);
-            Teleport(curPos.x, curPos.y, curPos.z, ay);
-            GetSaveData(at->FindAClass(at, "savedata"));
+            at["x"].get_to(curPos.x);
+            at["y"].get_to(curPos.y);
+            at["z"].get_to(curPos.z);
+            at["ay"].get_to(ay);
+            GetSaveData(&at["savedata"]);
         }
-        AttributesPointer->DeleteAttributeClassX(at);
+        at.clear();
     }
 }
 
@@ -3298,7 +3292,7 @@ uint32_t Character::zExMessage(MESSAGE &message)
             Character *chr = FindDialogCharacter();
             if (chr && chr->AttributesPointer)
             {
-                return chr->AttributesPointer->GetAttributeAsDword("index", -1);
+                return chr->AttributesPointer->getProperty("index").get<uint32_t>(-1);
             }
             return -1;
         }
@@ -3386,7 +3380,7 @@ uint32_t Character::zExMessage(MESSAGE &message)
             msg[sizeof(msg) - 1] = 0;
             if (AttributesPointer)
             {
-                const char *id = AttributesPointer->GetAttribute("id");
+                const char *id = AttributesPointer->getProperty("id").get<const char*>();
                 if (id)
                 {
                     if (strcmp(id, characterID) != 0)
@@ -5003,7 +4997,7 @@ void Character::FindNearCharacters(MESSAGE &message)
         // Array element
         auto *e = (VDATA *)array->GetArrayElement(i);
         // Setting fields
-        e->Set("index", fc.c->AttributesPointer->GetAttribute("index"));
+        e->Set("index", fc.c->AttributesPointer->getProperty("index").get<const char*>());
         sprintf_s(buf, "%f", sqrtf(fc.d2));
         e->Set("dist", buf);
         sprintf_s(buf, "%f", fc.dx);

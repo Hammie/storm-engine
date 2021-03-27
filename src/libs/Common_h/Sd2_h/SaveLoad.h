@@ -38,7 +38,7 @@ class CSaveLoad
 
             auto *pV = core.Event("SeaLoad_GetPointer", "sl", "seasave", -1);
             if (pV)
-                pV->GetAClass()->SetAttribute("save", pFFSave);
+                pV->GetAClass()->getProperty("save") = pFFSave;
 
             delete[] pFFSave;
         }
@@ -61,7 +61,7 @@ class CSaveLoad
         dwCurSize = 0;
 
         auto *pV = core.Event("SeaLoad_GetPointer", "sl", "seasave", -1);
-        auto *const pSave = pV->GetAClass()->GetAttribute("save");
+        auto *const pSave = pV->GetAClass()->getProperty("save").get<const char*>();
         uint32_t dwSize;
         char str[256];
         strncpy_s(str, pSave, 8);
@@ -145,12 +145,12 @@ class CSaveLoad
         Write((void *)pBuffer, dwSize);
     }
 
-    void SaveAPointer(const char *pStr, ATTRIBUTES *pAttribute)
+    void SaveAPointer(const char *pStr, Attribute *pAttribute)
     {
         long iIndex = -1;
         if (pAttribute)
         {
-            iIndex = static_cast<long>(pAttribute->GetAttributeAsDword("index", -1));
+            pAttribute->getProperty("index").get_to(iIndex, -1l);
         }
         SaveLong(iIndex);
         SaveString(pStr);
@@ -226,7 +226,7 @@ class CSaveLoad
         Read(reinterpret_cast<char *>(pBuffer), dwSize);
     }
 
-    ATTRIBUTES *LoadAPointer(const char *pStr)
+    Attribute *LoadAPointer(const char *pStr)
     {
         const auto iIndex = LoadLong();
         const auto str = LoadString();

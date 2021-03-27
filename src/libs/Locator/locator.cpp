@@ -36,7 +36,7 @@ bool LOCATOR::VerifyParticles()
     return static_cast<bool>(ParticlesID);
 }
 
-void LOCATOR::LocateForI_L2(ATTRIBUTES *pA, GEOS *g, GEOS::LABEL &label)
+void LOCATOR::LocateForI_L2(Attribute *pA, GEOS *g, GEOS::LABEL &label)
 {
     char name[16];
     GEOS::LABEL label2;
@@ -48,26 +48,26 @@ void LOCATOR::LocateForI_L2(ATTRIBUTES *pA, GEOS *g, GEOS::LABEL &label)
         return;
     }
 
-    pA = pA->CreateSubAClass(pA, "ships");
+    Attribute& aShips = pA->getProperty("ships");
 
     long n = 0;
     for (long stringIndex = 0; (stringIndex = g->FindLabelG(stringIndex, groupID)) >= 0; stringIndex++)
     {
         g->GetLabel(stringIndex, label2);
         sprintf_s(name, "l%d", n);
-        auto *pAA = pA->CreateSubAClass(pA, name);
-        pAA->SetAttributeUseFloat("x", label2.m[3][0]);
-        pAA->SetAttributeUseFloat("y", label2.m[3][1]);
-        pAA->SetAttributeUseFloat("z", label2.m[3][2]);
-        pAA->SetAttributeUseFloat("ay", atan2f(label2.m[2][0], label2.m[2][2]));
+        Attribute& attr = aShips[name];
+        attr["x"] = label2.m[3][0];
+        attr["y"] = label2.m[3][1];
+        attr["z"] = label2.m[3][2];
+        attr["ay"] = atan2f(label2.m[2][0], label2.m[2][2]);
         n++;
     }
 }
 
 void LOCATOR::LocateForI(VDATA *pData)
 {
-    ATTRIBUTES *pA;
-    ATTRIBUTES *pAA;
+    Attribute *pA;
+    Attribute *pAA;
     GEOS *g;
     GEOS::LABEL label;
     long i, n;
@@ -83,14 +83,15 @@ void LOCATOR::LocateForI(VDATA *pData)
         core.Trace("?void LOCATOR::LocateForI(VDATA * pData)");
         return;
     }
-    if (!pA->GetAttribute("locators"))
+    if (!pA->hasProperty("locators"))
     {
         core.Trace("?void LOCATOR::LocateForI(VDATA * pData)");
         return;
     }
     char sFileLocators[256];
-    auto *const pAFilesPath = pA->FindAClass(pA, "filespath.models");
-    sprintf_s(sFileLocators, "%s\\%s", (pAFilesPath) ? pAFilesPath->GetThisAttr() : "", pA->GetAttribute("locators"));
+
+    const Attribute& aModels = pA->getProperty("filespath")["models"];
+    sprintf_s(sFileLocators, "%s\\%s", aModels.get<const char*>(""), pA->getProperty("locators").get<const char*>());
     rs->SetLoadTextureEnable(false);
     g = gs->CreateGeometry(sFileLocators, "", 0);
     rs->SetLoadTextureEnable(true);
@@ -100,107 +101,100 @@ void LOCATOR::LocateForI(VDATA *pData)
         return;
     }
 
+    Attribute& aReload = pA->getProperty("reload");
+
     auto groupID = g->FindName("reload");
     if (groupID >= 0)
     {
         for (long i = 0; (i = g->FindLabelG(i, groupID)) >= 0; i++)
         {
             g->GetLabel(i, label);
-            pAA = pA->FindAClass(pA, "reload");
-            if (pAA)
-                for (n = 0; n < static_cast<long>(pAA->GetAttributesNum()); n++)
-                {
-                    if (pAA->GetAttributeClass(n))
+            if (!aReload.empty()) {
+                for (Attribute& attr : aReload) {
+                    if (!attr.hasProperty("name"))
                     {
-                        if (!pAA->GetAttributeClass(n)->GetAttribute("name"))
-                        {
-                            core.Trace("LOCATOR: no name");
-                            continue;
-                        }
-                        if (_stricmp(pAA->GetAttributeClass(n)->GetAttribute("name"), label.name) == 0)
-                        {
-                            pAA->GetAttributeClass(n)->SetAttributeUseFloat("x", label.m[3][0]);
-                            pAA->GetAttributeClass(n)->SetAttributeUseFloat("y", label.m[3][1]);
-                            pAA->GetAttributeClass(n)->SetAttributeUseFloat("z", label.m[3][2]);
-                            pAA->GetAttributeClass(n)->SetAttributeUseFloat("ay", atan2f(label.m[2][0], label.m[2][2]));
-                            LocateForI_L2(pAA->GetAttributeClass(n), g, label);
-                        }
+                        core.Trace("LOCATOR: no name");
+                        continue;
+                    }
+                    if (_stricmp(attr["name"].get<const char*>(), label.name) == 0)
+                    {
+                        attr["x"] = label.m[3][0];
+                        attr["y"] = label.m[3][1];
+                        attr["z"] = label.m[3][2];
+                        attr["ay"] = atan2f(label.m[2][0], label.m[2][2]);
+                        LocateForI_L2(&attr, g, label);
                     }
                 }
+            }
         }
     }
 
     // check for unfind reloads
-    pAA = pA->FindAClass(pA, "reload");
-    if (pAA)
-        for (n = 0; n < static_cast<long>(pAA->GetAttributesNum()); n++)
-        {
-            auto *pARC = pAA->GetAttributeClass(n);
-            if (!pARC->FindAClass(pARC, "x"))
+    if (!aReload.empty()) {
+        for (Attribute& attr : aReload) {
+            if (!attr.hasProperty("x"))
             {
-                core.Trace("LOCATOR: Can't find locator with name: %s, geo: %s", pARC->GetAttribute("name"),
-                           pA->GetAttribute("locators"));
+                core.Trace("LOCATOR: Can't find locator with name: %s, geo: %s", attr["name"].get<const char*>(),
+                           pA->getProperty("locators").get<const char*>());
+                continue;
+            }
+            if (_stricmp(attr["name"].get<const char*>(), label.name) == 0)
+            {
+                attr["x"] = label.m[3][0];
+                attr["y"] = label.m[3][1];
+                attr["z"] = label.m[3][2];
+                attr["ay"] = atan2f(label.m[2][0], label.m[2][2]);
+                LocateForI_L2(&attr, g, label);
             }
         }
+    }
 
     groupID = g->FindName("quest_ships");
     if (groupID >= 0)
     {
-        pAA = pA->FindAClass(pA, "Quest_ships");
-        if (!pAA)
-            pAA = pA->CreateAttribute("Quest_ships", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+        Attribute& aQuestShips = pA->getProperty("Quest_ships");
+        LocateForI_Locators(&aQuestShips, g, groupID, _XYZ_ | _AY_);
     }
 
     groupID = g->FindName("net_deathmatch");
     if (groupID >= 0)
     {
-        pAA = pA->CreateAttribute("net_deathmatch", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+        Attribute& aNetDeatchMatch = pA->getProperty("net_deathmatch");
+        LocateForI_Locators(&aNetDeatchMatch, g, groupID, _XYZ_ | _AY_);
     }
 
     groupID = g->FindName("net_team");
     if (groupID >= 0)
     {
-        pAA = pA->CreateAttribute("net_team", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+        Attribute &aNetTeam = pA->getProperty("net_team");
+        LocateForI_Locators(&aNetTeam, g, groupID, _XYZ_ | _AY_);
     }
 
     groupID = g->FindName("net_convoy");
     if (groupID >= 0)
     {
-        pAA = pA->CreateAttribute("net_convoy", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+        Attribute &aNetConvoy = pA->getProperty("net_convoy");
+        LocateForI_Locators(&aNetConvoy, g, groupID, _XYZ_ | _AY_);
     }
 
     groupID = g->FindName("net_fort");
     if (groupID >= 0)
     {
-        pAA = pA->CreateAttribute("net_fort", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+        Attribute &aNetFort = pA->getProperty("net_fort");
+        LocateForI_Locators(&aNetFort, g, groupID, _XYZ_ | _AY_);
     }
 
     groupID = g->FindName("fire");
     if (groupID >= 0)
     {
-        pAA = pA->FindAClass(pA, "fire");
-        if (!pAA)
-            pAA = pA->CreateAttribute("fire", "");
-        if (pAA)
-            LocateForI_Locators(pAA, g, groupID, _XYZ_);
+        Attribute &aFire = pA->getProperty("fire");
+        LocateForI_Locators(&aFire, g, groupID, _XYZ_);
     }
 
-    auto *pGA = pA->FindAClass(pA, "LoadGroup");
-    if (pGA)
-        for (n = 0; n < static_cast<long>(pGA->GetAttributesNum()); n++)
-        {
-            auto *const pARC = pGA->GetAttributeClass(n);
-            const char *pLoadGroupName = pARC->GetThisAttr();
+    Attribute &aLoadGroup = pA->getProperty("LoadGroup");
+    if (!aLoadGroup.empty())
+        for (Attribute &aGroupName : aLoadGroup) {
+            const char* pLoadGroupName = aGroupName.get<const char*>(nullptr);
             if (!pLoadGroupName)
                 continue;
 
@@ -208,34 +202,31 @@ void LOCATOR::LocateForI(VDATA *pData)
             if (groupID < 0)
                 continue;
 
-            pAA = pA->FindAClass(pA, pLoadGroupName);
-            if (!pAA)
-                pAA = pA->CreateAttribute(pLoadGroupName, "");
-            if (pAA)
-                LocateForI_Locators(pAA, g, groupID, _XYZ_ | _AY_);
+            Attribute& aGroup = pA->getProperty(pLoadGroupName);
+            LocateForI_Locators(&aGroup, g, groupID, _XYZ_ | _AY_);
         }
 
     delete g;
 }
 
-void LOCATOR::LocateForI_Locators(ATTRIBUTES *pA, GEOS *geo, long iGroupID, uint32_t dwFlags)
+void LOCATOR::LocateForI_Locators(Attribute *pA, GEOS *geo, long iGroupID, uint32_t dwFlags)
 {
     long i;
     GEOS::LABEL label;
-    ATTRIBUTES *pAA;
+    Attribute *pAA;
 
     for (i = 0; (i = geo->FindLabelG(i, iGroupID)) >= 0; i++)
     {
         geo->GetLabel(i, label);
-        pAA = pA->CreateSubAClass(pA, label.name);
+        Attribute& aLabel = pA->getProperty(label.name);
         if (dwFlags & _X_)
-            pAA->SetAttributeUseFloat("x", label.m[3][0]);
+            aLabel["x"] = label.m[3][0];
         if (dwFlags & _Y_)
-            pAA->SetAttributeUseFloat("y", label.m[3][1]);
+            aLabel["y"] = label.m[3][1];
         if (dwFlags & _Z_)
-            pAA->SetAttributeUseFloat("z", label.m[3][2]);
+            aLabel["z"] = label.m[3][2];
         if (dwFlags & _AY_)
-            pAA->SetAttributeUseFloat("ay", atan2f(label.m[2][0], label.m[2][2]));
+            aLabel["ay"] = atan2f(label.m[2][0], label.m[2][2]);
     }
 }
 
@@ -244,7 +235,7 @@ uint64_t LOCATOR::ProcessMessage(MESSAGE &message)
     long message_code;
     char name[MAX_PATH];
     GEOS::LABEL label;
-    ATTRIBUTES *pA;
+    Attribute *pA;
     char buffer[MAX_PATH];
 
     message_code = message.Long();
@@ -267,13 +258,14 @@ uint64_t LOCATOR::ProcessMessage(MESSAGE &message)
 
             if (pA)
             {
-                pA->SetAttributeUseFloat("x", label.m[3][0]);
-                pA->SetAttributeUseFloat("y", label.m[3][1]);
-                pA->SetAttributeUseFloat("z", label.m[3][2]);
-                pA->SetAttributeUseFloat("ay", atan2f(label.m[2][0], label.m[2][2]));
-                pA->SetAttributeUseFloat("vx", label.m[2][0]);
-                pA->SetAttributeUseFloat("vy", label.m[2][1]);
-                pA->SetAttributeUseFloat("vz", label.m[2][2]);
+                Attribute& attr = *pA;
+                attr["x"] = label.m[3][0];
+                attr["y"] = label.m[3][1];
+                attr["z"] = label.m[3][2];
+                attr["ay"] = atan2f(label.m[2][0], label.m[2][2]);
+                attr["vx"] = label.m[2][0];
+                attr["vy"] = label.m[2][1];
+                attr["vz"] = label.m[2][2];
             }
             stringIndex++;
             return 1;
@@ -290,13 +282,14 @@ uint64_t LOCATOR::ProcessMessage(MESSAGE &message)
             geo->GetLabel(stringIndex, label);
             if (pA)
             {
-                pA->SetAttributeUseFloat("x", label.m[3][0]);
-                pA->SetAttributeUseFloat("y", label.m[3][1]);
-                pA->SetAttributeUseFloat("z", label.m[3][2]);
-                pA->SetAttributeUseFloat("ay", atan2f(label.m[2][0], label.m[2][2]));
-                pA->SetAttributeUseFloat("vx", label.m[2][0]);
-                pA->SetAttributeUseFloat("vy", label.m[2][1]);
-                pA->SetAttributeUseFloat("vz", label.m[2][2]);
+                Attribute& attr = *pA;
+                attr["x"] = label.m[3][0];
+                attr["y"] = label.m[3][1];
+                attr["z"] = label.m[3][2];
+                attr["ay"] = atan2f(label.m[2][0], label.m[2][2]);
+                attr["vx"] = label.m[2][0];
+                attr["vy"] = label.m[2][1];
+                attr["vz"] = label.m[2][2];
             }
             stringIndex++;
             return 1;
@@ -359,7 +352,7 @@ uint64_t LOCATOR::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t LOCATOR::AttributeChanged(ATTRIBUTES *pA)
+uint32_t LOCATOR::AttributeChanged(Attribute &pA)
 {
     return 0;
 }

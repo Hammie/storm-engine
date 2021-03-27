@@ -9,42 +9,43 @@
 entid_t BIUtils::idBattleInterface;
 uint32_t BIUtils::g_dwBlinkColor;
 
-long BIUtils::GetLongFromAttr(ATTRIBUTES *pA, const char *name, long defVal)
+long BIUtils::GetLongFromAttr(const Attribute &pA, const char *name, long defVal)
 {
-    if (pA == nullptr || name == nullptr)
+    if (name == nullptr)
         return defVal;
-    return pA->GetAttributeAsDword(name, defVal);
+    return pA[name].get<long>(defVal);
 }
 
-float BIUtils::GetFloatFromAttr(ATTRIBUTES *pA, const char *name, float defVal)
+float BIUtils::GetFloatFromAttr(const Attribute &pA, const char *name, float defVal)
 {
-    if (pA == nullptr || name == nullptr)
+    if (name == nullptr)
         return defVal;
-    return pA->GetAttributeAsFloat(name, defVal);
+    return pA[name].get<float>(defVal);
 }
 
-bool BIUtils::ReadStringFromAttr(ATTRIBUTES *pA, const char *name, char *buf, long bufSize, const char *defVal)
+bool BIUtils::ReadStringFromAttr(const Attribute &pA, const char *name, char *buf, long bufSize, const char *defVal)
 {
     if (buf == nullptr || bufSize < 1)
         return false;
     buf[0] = 0;
-    const char *strGet;
+    std::string_view strGet;
     auto bRet = true;
-    if (pA == nullptr || (strGet = pA->GetAttribute(name)) == nullptr)
+    if (!pA.hasProperty(name))
     {
         strGet = defVal;
         bRet = false;
     }
+    pA.get_to(strGet);
 
     if (strGet != nullptr)
     {
-        if (static_cast<int>(strlen(strGet)) > bufSize - 1)
+        if (static_cast<int>(strGet.size()) > bufSize - 1)
         {
-            strncpy_s(buf, bufSize, strGet, bufSize - 1);
+            strncpy_s(buf, bufSize, strGet.data(), bufSize - 1);
             buf[bufSize - 1] = 0;
         }
         else
-            strcpy_s(buf, bufSize, strGet);
+            strcpy_s(buf, bufSize, strGet.data());
     }
     else
         bRet = false;
@@ -52,133 +53,159 @@ bool BIUtils::ReadStringFromAttr(ATTRIBUTES *pA, const char *name, char *buf, lo
     return bRet;
 }
 
-char *BIUtils::GetStringFromAttr(ATTRIBUTES *pA, const char *name, const char *defVal)
+const char *BIUtils::GetStringFromAttr(const Attribute &pA, const char *name, const char *defVal)
 {
-    if (pA == nullptr || name == nullptr)
+    if (name == nullptr)
         return (char *)defVal;
-    auto *const aVal = pA->GetAttribute(name);
-    if (aVal == nullptr)
-        return (char *)defVal;
-    return aVal;
+
+    if (const Attribute& property = pA.getProperty(name); !property.empty()) {
+        return property.get<std::string_view>().data();
+    }
+
+    return defVal;
 }
 
-long BIUtils::GetTextureFromAttr(VDX9RENDER *rs, ATTRIBUTES *pA, const char *sAttrName)
+long BIUtils::GetTextureFromAttr(VDX9RENDER *rs, const Attribute &pA, const char *sAttrName)
 {
-    if (!rs || !pA)
+    if (!rs)
         return -1;
-    auto *const sname = pA->GetAttribute(sAttrName);
-    if (!sname || sname[0] == 0)
-        return -1;
-    return rs->TextureCreate(sname);
-}
 
-bool BIUtils::ReadRectFromAttr(ATTRIBUTES *pA, const char *name, FRECT &rOut, FRECT &rDefault)
-{
-    rOut = rDefault;
-    if (pA && name)
-    {
-        auto *const pcStr = pA->GetAttribute(name);
-        if (pcStr)
-        {
-            sscanf(pcStr, "%f,%f,%f,%f", &rOut.left, &rOut.top, &rOut.right, &rOut.bottom);
-            return true;
-        }
+    if (const Attribute& property = pA.getProperty(sAttrName); !property.empty()) {
+        return rs->TextureCreate(property.get<std::string_view>().data());
     }
-    return false;
-}
 
-bool BIUtils::ReadRectFromAttr(ATTRIBUTES *pA, const char *name, RECT &rOut, RECT &rDefault)
-{
-    rOut = rDefault;
-    if (pA && name)
-    {
-        auto *const pcStr = pA->GetAttribute(name);
-        if (pcStr)
-        {
-            sscanf(pcStr, "%d,%d,%d,%d", &rOut.left, &rOut.top, &rOut.right, &rOut.bottom);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool BIUtils::ReadPosFromAttr(ATTRIBUTES *pA, const char *name, float &fX, float &fY, float fXDef, float fYDef)
-{
-    fX = fXDef;
-    fY = fYDef;
-    if (pA && name)
-    {
-        auto *const pcStr = pA->GetAttribute(name);
-        if (pcStr)
-        {
-            sscanf(pcStr, "%f,%f", &fX, &fY);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool BIUtils::ReadPosFromAttr(ATTRIBUTES *pA, const char *name, long &nX, long &nY, long nXDef, long nYDef)
-{
-    nX = nXDef;
-    nY = nYDef;
-    if (pA && name)
-    {
-        char *pcStr = pA->GetAttribute(name);
-        if (pcStr)
-        {
-            sscanf(pcStr, "%d,%d", &nX, &nY);
-            return true;
-        }
-    }
-    return false;
-}
-
-long BIUtils::GetAlignmentFromAttr(ATTRIBUTES *pA, const char *name, long nDefAlign)
-{
-    if (pA && name)
-    {
-        char *pcTmp = pA->GetAttribute(name);
-        if (pcTmp)
-        {
-            if (_stricmp(pcTmp, "left") == 0)
-                return PR_ALIGN_LEFT;
-            if (_stricmp(pcTmp, "center") == 0)
-                return PR_ALIGN_CENTER;
-            if (_stricmp(pcTmp, "right") == 0)
-                return PR_ALIGN_RIGHT;
-        }
-    }
-    return nDefAlign;
-}
-
-long BIUtils::GetFontIDFromAttr(ATTRIBUTES *pA, const char *name, VDX9RENDER *rs, const char *pcDefFontName)
-{
-    if (rs && pA && name)
-    {
-        char *pcTmp = pA->GetAttribute(name);
-        if (pcTmp)
-            return rs->LoadFont(pcTmp);
-    }
-    if (rs && pcDefFontName)
-        return rs->LoadFont((char *)pcDefFontName);
     return -1;
 }
 
-bool BIUtils::ReadVectorFormAttr(ATTRIBUTES *pA, const char *name, CVECTOR &vOut, const CVECTOR &vDef)
+bool BIUtils::ReadRectFromAttr(const Attribute &pA, const std::string_view& name, FRECT &rOut)
 {
-    vOut = vDef;
-    if (pA && name)
+    if (!name.empty() && pA.hasProperty(name))
     {
-        ATTRIBUTES *pAttr = pA->CreateSubAClass(pA, name);
-        if (pAttr)
-        {
-            vOut.x = pAttr->GetAttributeAsFloat("x", vDef.x);
-            vOut.y = pAttr->GetAttributeAsFloat("y", vDef.y);
-            vOut.z = pAttr->GetAttributeAsFloat("z", vDef.z);
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%f,%f,%f,%f", &rOut.left, &rOut.top, &rOut.right, &rOut.bottom);
+        return true;
+    }
+    return false;
+}
+
+bool BIUtils::ReadRectFromAttr(const Attribute &pA, const std::string_view& name, FRECT &rOut, FRECT &rDefault)
+{
+    rOut = rDefault;
+    if (!name.empty() && pA.hasProperty(name))
+    {
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%f,%f,%f,%f", &rOut.left, &rOut.top, &rOut.right, &rOut.bottom);
+        return true;
+    }
+    return false;
+}
+
+bool BIUtils::ReadRectFromAttr(const Attribute &pA, const std::string_view& name, RECT &rOut, RECT &rDefault)
+{
+    rOut = rDefault;
+    if (!name.empty() && pA.hasProperty(name))
+    {
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%d,%d,%d,%d", &rOut.left, &rOut.top, &rOut.right, &rOut.bottom);
+        return true;
+    }
+    return false;
+}
+
+bool BIUtils::ReadPosFromAttr(const Attribute &pA, const std::string_view& name, BIFPOINT &fP)
+{
+    if (!name.empty() && pA.hasProperty(name))
+    {
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%f,%f", &fP.x, &fP.y);
+        return true;
+    }
+    return false;
+}
+
+bool BIUtils::ReadPosFromAttr(const Attribute &pA, const std::string_view& name, float &fX, float &fY, float fXDef, float fYDef)
+{
+    fX = fXDef;
+    fY = fYDef;
+    if (!name.empty() && pA.hasProperty(name))
+    {
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%f,%f", &fX, &fY);
+        return true;
+    }
+    return false;
+}
+
+bool BIUtils::ReadPosFromAttr(const Attribute &pA, const std::string_view& name, long &nX, long &nY, long nXDef, long nYDef)
+{
+    nX = nXDef;
+    nY = nYDef;
+    if (!name.empty() && pA.hasProperty(name))
+    {
+        auto pcStr = pA[name].get<std::string_view>();
+        sscanf(pcStr.data(), "%d,%d", &nX, &nY);
+        return true;
+    }
+    return false;
+}
+
+long BIUtils::GetAlignmentFromAttr(const Attribute &pA, const char *name, long nDefAlign)
+{
+    if (name) {
+        if (const Attribute& property = pA.getProperty(name); !property.empty()) {
+            const std::string_view value = property.get<std::string_view>();
+            if (_stricmp(value.data(), "left") == 0)
+                return PR_ALIGN_LEFT;
+            if (_stricmp(value.data(), "center") == 0)
+                return PR_ALIGN_CENTER;
+            if (_stricmp(value.data(), "right") == 0)
+                return PR_ALIGN_RIGHT;
+        }
+    }
+
+    return nDefAlign;
+}
+
+long BIUtils::GetFontIDFromAttr(const Attribute &pA, const char *name, VDX9RENDER *rs, const char *pcDefFontName)
+{
+    if (rs) {
+        if (name) {
+	        if (const Attribute& font = pA.getProperty(name); !font.empty()) {
+		        const std::string_view value = font.get<std::string_view>();
+		        return rs->LoadFont(value.data());
+	        }
+        }
+        if (rs && pcDefFontName)
+            return rs->LoadFont((char *)pcDefFontName);
+    }
+
+    return -1;
+}
+
+std::optional<long> BIUtils::GetFontIDFromAttr(const Attribute &pA, const char *name, VDX9RENDER *rs)
+{
+    if (rs) {
+        if (name) {
+            if (const Attribute& font = pA.getProperty(name); !font.empty()) {
+                const std::string_view value = font.get<std::string_view>();
+                return rs->LoadFont(value.data());
+            }
+        }
+    }
+
+    return {};
+}
+
+bool BIUtils::ReadVectorFormAttr(const Attribute &pA, const char *name, CVECTOR &vOut, const CVECTOR &vDef)
+{
+    if (name)
+    {
+        if (const Attribute& property = pA.getProperty(name); !property.empty()) {
+            vOut = property.get<CVECTOR>();
             return true;
         }
     }
+    vOut = vDef;
     return false;
 }
 
@@ -187,18 +214,18 @@ bool BIUtils::ComparePoint(POINT &p1, POINT &p2)
     return ((p1.x == p2.x) && (p1.y == p2.y));
 }
 
-ATTRIBUTES *BIUtils::GetAttributesFromPath(ATTRIBUTES *pA, ...)
+Attribute *BIUtils::GetAttributesFromPath(Attribute *pA, ...)
 {
     va_list arglist;
 
     char *sName;
-    ATTRIBUTES *pTmpAttr = pA;
+    Attribute *pTmpAttr = pA;
     va_start(arglist, pA);
     while ((sName = va_arg(arglist, char *)) != nullptr)
     {
         if (pTmpAttr == nullptr)
             return nullptr;
-        pTmpAttr = pTmpAttr->GetAttributeClass(sName);
+        pTmpAttr = &(pTmpAttr->getProperty(sName));
     }
     va_end(arglist);
 
@@ -263,17 +290,14 @@ float BIUtils::GetFromStr_Float(const char *&pcStr, float fDefault)
     return static_cast<float>(atof(ctmp));
 }
 
-void BIUtils::FillTextInfoArray(VDX9RENDER *pRS, ATTRIBUTES *pA, std::vector<BITextInfo> &tia)
+void BIUtils::FillTextInfoArray(VDX9RENDER *pRS, Attribute *pA, std::vector<BITextInfo> &tia)
 {
     if (!pA)
         return;
     tia.clear();
 
-    const size_t q = pA->GetAttributesNum();
-    tia.reserve(q);
-    for (long n = 0; n < q; n++)
-    {
-        tia.emplace_back().Init(pRS, pA->GetAttributeClass(n));
+    for (const Attribute& attr : *pA) {
+        tia.emplace_back().Init(pRS, attr);
     }
 }
 
@@ -328,42 +352,33 @@ void BITextInfo::Release()
     FONT_RELEASE(pRS, nFont);
 }
 
-void BITextInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
+void BITextInfo::Init(VDX9RENDER *rs, const Attribute &attr)
 {
     FONT_RELEASE(pRS, nFont);
     pRS = rs;
-    if (!pRS || !pA)
+    if (!pRS || attr.empty())
         return;
 
-    nFont = pRS->LoadFont(pA->GetAttribute("font"));
-    fScale = pA->GetAttributeAsFloat("scale", 1.f);
-    dwColor = pA->GetAttributeAsDword("color", 0xFFFFFFFF);
-    bShadow = pA->GetAttributeAsDword("shadow", 1) != 0;
-
-    ATTRIBUTES *pAttr = pA->GetAttributeClass("pos");
-    if (pAttr)
-    {
-        pos.x = pAttr->GetAttributeAsDword("x", 0);
-        pos.y = pAttr->GetAttributeAsDword("y", 0);
-    }
-    else
-    {
-        pos.x = pos.y = 0;
-    }
-
-    sText = pA->GetAttribute("text");
+    nFont = pRS->LoadFont(attr["font"].get<std::string_view>().data());
+    attr["scale"].get_to(fScale, 1.0f);
+    attr["color"].get_to(dwColor, 0xFFFFFFFF);
+    attr["shadow"].get_to(bShadow, true);
+    attr["pos"].get_to(pos, {});
+    attr["text"].get_to(sText);
 
     pARefresh = nullptr;
-    if (pA->GetAttributeAsDword("refreshable", 0))
-        pARefresh = pA;
+    if (attr["refreshable"].get<bool>(false)) {
+        pARefresh = &attr;
+    }
 }
 
 void BITextInfo::Print()
 {
     if (nFont != -1)
     {
-        if (pARefresh)
-            sText = pARefresh->GetAttribute("text");
+        if (pARefresh) {
+            pARefresh->getProperty("text").get_to(sText);
+        }
         if (!sText.empty())
             pRS->ExtPrint(nFont, dwColor, 0, PR_ALIGN_CENTER, bShadow, fScale, 0, 0, pos.x, pos.y, "%s", sText.c_str());
     }
@@ -384,49 +399,24 @@ void BILinesInfo::Release()
     lines.clear();
 }
 
-void BILinesInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
+void BILinesInfo::Init(VDX9RENDER *rs, Attribute *pA)
 {
     pRS = rs;
     if (!pA)
         return;
 
-    const size_t q = pA->GetAttributesNum();
-    for (long n = 0; n < q; n++)
-    {
-        ATTRIBUTES *pAttr = pA->GetAttributeClass(n);
-        if (!pAttr)
-            break;
+    for (const Attribute& attr : *pA) {
+        RS_LINE2D& begin_line = lines.emplace_back();
+        RS_LINE2D& end_line = lines.emplace_back();
 
-        // long bi = lines.Add();
-        // long ei = lines.Add();
-        lines.push_back(RS_LINE2D{});
-        const auto bi = lines.size() - 1;
-        lines.push_back(RS_LINE2D{});
-        const auto ei = lines.size() - 1;
+        attr["color"].get_to(begin_line.dwColor, 0xFFFFFFFF);
+        end_line.dwColor = begin_line.dwColor;
 
-        lines[bi].rhw = lines[ei].rhw = 0.5f;
-        lines[bi].vPos.z = lines[ei].vPos.z = 1.f;
-        lines[bi].dwColor = lines[ei].dwColor = pAttr->GetAttributeAsDword("color");
-        ATTRIBUTES *pAPos = pAttr->GetAttributeClass("begin");
-        if (pAPos)
-        {
-            lines[bi].vPos.x = static_cast<float>(pAPos->GetAttributeAsDword("x", 0));
-            lines[bi].vPos.y = static_cast<float>(pAPos->GetAttributeAsDword("y", 0));
-        }
-        else
-        {
-            lines[bi].vPos.x = lines[bi].vPos.y = 0.f;
-        }
-        pAPos = pAttr->GetAttributeClass("end");
-        if (pAPos)
-        {
-            lines[ei].vPos.x = lines[bi].vPos.x + pAPos->GetAttributeAsDword("x", 0);
-            lines[ei].vPos.y = lines[bi].vPos.y + pAPos->GetAttributeAsDword("y", 0);
-        }
-        else
-        {
-            lines[ei].vPos.x = lines[ei].vPos.y = 0.f;
-        }
+        attr["begin"]["x"].get_to(begin_line.vPos.x);
+        attr["begin"]["y"].get_to(begin_line.vPos.y);
+
+        attr["end"]["x"].get_to(end_line.vPos.x);
+        attr["end"]["y"].get_to(end_line.vPos.y);
     }
 }
 
@@ -456,7 +446,7 @@ void BIImagesInfo::Release()
     STORM_DELETE(pImgRender);
 }
 
-void BIImagesInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
+void BIImagesInfo::Init(VDX9RENDER *rs, Attribute *pA)
 {
     if (!pA || !rs)
         return;
@@ -466,23 +456,17 @@ void BIImagesInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
     if (!pImgRender)
         return;
 
-    const size_t q = pA->GetAttributesNum();
-    for (long n = 0; n < q; n++)
-    {
-        ATTRIBUTES *pAImg = pA->GetAttributeClass(n);
-        if (!pAImg)
-            continue;
-        FRECT rUV;
-        FULLRECT(rUV);
-        BIUtils::ReadRectFromAttr(pAImg, "uv", rUV, rUV);
-        RECT rPos;
-        ZERO(rPos);
-        BIUtils::ReadRectFromAttr(pAImg, "pos", rPos, rPos);
-        IBIImage *pCurImg =
-            pImgRender->CreateImage(BIType_square, pAImg->GetAttribute("texture"),
-                                    pAImg->GetAttributeAsDword("color", ARGB(255, 128, 128, 128)), rUV, rPos);
-        if (pCurImg)
-            images.push_back(pCurImg);
+    for (const Attribute& attr : *pA) {
+        if (!attr.empty()) {
+            const auto rUV = attr["uv"].get<FRECT>({0, 0, 1, 1});
+            const auto rPos = attr["pos"].get<RECT>({0, 0});
+
+            IBIImage *pCurImg =
+                pImgRender->CreateImage(BIType_square, attr["texture"].get<const char*>(),
+                                        attr["color"].get<uint32_t>(ARGB(255, 128, 128, 128)), rUV, rPos);
+            if (pCurImg)
+                images.push_back(pCurImg);
+        }
     }
 }
 
@@ -512,7 +496,7 @@ void BIBorderInfo::Release()
     TEXTURE_RELEASE(pRS, nTexID);
 }
 
-void BIBorderInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
+void BIBorderInfo::Init(VDX9RENDER *rs, Attribute *pA)
 {
     pRS = rs;
     nVBuf = rs->CreateVertexBuffer(BI_COLOR_VERTEX_FORMAT, 2 * 5 * sizeof(BI_COLOR_VERTEX), D3DUSAGE_WRITEONLY);
@@ -533,14 +517,20 @@ void BIBorderInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
     bUsed = true;
     if (!pA)
         return;
-    dwColor1 = pA->GetAttributeAsDword("color1", dwColor1);
-    dwColor2 = pA->GetAttributeAsDword("color2", dwColor2);
-    BIUtils::ReadRectFromAttr(pA, "extpos", ext_pos, ext_pos);
-    BIUtils::ReadRectFromAttr(pA, "intpos1", int_pos1, int_pos1);
-    BIUtils::ReadRectFromAttr(pA, "intpos2", int_pos2, int_pos2);
-    fSpeed = pA->GetAttributeAsFloat("speed", fSpeed * 1000.f) * 0.001f;
-    nTexID = pRS->TextureCreate(pA->GetAttribute("texture"));
-    bUsed = pA->GetAttributeAsDword("used", 0) != 0;
+
+    const Attribute& attr = *pA;
+
+    attr["color1"].get_to(dwColor1);
+    attr["color2"].get_to(dwColor2);
+    attr["extpos"].get_to(ext_pos);
+    attr["intpos1"].get_to(int_pos1);
+    attr["intpos2"].get_to(int_pos2);
+    const Attribute& speed = attr["speed"];
+    if (!speed.empty()) {
+        fSpeed = speed.get<float>() * 0.001f;
+    }
+    nTexID = pRS->TextureCreate(attr["texture"].get<const char*>());
+    attr["used"].get_to(bUsed, false);
 }
 
 void BIBorderInfo::Draw()

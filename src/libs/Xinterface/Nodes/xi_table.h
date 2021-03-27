@@ -44,8 +44,8 @@ class XI_TableCellDescribe
     }
 
     void Draw(float fLeft, float fTop);
-    void SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHeader);
-    void LoadImageParam(ImgDescribe *pImg, ATTRIBUTES *pA) const;
+    void SetData(long nColIndex, Attribute *pAttr, bool bHeader);
+    void LoadImageParam(ImgDescribe *pImg, Attribute *pA) const;
 
   protected:
     CXI_TABLE *m_pTable;
@@ -81,7 +81,7 @@ class XI_TableLineDescribe
 
     void Draw(float fTop);
     void DrawSpecColor(float fTop) const;
-    void SetData(long nRowIndex, ATTRIBUTES *pLA, bool bHeader);
+    void SetData(long nRowIndex, Attribute *pLA, bool bHeader);
 
     long GetLineHeight() const;
     void SetLineHeight(long nHeight)

@@ -95,8 +95,8 @@ class Blots : public Entity
     VDX9RENDER *rs;
     entid_t model;
     long textureID;
-    ATTRIBUTES *blotsInfo;
-    ATTRIBUTES *pCharAttributeRoot;
+    Attribute *blotsInfo;
+    Attribute *pCharAttributeRoot;
 
     Blot blot[BLOTS_MAX];
     Vertex vrt[3 * BLOTS_NTRGS * BLOTS_MAX];

@@ -202,7 +202,7 @@ uint64_t BLAST::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t BLAST::AttributeChanged(ATTRIBUTES *pA)
+uint32_t BLAST::AttributeChanged(Attribute &pA)
 {
     return 0;
 }

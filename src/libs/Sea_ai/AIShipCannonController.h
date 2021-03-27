@@ -15,7 +15,7 @@ class AIShipCannonController
   private:
     AIShip *pOurAIShip;
 
-    ATTRIBUTES *pAShip;
+    Attribute *pAShip;
 
     bool bReload;         // we must start reload at next frame
     bool bNotEnoughBalls; // if we haven't enough balls
@@ -127,7 +127,7 @@ class AIShipCannonController
     void Realize(float fDeltaTime);
 
     // init section
-    bool Init(ATTRIBUTES *_pAShip);
+    bool Init(Attribute *_pAShip);
 
     void SetAIShip(AIShip *pShip)
     {

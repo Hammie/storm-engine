@@ -65,11 +65,10 @@ uint32_t _GetAssembledString(VS_STACK *pS)
                         {
                             nAttrNameStart = 3;
                         }
-                        ATTRIBUTES *pA = pAttr->FindAClass(pAttr, &accessString[nAttrNameStart]);
-                        char *writeStr = nullptr;
-                        if (pA != nullptr)
-                            writeStr = pA->GetThisAttr();
-                        if (writeStr)
+                        Attribute &attribute = pAttr->getProperty(accessString + nAttrNameStart);
+                        if (!attribute.empty())
+                        {
+                            const char *writeStr = attribute.get<const char *>();
                             switch (accessString[0])
                             {
                             case 's':
@@ -103,6 +102,7 @@ uint32_t _GetAssembledString(VS_STACK *pS)
                             }
                             break;
                             }
+                        }
                     }
                 }
                 else

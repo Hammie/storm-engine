@@ -1,5 +1,6 @@
 #include "ShipLights.h"
 #include "../../Shared/messages.h"
+#include "../Battle_interface/Utils.h"
 #include "ship.h"
 
 VDX9RENDER *ShipLights::pRS = nullptr;
@@ -49,64 +50,48 @@ void ShipLights::Release(VAI_OBJBASE *pObject)
 {
 }
 
-float ShipLights::GetAttributeAsFloat(ATTRIBUTES *pA, const char *pName, float fDefault)
-{
-    if (!pName)
-        return fDefault;
-    auto *pAF = pA->FindAClass(pA, (char *)pName);
-    return pAF ? pAF->GetAttributeAsFloat() : fDefault;
-}
-
 bool ShipLights::LoadLights()
 {
     aLightTypes.clear();
 
     bLoadLights = false;
 
-    auto *pA = this->AttributesPointer;
-    auto *pALights = pA->FindAClass(pA, "LightTypes");
-    if (!pALights)
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    const Attribute& aLights = attr["LightTypes"];
+    if (aLights.empty())
         return false;
 
-    for (uint32_t i = 0; i < pALights->GetAttributesNum(); i++)
-    {
-        auto *const pAL = pALights->GetAttributeClass(i);
-
+    for (const Attribute& aLight : aLights) {
         LightType lightType;
-        lightType.sLightType = pAL->GetThisName();
-        lightType.cLightColor.r = GetAttributeAsFloat(pAL, "light.r", 1.0f);
-        lightType.cLightColor.g = GetAttributeAsFloat(pAL, "light.g", 1.0f);
-        lightType.cLightColor.b = GetAttributeAsFloat(pAL, "light.b", 1.0f);
-        lightType.cLightColor.a = 1.0f;
-        lightType.cCoronaColor.r = GetAttributeAsFloat(pAL, "corona.r", 1.0f);
-        lightType.cCoronaColor.g = GetAttributeAsFloat(pAL, "corona.g", 1.0f);
-        lightType.cCoronaColor.b = GetAttributeAsFloat(pAL, "corona.b", 1.0f);
-        lightType.cCoronaColor.a = 1.0f;
-        lightType.fCoronaRange = GetAttributeAsFloat(pAL, "corona.Range", 20.0f);
-        lightType.fCoronaSize = GetAttributeAsFloat(pAL, "corona.Size", 1.0f);
-        lightType.fRange = GetAttributeAsFloat(pAL, "light.range", 10.0f);
-        lightType.fAttenuation0 = GetAttributeAsFloat(pAL, "light.Attenuation0", 1.0f);
-        lightType.fAttenuation1 = GetAttributeAsFloat(pAL, "light.Attenuation1", 0.0f);
-        lightType.fAttenuation2 = GetAttributeAsFloat(pAL, "light.Attenuation2", 0.0f);
-        lightType.fFlicker = GetAttributeAsFloat(pAL, "Oscillator1.Flicker", 0.1f);
-        lightType.fFreq = GetAttributeAsFloat(pAL, "Oscillator1.Freq", 15.0f);
-        lightType.fFlickerSlow = GetAttributeAsFloat(pAL, "Oscillator2.Flicker", 0.5f);
-        lightType.fFreqSlow = GetAttributeAsFloat(pAL, "Oscillator2.Freq", 1.0f);
-        lightType.fLifeTime = GetAttributeAsFloat(pAL, "LifeTime", 0.5f);
-        lightType.fUpTime = GetAttributeAsFloat(pAL, "UpTime", 0.2f);
-        lightType.fSunRoadFlareFadeDistance = GetAttributeAsFloat(pAL, "SunRoadFlareFadeDistance", 100.0f);
+        lightType.sLightType = aLight.getName();
+        aLight["light"].get_to(lightType.cLightColor, {1.0f, 1.0f, 1.0f, 1.0f});
+        aLight["light"]["range"].get_to(lightType.fRange, 10.0f);
+        aLight["corona"].get_to(lightType.cCoronaColor, {1.0f, 1.0f, 1.0f, 1.0f});
+        aLight["corona"]["Range"].get_to(lightType.fCoronaRange, 20.0f);
+        aLight["corona"]["Size"].get_to(lightType.fCoronaSize, 20.0f);
+        aLight["light"]["Attenuation0"].get_to(lightType.fAttenuation0, 1.0f);
+        aLight["light"]["Attenuation1"].get_to(lightType.fAttenuation1, 0.0f);
+        aLight["light"]["Attenuation2"].get_to(lightType.fAttenuation2, 0.0f);
+        aLight["Oscillator1"]["Flicker"].get_to(lightType.fFlicker, 0.1f);
+        aLight["Oscillator1"]["Freq"].get_to(lightType.fFlicker, 15.0f);
+        aLight["Oscillator2"]["Flicker"].get_to(lightType.fFlickerSlow, 0.5f);
+        aLight["Oscillator2"]["Freq"].get_to(lightType.fFreqSlow, 1.0f);
+        aLight["LifeTime"].get_to(lightType.fLifeTime, 0.5f);
+        aLight["UpTime"].get_to(lightType.fUpTime, 0.2f);
+        aLight["SunRoadFlareFadeDistance"].get_to(lightType.fSunRoadFlareFadeDistance, 100.0f);
         aLightTypes.push_back(lightType);
     }
 
-    dwMaxD3DLights = Min(static_cast<uint32_t>(7), pA->GetAttributeAsDword("MaxD3DLights", 7));
+    dwMaxD3DLights = Min(static_cast<uint32_t>(7), attr["MaxD3DLights"].get<uint32_t>(7));
 
-    sCoronaTechnique = (pA->GetAttribute("CoronaTechnique")) ? pA->GetAttribute("CoronaTechnique") : "";
-    iCoronaTex = (pA->GetAttribute("CoronaTexture")) ? pRS->TextureCreate(pA->GetAttribute("CoronaTexture")) : -1;
-    iFlareSunRoadTex =
-        (pA->GetAttribute("FlareSunRoadTexture")) ? pRS->TextureCreate(pA->GetAttribute("FlareSunRoadTexture")) : -1;
-    dwCoronaSubTexX = pA->GetAttributeAsDword("CoronaTextureX", 1);
-    dwCoronaSubTexY = pA->GetAttributeAsDword("CoronaTextureY", 1);
-    fSunRoadFlareSize = pA->GetAttributeAsFloat("SunRoadFlareSize", 4.0);
+    attr["CoronaTechnique"].get_to<std::string>(sCoronaTechnique, "");
+    sCoronaTechnique = BIUtils::GetTextureFromAttr(pRS, attr, "CoronaTexture");
+    iFlareSunRoadTex = BIUtils::GetTextureFromAttr(pRS, attr, "FlareSunRoadTexture");
+    attr["CoronaTextureX"].get_to(dwCoronaSubTexX, 1u);
+    attr["CoronaTextureY"].get_to(dwCoronaSubTexY, 1u);
+    attr["SunRoadFlareSize"].get_to(fSunRoadFlareSize, 4.0f);
 
     bLoadLights = true;
     return true;

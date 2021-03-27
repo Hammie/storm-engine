@@ -113,10 +113,10 @@ class MESSAGE
         return va_arg(args, char *);
     }
 
-    virtual ATTRIBUTES *AttributePointer()
+    virtual Attribute *AttributePointer()
     {
         ValidateFormat('a');
-        return va_arg(args, ATTRIBUTES *);
+        return va_arg(args, Attribute *);
     }
 
     virtual entid_t EntityID()

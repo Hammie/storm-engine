@@ -376,7 +376,7 @@ uint32_t CORE::PostEvent(const char *Event_name, uint32_t post_time, const char 
                 pMS->Set(static_cast<char *>(s));
                 break;
             case 'a':
-                ATTRIBUTES *a;
+                Attribute *a;
                 a = message.AttributePointer();
                 pMS->Set((char *)&a);
                 break;
@@ -645,24 +645,24 @@ uint32_t CORE::GetRDeltaTime()
     return Timer.rDelta_Time;
 }
 
-ATTRIBUTES *CORE::Entity_GetAttributeClass(entid_t id_PTR, const char *name)
+Attribute *CORE::Entity_GetAttributeClass(entid_t id_PTR, const char *name)
 {
     Entity *pE = EntityManager::GetEntityPointer(id_PTR);
     if (pE == nullptr)
         return nullptr;
     if (pE->AttributesPointer == nullptr)
         return nullptr;
-    return pE->AttributesPointer->FindAClass(pE->AttributesPointer, name);
+    return &pE->AttributesPointer->getProperty(name);
 }
 
-char *CORE::Entity_GetAttribute(entid_t id_PTR, const char *name)
+const char *CORE::Entity_GetAttribute(entid_t id_PTR, const char *name)
 {
     Entity *pE = EntityManager::GetEntityPointer(id_PTR);
     if (pE == nullptr)
         return nullptr;
     if (pE->AttributesPointer == nullptr)
         return nullptr;
-    return pE->AttributesPointer->GetAttribute(name);
+    return pE->AttributesPointer->getProperty(name).get<const char*>();
 }
 
 uint32_t CORE::Entity_GetAttributeAsDword(entid_t id_PTR, const char *name, uint32_t def)
@@ -672,7 +672,7 @@ uint32_t CORE::Entity_GetAttributeAsDword(entid_t id_PTR, const char *name, uint
         return def;
     if (pE->AttributesPointer == nullptr)
         return def;
-    return pE->AttributesPointer->GetAttributeAsDword(name, def);
+    return pE->AttributesPointer->getProperty(name).get<uint32_t>(def);
 }
 
 FLOAT CORE::Entity_GetAttributeAsFloat(entid_t id_PTR, const char *name, FLOAT def)
@@ -682,7 +682,7 @@ FLOAT CORE::Entity_GetAttributeAsFloat(entid_t id_PTR, const char *name, FLOAT d
         return def;
     if (pE->AttributesPointer == nullptr)
         return def;
-    return pE->AttributesPointer->GetAttributeAsFloat(name, def);
+    return pE->AttributesPointer->getProperty(name).get<float>(def);
 }
 
 bool CORE::Entity_SetAttribute(entid_t id_PTR, const char *name, const char *attribute)
@@ -692,7 +692,8 @@ bool CORE::Entity_SetAttribute(entid_t id_PTR, const char *name, const char *att
         return false;
     if (pE->AttributesPointer == nullptr)
         return false;
-    return pE->AttributesPointer->SetAttribute(name, attribute);
+    pE->AttributesPointer->getProperty(name) = attribute;
+    return true;
 }
 
 bool CORE::Entity_SetAttributeUseDword(entid_t id_PTR, const char *name, uint32_t val)
@@ -702,7 +703,8 @@ bool CORE::Entity_SetAttributeUseDword(entid_t id_PTR, const char *name, uint32_
         return false;
     if (pE->AttributesPointer == nullptr)
         return false;
-    return pE->AttributesPointer->SetAttributeUseDword(name, val);
+    pE->AttributesPointer->getProperty(name) = val;
+    return true;
 }
 
 bool CORE::Entity_SetAttributeUseFloat(entid_t id_PTR, const char *name, FLOAT val)
@@ -712,10 +714,11 @@ bool CORE::Entity_SetAttributeUseFloat(entid_t id_PTR, const char *name, FLOAT v
         return false;
     if (pE->AttributesPointer == nullptr)
         return false;
-    return pE->AttributesPointer->SetAttributeUseFloat(name, val);
+    pE->AttributesPointer->getProperty(name) = val;
+    return true;
 }
 
-void CORE::Entity_SetAttributePointer(entid_t id_PTR, ATTRIBUTES *pA)
+void CORE::Entity_SetAttributePointer(entid_t id_PTR, Attribute *pA)
 {
     Entity *pE = EntityManager::GetEntityPointer(id_PTR);
     if (pE == nullptr)
@@ -723,15 +726,15 @@ void CORE::Entity_SetAttributePointer(entid_t id_PTR, ATTRIBUTES *pA)
     pE->AttributesPointer = pA;
 }
 
-uint32_t CORE::Entity_AttributeChanged(entid_t id_PTR, ATTRIBUTES *pA)
+uint32_t CORE::Entity_AttributeChanged(entid_t id_PTR, Attribute *pA)
 {
     Entity *pE = EntityManager::GetEntityPointer(id_PTR);
     if (pE == nullptr)
         return 0;
-    return pE->AttributeChanged(pA);
+    return pE->AttributeChanged(*pA);
 }
 
-ATTRIBUTES *CORE::Entity_GetAttributePointer(entid_t id_PTR)
+Attribute *CORE::Entity_GetAttributePointer(entid_t id_PTR)
 {
     Entity *pE = EntityManager::GetEntityPointer(id_PTR);
     if (pE == nullptr)

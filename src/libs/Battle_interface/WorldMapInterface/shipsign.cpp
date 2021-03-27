@@ -23,18 +23,18 @@ long WMShipIcon::CalculateSignQuantity()
         for (n = 0; n < MAX_SIGN_QUANTITY; n++)
         {
             sprintf_s(param, sizeof(param), "sign%d", n + 1);
-            auto *pA = m_pAData->GetAttributeClass(param);
-            if (pA)
+            const Attribute& param_attr = m_pAData->getProperty(param);
+            if (!param_attr.empty())
             {
                 m_Sign[n].bUse = true;
-                m_Sign[n].fLeftState = pA->GetAttributeAsFloat("leftprogress", 0.f);
-                m_Sign[n].fRightState = pA->GetAttributeAsFloat("rightprogress", 0.f);
-                m_Sign[n].fStarProgress = pA->GetAttributeAsFloat("starprogress", 0.f);
+                param_attr["leftprogress"].get_to(m_Sign[n].fLeftState, 0.f);
+                param_attr["rightprogress"].get_to(m_Sign[n].fRightState, 0.f);
+                param_attr["starprogress"].get_to(m_Sign[n].fStarProgress, 0.f);
                 FULLRECT(m_Sign[n].rFaceUV);
-                BIUtils::ReadRectFromAttr(pA, "faceuv", m_Sign[n].rFaceUV, m_Sign[n].rFaceUV);
-                const char *attr = pA->GetAttribute("text");
-                if (attr != nullptr)
-                    m_Sign[n].sText = attr;
+                param_attr["faceuv"].get_to(m_Sign[n].rFaceUV);
+                const Attribute& attr_text = param_attr["text"];
+                if (!attr_text.empty())
+                    m_Sign[n].sText = attr_text.get<std::string_view>().data();
             }
             else
             {

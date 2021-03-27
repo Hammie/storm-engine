@@ -18,7 +18,7 @@ class VIRTUAL_COMPILER
 /*struct OBJECT_DESC
 {
     entid_t    object_id;
-    ATTRIBUTES * pAttributes;
+    Attribute * pAttributes;
 };*/
 
 class COMPILER;
@@ -49,11 +49,11 @@ class DATA : public VDATA
     uint32_t nGlobalVarTableIndex;
 
   public:
-    ATTRIBUTES *AttributesClass;
-    // ATTRIBUTES Attributes;
+    Attribute *AttributesClass;
+    // Attribute Attributes;
     DATA *GetReference();
     void SetReference(DATA *pRef);
-    void SetAReference(ATTRIBUTES *pARef);
+    void SetAReference(Attribute *pARef);
     // void  SetReferenceFlag() {bRef = true;};
     void SetSegmentID(uint32_t id)
     {
@@ -108,8 +108,8 @@ class DATA : public VDATA
     bool Set(entid_t eid, uint32_t index);
     bool Get(entid_t &eid, uint32_t index);
 
-    ATTRIBUTES *GetAClass();
-    ATTRIBUTES *GetAClass(uint32_t index);
+    Attribute *GetAClass();
+    Attribute *GetAClass(uint32_t index);
 
     void SetType(S_TOKEN_TYPE type, uint32_t array_size = 1);
     bool Convert(S_TOKEN_TYPE type);

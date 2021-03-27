@@ -72,7 +72,7 @@ class CXI_FORMATEDTEXT : public CINODE
     long FindDownGroup(long grNum);
     void SetVertexToNewGroup(bool bUpDirect, long upIdx, long downIdx);
     void CheckScrollButtons();
-    void SetSpecialStrings(ATTRIBUTES *pARoot);
+    void SetSpecialStrings(Attribute *pARoot);
     void ControlSyncronouseNodes();
     long GetFirstGroupNum();
     void SetCurrentGroupNum(long nFirstNum, long nSelectNum);

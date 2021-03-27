@@ -60,7 +60,7 @@ class DECK_CAMERA : public COMMON_CAMERA
     DECK_CAMERA();
     ~DECK_CAMERA();
 
-    void SetCharacter(ATTRIBUTES *_pACharacter) override;
+    void SetCharacter(Attribute *_pACharacter) override;
 
     void SetDevice();
     bool Init() override;
@@ -69,7 +69,7 @@ class DECK_CAMERA : public COMMON_CAMERA
     void Execute(uint32_t Delta_Time);
     bool CreateState(ENTITY_STATE_GEN *state_gen);
     bool LoadState(ENTITY_STATE *state);
-    uint32_t AttributeChanged(ATTRIBUTES *pAttr) override;
+    uint32_t AttributeChanged(Attribute &attr) override;
     uint64_t ProcessMessage(MESSAGE &message) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override

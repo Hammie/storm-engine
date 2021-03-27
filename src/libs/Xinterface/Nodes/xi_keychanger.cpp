@@ -99,14 +99,14 @@ uint32_t CXI_KEYCHANGER::MessageProc(long msgcode, MESSAGE &message)
     return 0;
 }
 
-void CXI_KEYCHANGER::SetChoosingControls(ATTRIBUTES *pA)
+void CXI_KEYCHANGER::SetChoosingControls(Attribute *pA)
 {
     if (pA == nullptr)
         return;
 
     STORM_DELETE(m_pControlsID);
     STORM_DELETE(m_pbControlsStick);
-    m_keysQuantity = pA->GetAttributesNum();
+    m_keysQuantity = std::distance(pA->begin(), pA->end());
     if (m_keysQuantity <= 0)
         return;
 
@@ -123,15 +123,14 @@ void CXI_KEYCHANGER::SetChoosingControls(ATTRIBUTES *pA)
         sprintf_s(contrlName, "cntrl_%d", i);
         m_pbControlsStick[i] = false;
         m_pControlsID[i] = core.Controls->CreateControl(contrlName);
-        auto *const keyCode = pA->GetAttribute(i);
+        auto *const keyCode = (pA->begin() + i)->get<const char*>();
         if (keyCode != nullptr)
         {
             core.Controls->MapControl(m_pControlsID[i], atoi(keyCode));
         }
-        auto *pAttr = pA->GetAttributeClass(i);
-        if (pAttr != nullptr)
-            if (pAttr->GetAttributeAsDword("stick", 0) != 1)
-                m_pbControlsStick[i] = true;
+        const Attribute& attr = *(pA->begin() + i);
+        if (!attr.empty())
+            attr.get_to(m_pbControlsStick[i], false);
     }
 }
 

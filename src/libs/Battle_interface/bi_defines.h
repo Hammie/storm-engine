@@ -96,8 +96,20 @@ struct BIFPOINT
         bp.y += p2.y;
         return bp;
     }
-    // FPOINT operator FPOINT() {return *(FPOINT*)this;}
+
+    explicit operator FPOINT() const noexcept
+    {
+        return FPOINT{.x = x, .y = y};
+    }
 };
+
+template<>
+inline BIFPOINT Attribute::getValue<BIFPOINT>() const {
+    Assert(m_Children.empty());
+    BIFPOINT result{};
+    sscanf(m_Value.c_str(), "%f,%f", &result.x, &result.y);
+    return result;
+}
 
 #define BI_COLOR_VERTEX_FORMAT (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1 | D3DFVF_TEXTUREFORMAT2)
 struct BI_COLOR_VERTEX

@@ -63,13 +63,10 @@ inline bool CheckID(VDATA *vd, const char *id, bool &res)
     auto *a = vd->GetAClass();
     if (!a)
         return false;
-    a = a->GetAttributeClass("id");
-    if (!a)
+    const Attribute& id_attr = a->getProperty("id");
+    if (id_attr.empty())
         return true;
-    auto *const attr = a->GetThisAttr();
-    if (!attr)
-        return true;
-    res = _stricmp(attr, id) == 0;
+    res = _stricmp(id_attr.get<const char*>(), id) == 0;
     return true;
 }
 
@@ -208,7 +205,7 @@ uint32_t slNativeFindLaodLocation(VS_STACK *pS)
         pReturn->Set(-1L);
         return IFUNCRESULT_OK;
     }
-    const long index = l->AttributesPointer->GetAttributeAsDword("index", -1L);
+    const long index = l->AttributesPointer->getProperty("index").get<uint32_t>(-1L);
     pReturn->Set(index);
     return IFUNCRESULT_OK;
 }

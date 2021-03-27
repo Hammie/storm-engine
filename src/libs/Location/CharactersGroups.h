@@ -91,7 +91,7 @@ class CharactersGroups : public Entity
     // Messages
     uint64_t ProcessMessage(MESSAGE &message) override;
     // Changing an attribute
-    uint32_t AttributeChanged(ATTRIBUTES *apnt) override;
+    uint32_t AttributeChanged(Attribute &apnt) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -216,5 +216,11 @@ class CharactersGroups : public Entity
     // Character search array
     Supervisor::FindCharacter fnd[MAX_CHARACTERS];
 };
+
+template<>
+inline CharactersGroups::RelState Attribute::getValue<CharactersGroups::RelState>() const {
+    Assert(m_Children.empty());
+    return static_cast<CharactersGroups::RelState>(get<uint32_t>());
+}
 
 #endif

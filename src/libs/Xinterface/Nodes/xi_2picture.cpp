@@ -184,7 +184,7 @@ void CXI_TWOPICTURE::UpdateRectangles()
         SetRectangleColor(m_vTwo, m_dwDarkColor);
 
         if (pA != nullptr)
-            pA->SetAttributeUseDword("current", 0);
+            pA->getProperty("current") = 0;
     }
     else
     {
@@ -198,7 +198,7 @@ void CXI_TWOPICTURE::UpdateRectangles()
         SetRectangleColor(m_vTwo, m_dwSelectColor);
 
         if (pA != nullptr)
-            pA->SetAttributeUseDword("current", 1);
+            pA->getProperty("current") = 1;
     }
 }
 

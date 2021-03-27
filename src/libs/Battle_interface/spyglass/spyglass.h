@@ -28,7 +28,7 @@ class ISPYGLASS : public Entity
             Release();
         }
         void Release();
-        void LoadFromAttr(BIImageRender *pImgRender, ATTRIBUTES *pA, const char *pcDefName, long nDefLeftPos,
+        void LoadFromAttr(BIImageRender *pImgRender, const Attribute &attribute, const char *pcDefName, long nDefLeftPos,
                           long nDefTopPos, long nDefRightPos, long nDefBottomPos, long nPrior);
         void ChangeIcon(BIImageRender *pImgRender, const char *pcTextureName, FRECT &frUV);
     };
@@ -64,7 +64,7 @@ class ISPYGLASS : public Entity
             nFontID = -1;
         }
 
-        void LoadFromAttr(VDX9RENDER *rs, ATTRIBUTES *pA, const char *pcDefText, long nDefXPos, long nDefYPos);
+        void LoadFromAttr(VDX9RENDER *rs, const Attribute &attribute, const char *pcDefText, long nDefXPos, long nDefYPos);
         void Print() const;
     };
 
@@ -173,7 +173,7 @@ class ISPYGLASS : public Entity
 
   protected:
     void Release();
-    ATTRIBUTES *GetAttr(const char *pcAttrName) const;
+    Attribute *GetAttr(const char *pcAttrName) const;
     void TurnOnTelescope(bool bTurnOn);
     void SetShipInfo(long nCharIndex);
     void FindNewTargetShip();
@@ -185,7 +185,7 @@ class ISPYGLASS : public Entity
                           long nCharge, long nNation, long nSailState, long nFace, long nFencing, long nCannon,
                           long nAccuracy, long nNavigation, long nBoarding, const char *pcCaptainName,
                           const char *pcFaceTexture, long nShipClass);
-    void FillUVArrayFromAttributes(std::vector<FRECT> &m_aUV, ATTRIBUTES *pA) const;
+    void FillUVArrayFromAttributes(std::vector<FRECT> &m_aUV, Attribute *pA) const;
     VAI_OBJBASE *GetFort();
 };
 

@@ -385,9 +385,9 @@ void Grass::Realize(uint32_t delta_time)
     if (eidIsland)
     {
         auto fIslandFogDensity = static_cast<float>(dwOldFogDensity);
-        ATTRIBUTES *pA = core.Entity_GetAttributePointer(eidIsland);
+        Attribute *pA = core.Entity_GetAttributePointer(eidIsland);
         if (pA)
-            fIslandFogDensity = pA->GetAttributeAsFloat("FogDensity", 0.0f);
+            pA->getProperty("FogDensity").get_to(fIslandFogDensity, 0.0f);
         rs->SetRenderState(D3DRS_FOGDENSITY, F2DW(fIslandFogDensity));
     }
     // Set up the stages

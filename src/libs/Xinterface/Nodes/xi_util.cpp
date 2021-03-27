@@ -412,13 +412,13 @@ long CXI_UTILS::SplitStringByWidth(const char *pcText, long nFontID, float fFont
     return nMaxUsingWidth;
 }
 
-float CXI_UTILS::GetByStrNumFromAttribute_Float(ATTRIBUTES *pA, const char *pStr, long num, float fDefValue)
+float CXI_UTILS::GetByStrNumFromAttribute_Float(Attribute *pA, const char *pStr, long num, float fDefValue)
 {
     if (!pA)
         return fDefValue;
     char stmp[64];
     sprintf_s(stmp, sizeof(stmp), "%s%d", pStr, num);
-    return pA->GetAttributeAsFloat(stmp, fDefValue);
+    return pA->getProperty(stmp).get<float>(fDefValue);
 }
 
 void CXI_UTILS::WriteSquareToVertexBuffer(XI_ONETEX_VERTEX *pv, uint32_t color, FXYRECT &uv, XYRECT &rect)

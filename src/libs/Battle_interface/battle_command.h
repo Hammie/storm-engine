@@ -22,7 +22,7 @@ class BICommandList
   public:
     BICommandList(BICommandList &&) = delete;
     BICommandList(const BICommandList &) = delete;
-    BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs);
+    BICommandList(entid_t eid, Attribute &pA, VDX9RENDER *rs);
     virtual ~BICommandList();
 
     void Draw();
@@ -54,7 +54,7 @@ class BICommandList
 
   protected:
     entid_t m_idHostObj;
-    ATTRIBUTES *m_pARoot;
+    Attribute &m_pARoot;
     VDX9RENDER *m_pRS;
 
     BIImageRender *m_pImgRender;
@@ -155,7 +155,7 @@ class BICommandList
     void UpdateShowIcon();
     void SetNote(const char *pcNote, long nX, long nY);
 
-    ATTRIBUTES *GetCurrentCommandAttribute() const;
+    Attribute *GetCurrentCommandAttribute() const;
 };
 
 #endif

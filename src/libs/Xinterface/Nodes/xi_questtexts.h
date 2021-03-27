@@ -26,7 +26,7 @@ class CXI_QUESTTEXTS : public CINODE
     void SaveParametersToIni() override;
     uint32_t MessageProc(long msgcode, MESSAGE &message) override;
 
-    void StartQuestShow(ATTRIBUTES *pA, int qn);
+    void StartQuestShow(Attribute *pA, int qn);
 
     float GetLineStep() const;
     void ScrollerChanged(float fPos);

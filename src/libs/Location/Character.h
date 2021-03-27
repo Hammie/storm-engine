@@ -198,7 +198,7 @@ class Character : public Entity
     // Messages
     uint64_t ProcessMessage(MESSAGE &message) override;
     // Changing an attribute
-    uint32_t AttributeChanged(ATTRIBUTES *apnt) override;
+    uint32_t AttributeChanged(Attribute &apnt) override;
 
     void ProcessStage(Stage, uint32_t) override
     {
@@ -206,7 +206,7 @@ class Character : public Entity
 
     void SetSignModel();
     void SetSignTechnique();
-    void ReadFightActions(ATTRIBUTES *at, ActionCharacter actions[4], long &counter);
+    void ReadFightActions(Attribute *at, ActionCharacter actions[4], long &counter);
 
     virtual bool PostInit()
     {
@@ -238,9 +238,9 @@ class Character : public Entity
     // Delete loading positions
     void DelSavePosition(bool isTeleport);
     // Save parameters
-    virtual void SetSaveData(ATTRIBUTES *sdata){};
+    virtual void SetSaveData(Attribute *sdata){};
     // Restore parameters
-    virtual void GetSaveData(ATTRIBUTES *sdata){};
+    virtual void GetSaveData(Attribute *sdata){};
     void StopFightAnimation(); // boal
 
   protected:

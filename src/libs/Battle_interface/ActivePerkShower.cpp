@@ -13,13 +13,11 @@ ActivePerkShower::ActivePerkShower()
     m_idIBuf = -1;
 
     m_nTextureQ = 0;
-    m_pTexDescr = nullptr;
 
     m_nShowPlaceQ = 0;
     m_pShowPlaces = nullptr;
 
     m_nIShowQ = 0;
-    m_pIconsList = nullptr;
 }
 
 ActivePerkShower::~ActivePerkShower()
@@ -37,15 +35,15 @@ bool ActivePerkShower::Init()
     if (AttributesPointer == nullptr)
         return false;
 
-    if (!CreateTextures(AttributesPointer->GetAttributeClass("Textures")))
+    if (!CreateTextures(AttributesPointer->getProperty("Textures")))
         return false;
 
-    if (!CreateShowPlaces(AttributesPointer->GetAttributeClass("ShowParam")))
+    if (!CreateShowPlaces(AttributesPointer->getProperty("ShowParam")))
     {
         ReleaseAll();
         return false;
     }
-    if (!InitIconsList(AttributesPointer->FindAClass(AttributesPointer, "PerkList.list")))
+    if (!InitIconsList(AttributesPointer->getProperty("PerkList")["list"]))
     {
         ReleaseAll();
         return false;
@@ -59,7 +57,7 @@ void ActivePerkShower::Execute(uint32_t delta_time)
 
 void ActivePerkShower::Realize(uint32_t delta_time) const
 {
-    if (m_pTexDescr == nullptr)
+    if (m_pTexDescr.empty())
         return;
     rs->MakePostProcess();
 
@@ -82,61 +80,45 @@ uint64_t ActivePerkShower::ProcessMessage(MESSAGE &message)
         char param[256];
         message.String(sizeof(param), param);
         auto *const pA = message.AttributePointer();
-        if (_stricmp(param, "add") == 0)
-            AddIconToList(pA);
-        else if (_stricmp(param, "del") == 0)
-            DelIconFromList(pA);
+        if (pA != nullptr) {
+            if (_stricmp(param, "add") == 0)
+                AddIconToList(*pA);
+            else if (_stricmp(param, "del") == 0)
+                DelIconFromList(*pA);
+        }
     }
     break;
     case MSG_ACTIVE_PERK_ICON_REFRESH:
-        RefreshShowPlaces(AttributesPointer->GetAttributeClass("ShowParam"));
+        RefreshShowPlaces(AttributesPointer->getProperty("ShowParam"));
         break;
     }
     return 0;
 }
 
-bool ActivePerkShower::CreateTextures(ATTRIBUTES *pATextureRoot)
+bool ActivePerkShower::CreateTextures(Attribute &pATextureRoot)
 {
-    if (pATextureRoot == nullptr)
+    if (pATextureRoot.empty())
         return false;
 
-    const size_t q = pATextureRoot->GetAttributesNum();
-    if (q <= 0)
-        return false;
+    std::transform(pATextureRoot.begin(), pATextureRoot.end(), std::back_inserter(m_pTexDescr), [this] (const Attribute& attr) {
+      _TEXTURE_DESCR result{};
 
-    m_pTexDescr = new _TEXTURE_DESCR[q];
-    if (m_pTexDescr == nullptr)
-    {
-        throw std::exception("allocate memory error");
-    }
+      if (!attr.empty()) {
+          result.m_idTexture = rs->TextureCreate(attr["file"].get<std::string_view>().data());
+          attr["horz"].get_to(result.m_nCol);
+          attr["vert"].get_to(result.m_nRow);
+      }
 
-    for (auto i = 0; i < q; i++)
-    {
-        auto *pA = pATextureRoot->GetAttributeClass(i);
-        if (pA == nullptr)
-        {
-            m_pTexDescr[i].m_idTexture = -1;
-            m_pTexDescr[i].m_nCol = 1;
-            m_pTexDescr[i].m_nRow = 1;
-        }
-        else
-        {
-            m_pTexDescr[i].m_idTexture = rs->TextureCreate(pA->GetAttribute("file"));
-            m_pTexDescr[i].m_nCol = pA->GetAttributeAsDword("horz", 1);
-            m_pTexDescr[i].m_nRow = pA->GetAttributeAsDword("vert", 1);
-        }
-        m_pTexDescr[i].m_nPicsQ = 0;
-        m_pTexDescr[i].m_nVertStart = 0;
-        m_pTexDescr[i].m_nIndxStart = 0;
-    }
+      return result;
+    });
 
-    m_nTextureQ = q;
+    m_nTextureQ = m_pTexDescr.size();
     return true;
 }
 
-bool ActivePerkShower::CreateShowPlaces(ATTRIBUTES *pAPlacesRoot)
+bool ActivePerkShower::CreateShowPlaces(Attribute &pAPlacesRoot)
 {
-    if (pAPlacesRoot == nullptr)
+    if (pAPlacesRoot.empty())
         return false;
 
     RefreshShowPlaces(pAPlacesRoot);
@@ -144,44 +126,36 @@ bool ActivePerkShower::CreateShowPlaces(ATTRIBUTES *pAPlacesRoot)
     return InitCommonBuffers();
 }
 
-void ActivePerkShower::RefreshShowPlaces(ATTRIBUTES *pAPlacesRoot)
+void ActivePerkShower::RefreshShowPlaces(Attribute &pAPlacesRoot)
 {
-    ATTRIBUTES *pAttr;
+    Attribute *pAttr;
 
     if (m_pShowPlaces)
         STORM_DELETE(m_pShowPlaces);
 
     m_nIconWidth = 64;
     m_nIconHeight = 64;
-    pAttr = pAPlacesRoot->GetAttributeClass("IconSize");
-    if (pAttr != nullptr)
-    {
-        m_nIconWidth = pAttr->GetAttributeAsDword("horz", 64);
-        m_nIconHeight = pAttr->GetAttributeAsDword("vert", 64);
-    }
+    const Attribute& icon_size = pAPlacesRoot["IconSize"];
+    icon_size["horz"].get_to(m_nIconWidth);
+    icon_size["vert"].get_to(m_nIconHeight);
 
     m_nSpaceHorz = 4;
     m_nSpaceVert = 4;
-    pAttr = pAPlacesRoot->GetAttributeClass("IconSpace");
-    if (pAttr != nullptr)
-    {
-        m_nSpaceHorz = pAttr->GetAttributeAsDword("horz", 4);
-        m_nSpaceVert = pAttr->GetAttributeAsDword("vert", 4);
-    }
+    const Attribute& icon_space = pAPlacesRoot["IconSpace"];
+    icon_space["horz"].get_to(m_nSpaceHorz);
+    icon_space["vert"].get_to(m_nSpaceVert);
 
     RECT rectBound;
     rectBound.left = 488;
     rectBound.top = 192;
     rectBound.right = 624;
     rectBound.bottom = 464;
-    pAttr = pAPlacesRoot->GetAttributeClass("PosRect");
-    if (pAttr != nullptr)
-    {
-        rectBound.left = pAttr->GetAttributeAsDword("left", rectBound.left);
-        rectBound.top = pAttr->GetAttributeAsDword("top", rectBound.top);
-        rectBound.right = pAttr->GetAttributeAsDword("right", rectBound.right);
-        rectBound.bottom = pAttr->GetAttributeAsDword("bottom", rectBound.bottom);
-    }
+
+    const Attribute& rect_attr = pAPlacesRoot["PosRect"];
+    rect_attr["left"].get_to(rectBound.left);
+    rect_attr["top"].get_to(rectBound.top);
+    rect_attr["right"].get_to(rectBound.right);
+    rect_attr["bottom"].get_to(rectBound.bottom);
 
     int nHorzQ = (rectBound.right - rectBound.left) / (m_nIconWidth + m_nSpaceHorz);
     int nVertQ = (rectBound.bottom - rectBound.top) / (m_nIconHeight + m_nSpaceVert);
@@ -210,44 +184,36 @@ void ActivePerkShower::RefreshShowPlaces(ATTRIBUTES *pAPlacesRoot)
     }
 }
 
-bool ActivePerkShower::InitIconsList(ATTRIBUTES *pAIconsRoot)
+bool ActivePerkShower::InitIconsList(Attribute &pAIconsRoot)
 {
-    if (pAIconsRoot == nullptr)
+    if (pAIconsRoot.empty())
         return true;
 
-    const size_t q = pAIconsRoot->GetAttributesNum();
-    m_nIShowQ = q;
-    if (m_nIShowQ == 0)
-        return true;
-    m_pIconsList = new _PICTURE_DESCR[q];
-    if (m_pIconsList == nullptr)
-    {
-        throw std::exception("allocate memory error");
-    }
-    for (auto i = 0; i < q; i++)
-    {
-        m_pIconsList[i].m_nPicNum = 0;
-        m_pIconsList[i].m_nPicTexIdx = 0;
-        auto *pA = pAIconsRoot->GetAttributeClass(i);
-        if (pA != nullptr)
-        {
-            m_pIconsList[i].m_nPicNum = pA->GetAttributeAsDword("texture", 0);
-            m_pIconsList[i].m_nPicTexIdx = pA->GetAttributeAsDword("pic_idx", 0);
-        }
-    }
+    std::transform(pAIconsRoot.begin(), pAIconsRoot.end(), std::back_inserter(m_pIconsList), [this] (const Attribute& attr) {
+      _PICTURE_DESCR result{};
+
+      if (!attr.empty()) {
+          attr["texture"].get_to(result.m_nPicNum);
+          attr["pic_idx"].get_to(result.m_nPicTexIdx);
+      }
+
+      return result;
+    });
+
+    m_nIShowQ = m_pIconsList.size();
 
     FillVIBuffers();
     return true;
 }
 
-void ActivePerkShower::AddIconToList(ATTRIBUTES *pAItemDescr)
+void ActivePerkShower::AddIconToList(Attribute &pAItemDescr)
 {
-    if (pAItemDescr == nullptr)
+    if (pAItemDescr.empty())
         return;
-    const int picNum = pAItemDescr->GetAttributeAsDword("pic_idx");
-    const int texNum = pAItemDescr->GetAttributeAsDword("texture");
+    const int picNum = pAItemDescr["pic_idx"].get<int>();
+    const int texNum = pAItemDescr["texture"].get<int>();
 
-    if (m_pIconsList != nullptr)
+    if (!m_pIconsList.empty())
     {
         for (auto i = 0; i < m_nIShowQ; i++)
         {
@@ -256,55 +222,28 @@ void ActivePerkShower::AddIconToList(ATTRIBUTES *pAItemDescr)
         }
     }
 
-    m_nIShowQ++;
-    if (m_pIconsList == nullptr)
-    {
-        m_pIconsList = new _PICTURE_DESCR[m_nIShowQ];
-    }
-    else
-    {
-        auto *const old_pIconsList = m_pIconsList;
-        m_pIconsList = new _PICTURE_DESCR[m_nIShowQ];
-        if (m_pIconsList != nullptr)
-        {
-            memcpy(m_pIconsList, old_pIconsList, sizeof(_PICTURE_DESCR) * (m_nIShowQ - 1));
-        }
-        delete old_pIconsList;
-    }
-    if (m_pIconsList == nullptr)
-    {
-        throw std::exception("allocate memory error");
-    }
-    m_pIconsList[m_nIShowQ - 1].m_nPicTexIdx = texNum;
-    m_pIconsList[m_nIShowQ - 1].m_nPicNum = picNum;
+    m_pIconsList.emplace_back(picNum, texNum);
+    m_nIShowQ = m_pIconsList.size();
 
     FillVIBuffers();
 }
 
-void ActivePerkShower::DelIconFromList(ATTRIBUTES *pAIconDescr)
+void ActivePerkShower::DelIconFromList(Attribute &pAIconDescr)
 {
-    if (pAIconDescr == nullptr)
+    if (pAIconDescr.empty())
         return;
-    const int picNum = pAIconDescr->GetAttributeAsDword("pic_idx");
-    const int texNum = pAIconDescr->GetAttributeAsDword("texture");
+    const int picNum = pAIconDescr["pic_idx"].get<int>();
+    const int texNum = pAIconDescr["texture"].get<int>();
 
-    auto del_idx = m_nIShowQ;
-    for (auto i = 0; i < m_nIShowQ; i++)
-    {
-        if (i > del_idx)
-        {
-            m_pIconsList[i - 1].m_nPicTexIdx = m_pIconsList[i].m_nPicTexIdx;
-            m_pIconsList[i - 1].m_nPicNum = m_pIconsList[i].m_nPicNum;
-            continue;
-        }
-        if (texNum == m_pIconsList[i].m_nPicTexIdx && picNum == m_pIconsList[i].m_nPicNum)
-            del_idx = i;
+    auto found = std::find_if(m_pIconsList.begin(), m_pIconsList.end(), [picNum, texNum](const _PICTURE_DESCR &descr) {
+        return descr.m_nPicTexIdx == texNum && descr.m_nPicNum == picNum;
+    });
+
+    if (found != m_pIconsList.end()) {
+        m_pIconsList.erase(found);
+        m_nIShowQ = m_pIconsList.size();
+        FillVIBuffers();
     }
-    if (del_idx == m_nIShowQ)
-        return;
-
-    m_nIShowQ--;
-    FillVIBuffers();
 }
 
 void ActivePerkShower::FillVIBuffers()
@@ -413,12 +352,12 @@ void ActivePerkShower::ReleaseAll()
 
     for (i = 0; i < m_nTextureQ; i++)
         TEXTURE_RELEASE(rs, m_pTexDescr[i].m_idTexture);
-    STORM_DELETE(m_pTexDescr);
+    m_pTexDescr.clear();
     m_nTextureQ = 0;
 
     STORM_DELETE(m_pShowPlaces);
     m_nShowPlaceQ = 0;
 
-    STORM_DELETE(m_pIconsList);
+    m_pIconsList.clear();
     m_nIShowQ = 0;
 }

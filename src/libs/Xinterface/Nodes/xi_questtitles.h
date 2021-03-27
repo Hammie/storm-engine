@@ -21,7 +21,7 @@ class CXI_QUESTTITLE : public CINODE
     void ChangePosition(XYRECT &rNewPos) override;
     void SaveParametersToIni() override;
 
-    void SetNewTopQuest(ATTRIBUTES *pA, int topNum);
+    void SetNewTopQuest(Attribute *pA, int topNum);
 
     float GetLineStep() const;
     void ScrollerChanged(float fPos);

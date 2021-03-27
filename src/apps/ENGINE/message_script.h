@@ -73,7 +73,7 @@ class MESSAGE_SCRIPT : public MESSAGE
             arg_size = sizeof(DATA *);
             break;
         case 'a':
-            arg_size = sizeof(ATTRIBUTES *);
+            arg_size = sizeof(Attribute *);
             break;
         default:
             throw "Invalid MESSAGE_SCRIPT data type";
@@ -119,12 +119,12 @@ class MESSAGE_SCRIPT : public MESSAGE
     {
         throw "Invalid MESSAGE_SCRIPT data type";
     }
-    ATTRIBUTES *AttributePointer()
+    Attribute *AttributePointer()
     {
-        ATTRIBUTES *tAP;
+        Attribute *tAP;
         ValidateFormat('a');
-        memcpy(&tAP, ReadPointer, sizeof(ATTRIBUTES *));
-        ReadPointer += sizeof(ATTRIBUTES *);
+        memcpy(&tAP, ReadPointer, sizeof(Attribute *));
+        ReadPointer += sizeof(Attribute *);
         return tAP;
     }
     long Long()

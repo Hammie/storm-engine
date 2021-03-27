@@ -530,7 +530,7 @@ uint64_t CharactersGroups::ProcessMessage(MESSAGE &message)
 }
 
 // Changing an attribute
-uint32_t CharactersGroups::AttributeChanged(ATTRIBUTES *apnt)
+uint32_t CharactersGroups::AttributeChanged(Attribute &apnt)
 {
     return 0;
 }
@@ -550,7 +550,11 @@ bool CharactersGroups::MsgIsValidateTarget(MESSAGE &message)
     c->GetPosition(vP1);
     en->GetPosition(vP2);
     const auto fDistance = sqrtf(~(vP1 - vP2));
-    AttributesPointer->SetAttributeUseFloat("distance", fDistance);
+
+    Assert(AttributesPointer != nullptr);
+    Attribute& attr = *AttributesPointer;
+    attr["distance"] = fDistance;
+
     return RemoveInvalidTargets(c, en);
 }
 
@@ -622,7 +626,7 @@ bool CharactersGroups::MsgGetOptimalTarget(MESSAGE &message) const
     // if(!c->IsSetBlade()) return false;
     if (c->AttributesPointer)
     {
-        vd->Set(static_cast<long>(c->AttributesPointer->GetAttributeAsDword("index", -1)));
+        vd->Set(static_cast<long>(c->AttributesPointer->getProperty("index").get<uint32_t>(-1)));
     }
     else
     {
@@ -1214,10 +1218,11 @@ void CharactersGroups::SaveData()
         core.Trace("CharactersGroups::SaveData -> no attributes");
         return;
     }
-    auto *saveData = AttributesPointer->FindAClass(AttributesPointer, "savedata");
-    if (saveData)
-        AttributesPointer->DeleteAttributeClassX(saveData);
-    saveData = AttributesPointer->CreateSubAClass(AttributesPointer, "savedata");
+
+    Attribute& attr = *AttributesPointer;
+    Attribute& saveData = attr["savedata"];
+    if (!saveData.empty())
+        saveData.clear();
     // Maintaining group relationships
     for (long i = 0, cnt = 0; i < numGroups; i++)
     {
@@ -1226,28 +1231,31 @@ void CharactersGroups::SaveData()
             // Relationship section
             char buf[16];
             sprintf_s(buf, "r%.4i", cnt++);
-            auto *grp = saveData->CreateSubAClass(saveData, buf);
+            Attribute& group = saveData[buf];
+
             // Save group parameters
-            grp->SetAttribute("name1", groups[i]->name.name);
-            grp->SetAttributeUseFloat("look1", groups[i]->look);
-            grp->SetAttributeUseFloat("hear1", groups[i]->hear);
-            grp->SetAttributeUseFloat("say1", groups[i]->say);
-            grp->SetAttributeUseDword("prt1", groups[i]->priority);
-            grp->SetAttribute("name2", groups[j]->name.name);
-            grp->SetAttributeUseFloat("look2", groups[j]->look);
-            grp->SetAttributeUseFloat("hear2", groups[j]->hear);
-            grp->SetAttributeUseFloat("say2", groups[j]->say);
-            grp->SetAttributeUseDword("prt2", groups[j]->priority);
+            group["name1"] = groups[i]->name.name;
+            group["look1"] = groups[i]->look;
+            group["hear1"] = groups[i]->hear;
+            group["say1"] = groups[i]->say;
+            group["prt1"] = groups[i]->priority;
+
+            group["name2"] = groups[j]->name.name;
+            group["look2"] = groups[j]->look;
+            group["hear2"] = groups[j]->hear;
+            group["say2"] = groups[j]->say;
+            group["prt2"] = groups[j]->priority;
+
             // keep the relationship
             auto &r = FindRelation(i, j);
-            grp->SetAttributeUseFloat("alarm", r.alarm);
-            grp->SetAttributeUseFloat("alarmdown", r.alarmdown);
-            grp->SetAttributeUseFloat("alarmmin", r.alarmmin);
-            grp->SetAttributeUseFloat("alarmmax", r.alarmmax);
-            grp->SetAttributeUseDword("isactive", r.isActive);
-            grp->SetAttributeUseDword("curState", r.curState);
-            grp->SetAttributeUseDword("actState", r.actState);
-            grp->SetAttributeUseDword("relState", r.relState);
+            group["alarm"] = r.alarm;
+            group["alarmdown"] = r.alarmdown;
+            group["alarmmin"] = r.alarmmin;
+            group["alarmmax"] = r.alarmmax;
+            group["isactive"] = r.isActive;
+            group["curState"] = r.curState;
+            group["actState"] = r.actState;
+            group["relState"] = r.relState;
         }
     }
     // Save character parameters
@@ -1267,62 +1275,60 @@ void CharactersGroups::LoadDataRelations()
         core.Trace("CharactersGroups::LoadDataRelations -> no attributes");
         return;
     }
-    auto *saveData = AttributesPointer->FindAClass(AttributesPointer, "savedata");
-    if (!saveData)
+
+    const Attribute& attr = *AttributesPointer;
+    const Attribute& saveData = attr["savedata"];
+    if (saveData.empty())
         return;
-    const long numG = saveData->GetAttributesNum();
-    for (long i = 0; i < numG; i++)
-    {
-        auto *grp = saveData->GetAttributeClass(i);
+
+    for (const Attribute& group : saveData) {
         // Registering the first group
-        const char *gname = grp->GetAttribute("name1");
-        if (!gname)
-            gname = "";
-        const auto g1 = RegistryGroup(gname);
-        groups[g1]->look = grp->GetAttributeAsFloat("look1", groups[g1]->look);
-        groups[g1]->hear = grp->GetAttributeAsFloat("hear1", groups[g1]->hear);
-        groups[g1]->say = grp->GetAttributeAsFloat("say1", groups[g1]->say);
-        groups[g1]->priority = grp->GetAttributeAsDword("prt1", groups[g1]->priority);
+        const auto gname1 = group["name1"].get<std::string_view>();
+        const auto g1 = RegistryGroup(gname1.data());
+        group["look1"].get_to(groups[g1]->look);
+        group["hear1"].get_to(groups[g1]->hear);
+        group["say1"].get_to(groups[g1]->say);
+        group["prt1"].get_to(groups[g1]->priority);
         // Registering the second group
-        gname = grp->GetAttribute("name2");
-        if (!gname)
-            gname = "";
-        const auto g2 = RegistryGroup(gname);
-        groups[g2]->look = grp->GetAttributeAsFloat("look2", groups[g2]->look);
-        groups[g2]->hear = grp->GetAttributeAsFloat("hear2", groups[g2]->hear);
-        groups[g2]->say = grp->GetAttributeAsFloat("say2", groups[g2]->say);
-        groups[g2]->priority = grp->GetAttributeAsDword("prt2", groups[g2]->priority);
+        const auto gname2 = group["name2"].get<std::string_view>();
+        const auto g2 = RegistryGroup(gname1.data());
+        group["look2"].get_to(groups[g2]->look);
+        group["hear2"].get_to(groups[g2]->hear);
+        group["say2"].get_to(groups[g2]->say);
+        group["prt2"].get_to(groups[g2]->priority);
+
         // restore relations
         Assert(g1 != g2);
         auto &r = FindRelation(g1, g2);
-        r.alarm = grp->GetAttributeAsFloat("alarm", r.alarm);
+        group["alarm"].get_to(r.alarm);
         if (r.alarm < 0.0f)
             r.alarm = 0.0f;
-        r.alarmdown = grp->GetAttributeAsFloat("alarmdown", r.alarmdown);
-        r.alarmmin = grp->GetAttributeAsFloat("alarmmin", r.alarmmin);
-        r.alarmmax = grp->GetAttributeAsFloat("alarmmax", r.alarmmax);
-        r.isActive = grp->GetAttributeAsDword("isactive", r.isActive) != 0;
-        long curState = grp->GetAttributeAsDword("curState", r.curState);
-        long actState = grp->GetAttributeAsDword("actState", r.actState);
-        long relState = grp->GetAttributeAsDword("relState", r.relState);
-        if (curState <= rs_beginvalue || curState >= rs_endvalue)
+        group["alarmdown"].get_to(r.alarmdown);
+        group["alarmmin"].get_to(r.alarmmin);
+        group["alarmmax"].get_to(r.alarmmax);
+        group["isactive"].get_to(r.isActive);
+        group["curState"].get_to(r.curState);
+        group["actState"].get_to(r.actState);
+        group["relState"].get_to(r.relState);
+
+        if (r.curState <= rs_beginvalue || r.curState >= rs_endvalue)
         {
             core.Trace("CharactersGroups::LoadDataRelations -> invalide curState value, set this neitral");
-            curState = rs_neitral;
+            r.curState = rs_neitral;
         }
-        r.curState = static_cast<RelState>(curState);
-        if (actState <= rs_beginvalue || actState >= rs_endvalue)
+        r.curState = static_cast<RelState>(r.curState);
+        if (r.actState <= rs_beginvalue || r.actState >= rs_endvalue)
         {
             core.Trace("CharactersGroups::LoadDataRelations -> invalide actState value, set this enemy");
-            actState = rs_enemy;
+            r.actState = rs_enemy;
         }
-        r.actState = static_cast<RelState>(actState);
-        if (relState <= rs_beginvalue || relState >= rs_endvalue)
+        r.actState = static_cast<RelState>(r.actState);
+        if (r.relState <= rs_beginvalue || r.relState >= rs_endvalue)
         {
             core.Trace("CharactersGroups::LoadDataRelations -> invalide relState value, set this neitral");
-            relState = rs_neitral;
+            r.relState = rs_neitral;
         }
-        r.relState = static_cast<RelState>(relState);
+        r.relState = static_cast<RelState>(r.relState);
     }
 }
 

@@ -4,49 +4,48 @@
 #include "Attributes.h"
 #include "storm_assert.h"
 
-inline char *GetFirstName(ATTRIBUTES *pACharacter)
+inline const char *GetFirstName(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    char *pName = pACharacter->GetAttribute("name");
+    const char *pName = pACharacter->getProperty("name").get<const char*>();
     Assert(pName);
     return pName;
 }
 
-inline char *GetLastName(ATTRIBUTES *pACharacter)
+inline const char *GetLastName(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    char *pName = pACharacter->GetAttribute("name");
+    const char *pName = pACharacter->getProperty("name").get<const char*>();
     Assert(pName);
     return pName;
 }
 
-inline long GetIndex(ATTRIBUTES *pACharacter)
+inline long GetIndex(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    Assert(pACharacter->FindAClass(pACharacter, "index"));
-    return pACharacter->GetAttributeAsDword("index");
+    Assert(pACharacter->hasProperty("index"));
+    return pACharacter->getProperty("index").get<long>();
 }
 
-inline long GetNation(ATTRIBUTES *pACharacter)
+inline long GetNation(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    Assert(pACharacter->FindAClass(pACharacter, "nation"));
-    return pACharacter->GetAttributeAsDword("nation");
+    Assert(pACharacter->hasProperty("nation"));
+    return pACharacter->getProperty("nation").get<long>();
 }
 
-inline long GetRank(ATTRIBUTES *pACharacter)
+inline long GetRank(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    Assert(pACharacter->FindAClass(pACharacter, "rank"));
-    return pACharacter->GetAttributeAsDword("rank");
+    Assert(pACharacter->hasProperty("rank"));
+    return pACharacter->getProperty("rank").get<long>();
 }
 
-inline ATTRIBUTES *GetAShip(ATTRIBUTES *pACharacter)
+inline Attribute *GetAShip(Attribute *pACharacter)
 {
     Assert(pACharacter);
-    ATTRIBUTES *pAShip = pACharacter->FindAClass(pACharacter, "ship");
-    Assert(pAShip);
-    return pAShip;
+    Assert(pACharacter->hasProperty("ship"));
+    return &pACharacter->getProperty("ship");
 }
 
 #endif

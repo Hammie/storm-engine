@@ -45,16 +45,18 @@ class ActivePerkShower : public Entity
 
     struct _TEXTURE_DESCR
     {
-        long m_idTexture;
-        long m_nCol;
-        long m_nRow;
+        long m_idTexture = -1;
+        long m_nCol= -1;
+        long m_nRow = -1;
 
-        long m_nPicsQ;
-        long m_nVertStart;
-        long m_nIndxStart;
-    } * m_pTexDescr;
+        long m_nPicsQ = 0;
+        long m_nVertStart = 0;
+        long m_nIndxStart = 0;
+    };
 
-    bool CreateTextures(ATTRIBUTES *pATextureRoot);
+    std::vector<_TEXTURE_DESCR> m_pTexDescr;
+
+    bool CreateTextures(Attribute &pATextureRoot);
     FRECT GetTextureRect(int textIdx, int picIdx) const;
 
     int m_nIconWidth;
@@ -65,20 +67,21 @@ class ActivePerkShower : public Entity
     int m_nShowPlaceQ;
     typedef FRECT _SHOW_PLACE;
     _SHOW_PLACE *m_pShowPlaces;
-    bool CreateShowPlaces(ATTRIBUTES *pAPlacesRoot);
-    void RefreshShowPlaces(ATTRIBUTES *pAPlacesRoot);
+    bool CreateShowPlaces(Attribute &pAPlacesRoot);
+    void RefreshShowPlaces(Attribute &pAPlacesRoot);
 
     size_t m_nIShowQ;
 
     struct _PICTURE_DESCR
     {
-        long m_nPicNum;
-        long m_nPicTexIdx;
-    } * m_pIconsList;
+        long m_nPicNum = 0;
+        long m_nPicTexIdx = 0;
+    };
+    std::vector<_PICTURE_DESCR> m_pIconsList;
 
-    bool InitIconsList(ATTRIBUTES *pAIconsRoot);
-    void AddIconToList(ATTRIBUTES *pAIconDescr);
-    void DelIconFromList(ATTRIBUTES *pAIconDescr);
+    bool InitIconsList(Attribute &pAIconsRoot);
+    void AddIconToList(Attribute &pAIconDescr);
+    void DelIconFromList(Attribute &pAIconDescr);
 
     bool InitCommonBuffers();
 };

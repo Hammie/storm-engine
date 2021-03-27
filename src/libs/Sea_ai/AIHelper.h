@@ -11,14 +11,14 @@
 class AIAttributesHolder
 {
   protected:
-    ATTRIBUTES *pACharacter;
+    Attribute *pACharacter;
 
   public:
-    virtual void SetACharacter(ATTRIBUTES *pAP)
+    virtual void SetACharacter(Attribute *pAP)
     {
         pACharacter = pAP;
     };
-    virtual ATTRIBUTES *GetACharacter() const
+    virtual Attribute *GetACharacter() const
     {
         return pACharacter;
     };
@@ -32,7 +32,7 @@ class AIHelper
     AIHelper();
     ~AIHelper();
 
-    static ATTRIBUTES *pASeaCameras;
+    static Attribute *pASeaCameras;
     static ISLAND_BASE *pIsland;
     static VDX9RENDER *pRS;
     static COLLIDE *pCollide;
@@ -42,19 +42,19 @@ class AIHelper
     bool SetDevice();
     bool Init() const;
     bool Uninit();
-    void AddCharacter(ATTRIBUTES *pACharacter, ATTRIBUTES *pAMainCharacter);
+    void AddCharacter(Attribute *pACharacter, Attribute *pAMainCharacter);
     void CalculateRelations();
 
-    bool isFriend(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const;
-    bool isEnemy(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const;
-    bool isNeutral(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const;
+    bool isFriend(Attribute *pA1, Attribute *pA2) const;
+    bool isEnemy(Attribute *pA1, Attribute *pA2) const;
+    bool isNeutral(Attribute *pA1, Attribute *pA2) const;
 
-    ATTRIBUTES *GetMainCharacter(ATTRIBUTES *pACharacter);
+    Attribute *GetMainCharacter(Attribute *pACharacter);
 
-    static VAI_INNEROBJ *FindAIInnerObj(ATTRIBUTES *pACharacter);
+    static VAI_INNEROBJ *FindAIInnerObj(Attribute *pACharacter);
 
-    uint32_t GetRelation(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const;
-    uint32_t GetRelationSafe(ATTRIBUTES *pA1, ATTRIBUTES *pA2) const;
+    uint32_t GetRelation(Attribute *pA1, Attribute *pA2) const;
+    uint32_t GetRelationSafe(Attribute *pA1, Attribute *pA2) const;
 
     static void Print(float x, float y, float fScale, const char *pFormat, ...);
     static void Print3D(CVECTOR vPos, float dy, float fScale, const char *pFormat, ...);
@@ -64,10 +64,10 @@ class AIHelper
 
   private:
     uint32_t *pRelations, dwRelationSize;
-    std::vector<ATTRIBUTES *> aCharacters, aMainCharacters;
+    std::vector<Attribute *> aCharacters, aMainCharacters;
 
     uint32_t *GetRelation(uint32_t x, uint32_t y) const;
-    uint32_t FindIndex(ATTRIBUTES *pACharacter) const;
+    uint32_t FindIndex(Attribute *pACharacter) const;
 };
 
 extern AIHelper Helper;

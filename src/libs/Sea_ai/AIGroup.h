@@ -20,7 +20,7 @@ class AIGroup
     bool bFirstExecute;
     uint32_t iWarShipsNum, iTradeShipsNum;
 
-    ATTRIBUTES *pACommander;
+    Attribute *pACommander;
 
     // ship container for this group
     std::vector<AIShip *> aGroupShips;
@@ -36,7 +36,7 @@ class AIGroup
     static float fDistanceBetweenGroupLines;
 
     // static functions
-    static AIGroup *FindGroup(ATTRIBUTES *pACharacter);
+    static AIGroup *FindGroup(Attribute *pACharacter);
     static AIGroup *FindGroup(const char *pGroupName);
     static AIGroup *FindOrCreateGroup(const char *pGroupName);
     static AIGroup *CreateNewGroup(const char *pGroupName);
@@ -48,12 +48,12 @@ class AIGroup
     static void GroupSetAttack(AIShip *pS1, AIShip *pS2);
     static void GroupSetRunAway(const char *pGroupName);
     static void GroupSetType(const char *pGroupName, const char *cGroupType);
-    static void GroupSetCommander(const char *pGroupName, ATTRIBUTES *_pACommander);
+    static void GroupSetCommander(const char *pGroupName, Attribute *_pACommander);
     static void GroupSetLocationNearOtherGroup(const char *pGroupName, const char *pOtherGroupName);
-    static void ShipChangeGroup(ATTRIBUTES *pACharacter, const char *pGroupName);
-    static void SwapCharactersShips(ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
-    static void SetOfficerCharacter2Ship(ATTRIBUTES *pOfficerCharacter, ATTRIBUTES *pReplacedACharacter);
-    static void SailMainGroup(CVECTOR vPos, float fAngleY, ATTRIBUTES *pACharacter);
+    static void ShipChangeGroup(Attribute *pACharacter, const char *pGroupName);
+    static void SwapCharactersShips(Attribute *pACharacter1, Attribute *pACharacter2);
+    static void SetOfficerCharacter2Ship(Attribute *pOfficerCharacter, Attribute *pReplacedACharacter);
+    static void SailMainGroup(CVECTOR vPos, float fAngleY, Attribute *pACharacter);
 
     static void GroupHelpMe(const char *pGroupName, AIShip *pMe, AIShip *pEnemy);
 
@@ -70,13 +70,13 @@ class AIGroup
     };
 
     // extract / insert ship group
-    AIShip *ExtractShip(ATTRIBUTES *pACharacter);
+    AIShip *ExtractShip(Attribute *pACharacter);
     void InsertShip(AIShip *pAIShip);
 
     // add new ship to group
-    ATTRIBUTES *GetCommanderACharacter() const;
+    Attribute *GetCommanderACharacter() const;
     AIShip *GetMainShip();
-    void AddShip(entid_t _eidShip, ATTRIBUTES *pACharacter, ATTRIBUTES *pAShip);
+    void AddShip(entid_t _eidShip, Attribute *pACharacter, Attribute *pAShip);
 
     void Unload(){};
 

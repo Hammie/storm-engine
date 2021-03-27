@@ -310,7 +310,7 @@ void CXI_QUESTTITLE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, co
     }
 }
 
-void CXI_QUESTTITLE::SetNewTopQuest(ATTRIBUTES *pA, int topNum)
+void CXI_QUESTTITLE::SetNewTopQuest(Attribute *pA, int topNum)
 {
     int i;
     m_nCommonQuantity = 0;
@@ -326,7 +326,7 @@ void CXI_QUESTTITLE::SetNewTopQuest(ATTRIBUTES *pA, int topNum)
 
     if (pA == nullptr)
         return;
-    const long aq = pA->GetAttributesNum();
+    const long aq = std::distance(pA->begin(), pA->end());
     if (topNum < 0 || topNum >= aq)
     {
         core.Trace("quest number out of range");
@@ -359,19 +359,19 @@ void CXI_QUESTTITLE::SetNewTopQuest(ATTRIBUTES *pA, int topNum)
         {
             m_strList[i].lineQuantity = 0;
             m_strList[i].dwSpecColor = 0;
-            auto *pAttr = pA->GetAttributeClass(topNum + i);
-            if (pAttr == nullptr)
+            const Attribute &pAttr = *(pA->begin() + topNum + i);
+            if (pAttr.empty())
             {
                 m_strList[i].complete = false;
                 m_strList[i].lineQuantity = 0;
                 continue;
             }
-            m_strList[i].dwSpecColor = pAttr->GetAttributeAsDword("color", 0);
-            m_strList[i].complete = pAttr->GetAttributeAsDword("Complete", 0) != 0;
-            const char *pTmpQuestRecordID = pAttr->GetAttribute("LogName");
+            pAttr["color"].get_to(m_strList[i].dwSpecColor, 0u);
+            pAttr["Complete"].get_to(m_strList[i].complete, false);
+            const char *pTmpQuestRecordID = pAttr["LogName"].get<const char*>();
             if (!pTmpQuestRecordID)
-                pTmpQuestRecordID = pAttr->GetThisName();
-            if (ptrOwner->QuestFileReader()->GetQuestTitle(pTmpQuestRecordID, pAttr->GetThisName(), sizeof(param) - 1,
+                pTmpQuestRecordID = pAttr.getName().data();
+            if (ptrOwner->QuestFileReader()->GetQuestTitle(pTmpQuestRecordID, pAttr.getName().data(), sizeof(param) - 1,
                                                            param))
             {
                 const int titleSize = strlen(param);

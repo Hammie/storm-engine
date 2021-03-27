@@ -24,7 +24,7 @@ class ANIMALS : public Entity
     virtual uint64_t ProcessMessage(MESSAGE &message);
     virtual void Realize(uint32_t dTime);
     virtual void Execute(uint32_t dTime);
-    uint32_t AttributeChanged(ATTRIBUTES *pA);
+    uint32_t AttributeChanged(Attribute &pA);
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {

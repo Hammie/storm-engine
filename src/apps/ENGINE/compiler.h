@@ -176,7 +176,7 @@ class COMPILER : public VIRTUAL_COMPILER
     DATA rAX;
     DATA rBX;
     DATA ExpressionResult;
-    ATTRIBUTES *rAP;
+    Attribute* rAP = nullptr;
 
   public:
     std::shared_ptr<spdlog::sinks::basic_file_sink_mt> error_warning_sink;
@@ -287,7 +287,7 @@ class COMPILER : public VIRTUAL_COMPILER
     void UpdateOffsets(SEGMENT_DESC &Segment, STRINGS_LIST &list, uint32_t offset, const char *sname = nullptr);
     S_TOKEN_TYPE DetectUnknown(uint32_t &code);
 
-    void DumpAttributes(ATTRIBUTES *pA, long level);
+    void DumpAttributes(Attribute *pA, long level);
 
     bool IsIntFuncVarArgsNum(uint32_t code);
 
@@ -306,10 +306,10 @@ class COMPILER : public VIRTUAL_COMPILER
     void SaveVariable(DATA *pV, bool bdim = false);
     bool ReadVariable(char *name, /*DWORD code,*/ bool bdim = false, uint32_t a_index = 0);
     bool FindReferencedVariable(DATA *pRef, uint32_t &var_index, uint32_t &array_index);
-    bool FindReferencedVariableByRootA(ATTRIBUTES *pA, uint32_t &var_index, uint32_t &array_index);
-    ATTRIBUTES *TraceARoot(ATTRIBUTES *pA, const char *&pAccess);
-    void SaveAttributesData(ATTRIBUTES *pRoot);
-    void ReadAttributesData(ATTRIBUTES *pRoot, ATTRIBUTES *pParent);
+    bool FindReferencedVariableByRootA(Attribute *pA, uint32_t &var_index, uint32_t &array_index);
+    const Attribute *TraceARoot(const Attribute *pA, const char *&pAccess);
+    void SaveAttributesData(Attribute *pRoot);
+    void ReadAttributesData(Attribute *pRoot, Attribute *pParent);
     void WriteVDword(uint32_t v);
     uint32_t ReadVDword();
 

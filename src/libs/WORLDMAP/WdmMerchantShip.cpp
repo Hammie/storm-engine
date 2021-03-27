@@ -117,21 +117,28 @@ void WdmMerchantShip::UpdateSaveData()
     if (!saveAttribute)
         return;
     WdmEnemyShip::UpdateSaveData();
-    saveAttribute->SetAttributeUseFloat("gotoX", gotoPos.x);
-    saveAttribute->SetAttributeUseFloat("gotoZ", gotoPos.z);
-    saveAttribute->SetAttributeUseFloat("gotoRad", gotoRad);
-    saveAttribute->SetAttributeUseDword("isEnableSetDir", isEnableSetDir);
+
+    Assert(saveAttribute != nullptr);
+    Attribute& attr = *saveAttribute;
+
+    attr["gotoX"] = gotoPos.x;
+    attr["gotoZ"] = gotoPos.z;
+    attr["gotoRad"] = gotoRad;
+    attr["isEnableSetDir"] = isEnableSetDir;
 }
 
 // Setting parameters
-void WdmMerchantShip::SetSaveAttribute(ATTRIBUTES *save)
+void WdmMerchantShip::SetSaveAttribute(Attribute *save)
 {
     if (save)
     {
-        gotoPos.x = save->GetAttributeAsFloat("gotoX", gotoPos.x);
-        gotoPos.z = save->GetAttributeAsFloat("gotoZ", gotoPos.z);
-        gotoRad = save->GetAttributeAsFloat("gotoRad", gotoRad);
-        isEnableSetDir = save->GetAttributeAsDword("isEnableSetDir", isEnableSetDir) != 0;
+        Assert(save != nullptr);
+        Attribute& attr = *save;
+
+        attr["gotoX"].get_to(gotoPos.x);
+        attr["gotoZ"].get_to(gotoPos.z);
+        attr["gotoRad"].get_to(gotoRad);
+        attr["isEnableSetDir"].get_to(isEnableSetDir);
     }
     WdmEnemyShip::SetSaveAttribute(save);
 }

@@ -6,7 +6,7 @@ class AIShip;
 class AIShipCameraController
 {
   private:
-    ATTRIBUTES *pTargetAPointer;
+    Attribute *pTargetAPointer;
     uint32_t dwTarget;
     float fDelta;
     long iCrosshairTex;
@@ -17,7 +17,7 @@ class AIShipCameraController
     uint32_t dwSubTexturesX, dwSubTexturesY;
 
     AIShip *pOurAIShip;
-    ATTRIBUTES *pACrosshair;
+    Attribute *pACrosshair;
 
     bool isCameraOutside() const
     {

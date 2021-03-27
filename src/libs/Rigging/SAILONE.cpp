@@ -1665,7 +1665,7 @@ float SAILONE::SSailTrace(CVECTOR &src, CVECTOR &dst, bool bCannonTrace)
             auto *pVai = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(pp->gdata[HostNum].shipEI));
             auto charIdx = -1;
             if (pVai != nullptr && pVai->GetACharacter() != nullptr)
-                charIdx = pVai->GetACharacter()->GetAttributeAsDword("index");
+                charIdx = pVai->GetACharacter()->getProperty("index").get<int>(-1);
             if (charIdx != -1)
                 core.Event("DoSailHole", "llssllllf", g_iBallOwnerIdx, charIdx, "*", hostNode->GetName(), groupNum,
                            ss.holeCount, GetHoleDword(), 12, static_cast<float>(maxSpeed) / pp->gdata[HostNum].speed_m);
@@ -1724,7 +1724,7 @@ float SAILONE::TSailTrace(CVECTOR &src, CVECTOR &dst, bool bCannonTrace)
             auto *pVai = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(pp->gdata[HostNum].shipEI));
             auto charIdx = -1;
             if (pVai != nullptr && pVai->GetACharacter() != nullptr)
-                charIdx = pVai->GetACharacter()->GetAttributeAsDword("index");
+                charIdx = pVai->GetACharacter()->getProperty("index").get<int>(-1);
             if (charIdx != -1)
                 core.Event("DoSailHole", "llssllllf", g_iBallOwnerIdx, charIdx, "*", hostNode->GetName(), groupNum,
                            ss.holeCount, GetHoleDword(), 10, static_cast<float>(maxSpeed) / pp->gdata[HostNum].speed_m);

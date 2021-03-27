@@ -33,7 +33,7 @@ class WdmMerchantShip : public WdmEnemyShip
     // Updating stored data
     void UpdateSaveData() override;
     // Setting parameters
-    void SetSaveAttribute(ATTRIBUTES *save) override;
+    void SetSaveAttribute(Attribute *save) override;
 
     // Setting parameters
     bool Load(const char *modelName) override;

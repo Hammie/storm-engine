@@ -5,10 +5,10 @@
 #include "image/imgrender.h"
 #include "sea/ships_list.h"
 
-BICommandList::BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs)
+BICommandList::BICommandList(entid_t eid, Attribute &pA, VDX9RENDER *rs)
+    : m_pARoot(pA)
 {
     m_idHostObj = eid;
-    m_pARoot = pA;
     m_pRS = rs;
 
     m_pImgRender = new BIImageRender(rs);
@@ -181,9 +181,9 @@ long BICommandList::ExecuteCancel()
 
 void BICommandList::SetActive(bool bActive)
 {
-    if (m_pARoot)
+    if (!m_pARoot.empty())
     {
-        m_pARoot->SetAttributeUseDword("ComState", (bActive ? 1 : 0));
+        m_pARoot["ComState"] = bActive;
     }
 
     if (m_bActive == bActive)
@@ -204,7 +204,6 @@ void BICommandList::SetUpDown(bool bUp, bool bDown)
 void BICommandList::Init()
 {
     Assert(m_pImgRender);
-    ATTRIBUTES *pAList, *pATextures;
 
     m_LeftTopPoint.x = 120;
     m_LeftTopPoint.y = 100;
@@ -236,69 +235,46 @@ void BICommandList::Init()
     FULLRECT(m_frActiveIconUV2);
     m_sActiveIconNote = "";
 
-    pAList = nullptr;
-    if (m_pARoot)
-        pAList = m_pARoot->GetAttributeClass("CommandList");
-    if (pAList)
+    const Attribute& command_list = m_pARoot["CommandList"];
+    if (!command_list.empty())
     {
         // get icon parameters
-        m_nIconSpace = pAList->GetAttributeAsDword("CommandIconSpace", 0);
-        m_LeftTopPoint.x = pAList->GetAttributeAsDword("CommandIconLeft", 100);
-        m_IconSize.x = pAList->GetAttributeAsDword("CommandIconWidth", m_IconSize.x);
-        m_IconSize.y = pAList->GetAttributeAsDword("CommandIconHeight", m_IconSize.y);
-
-        const char *attr = nullptr;
+        command_list["CommandIconSpace"].get_to(m_nIconSpace, 0l);
+        command_list["CommandIconLeft"].get_to(m_LeftTopPoint.x, 100l);
+        command_list["CommandIconWidth"].get_to(m_IconSize.x);
+        command_list["CommandIconHeight"].get_to(m_IconSize.y);
 
         // get note font parameters
-        if (pAList->GetAttribute("CommandNoteFont"))
-            m_NoteFontID = m_pRS->LoadFont(pAList->GetAttribute("CommandNoteFont"));
-        m_NoteFontColor = pAList->GetAttributeAsDword("CommandNoteColor", m_NoteFontColor);
-        m_NoteFontScale = pAList->GetAttributeAsFloat("CommandNoteScale", m_NoteFontScale);
-        if (pAList->GetAttribute("CommandNoteOffset"))
-            sscanf(pAList->GetAttribute("CommandNoteOffset"), "%d,%d", &m_NoteOffset.x, &m_NoteOffset.y);
+        m_NoteFontID = BIUtils::GetFontIDFromAttr(command_list, "CommandNoteFont", m_pRS).value_or(-1);
 
-        // Setting values for arrows (up / down)
-        if (attr = pAList->GetAttribute("UDArrow_Texture"))
-            m_sUpDownArrowTexture = attr;
-        BIUtils::ReadRectFromAttr(pAList, "UDArrow_UV_Up", m_frUpArrowUV, m_frUpArrowUV);
-        BIUtils::ReadRectFromAttr(pAList, "UDArrow_UV_Down", m_frDownArrowUV, m_frDownArrowUV);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Size", m_pntUpDownArrowSize.x, m_pntUpDownArrowSize.y,
-                                 m_pntUpDownArrowSize.x, m_pntUpDownArrowSize.y);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Offset_Up", m_pntUpArrowOffset.x, m_pntUpArrowOffset.y,
-                                 m_pntUpArrowOffset.x, m_pntUpArrowOffset.y);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Offset_Down", m_pntDownArrowOffset.x, m_pntDownArrowOffset.y,
-                                 m_pntDownArrowOffset.x, m_pntDownArrowOffset.y);
+        command_list["CommandNoteColor"].get_to(m_NoteFontColor);
+        command_list["CommandNoteScale"].get_to(m_NoteFontScale);
+        command_list["CommandNoteOffset"].get_to(m_NoteOffset);
 
-        // set values for the menu activity icon
-        if (attr = pAList->GetAttribute("ActiveIcon_Texture"))
-            m_sActiveIconTexture = attr;
-        BIUtils::ReadPosFromAttr(pAList, "ActiveIcon_Offset", m_pntActiveIconOffset.x, m_pntActiveIconOffset.y,
-                                 m_pntActiveIconOffset.x, m_pntActiveIconOffset.y);
-        BIUtils::ReadPosFromAttr(pAList, "ActiveIcon_Size", m_pntActiveIconSize.x, m_pntActiveIconSize.y,
-                                 m_pntActiveIconSize.x, m_pntActiveIconSize.y);
-        BIUtils::ReadRectFromAttr(pAList, "ActiveIcon_UV1", m_frActiveIconUV1, m_frActiveIconUV1);
-        BIUtils::ReadRectFromAttr(pAList, "ActiveIcon_UV2", m_frActiveIconUV2, m_frActiveIconUV2);
-        if (attr = pAList->GetAttribute("ActiveIcon_Note"))
-            m_sActiveIconNote = attr;
+        command_list["UDArrow_Texture"].get_to(m_sUpDownArrowTexture);
+        command_list["UDArrow_UV_Up"].get_to(m_frUpArrowUV);
+        command_list["UDArrow_UV_Down"].get_to(m_frDownArrowUV);
+        command_list["UDArrow_Size"].get_to(m_pntUpDownArrowSize);
+        command_list["UDArrow_Offset_Up"].get_to(m_pntUpArrowOffset);
+        command_list["UDArrow_Offset_Down"].get_to(m_pntDownArrowOffset);
+
+        command_list["ActiveIcon_Texture"].get_to(m_sActiveIconTexture);
+        command_list["ActiveIcon_Offset"].get_to(m_pntActiveIconOffset);
+        command_list["ActiveIcon_Size"].get_to(m_pntActiveIconSize);
+        command_list["ActiveIcon_UV1"].get_to(m_frActiveIconUV1);
+        command_list["ActiveIcon_UV2"].get_to(m_frActiveIconUV2);
+        command_list["ActiveIcon_Note"].get_to(m_sActiveIconNote);
     }
 
-    pAList = nullptr;
-    if (m_pARoot)
-        pAList = m_pARoot->GetAttributeClass("CommandTextures");
-
-    pATextures = nullptr;
-    if (pAList)
-        pATextures = pAList->GetAttributeClass("list");
-    if (pATextures)
-    {
-        size_t q = pATextures->GetAttributesNum();
-        for (int n = 0; n < q; n++)
-        {
-            auto *pA = pATextures->GetAttributeClass(n);
-            if (pA)
-            {
-                TextureDescr td = {pA->GetAttribute("name") ? pA->GetAttribute("name") : std::string(),
-                                   pA->GetAttributeAsDword("xsize", 1), pA->GetAttributeAsDword("ysize", 1)};
+    const Attribute& command_texture_list = m_pARoot["CommandTextures"]["list"];
+    if (!command_list.empty()) {
+        for (const Attribute& texture : command_texture_list) {
+            if (!texture.empty()) {
+                TextureDescr td =
+                { texture["name"].get<std::string>(),
+                  texture["xsize"].get<uint32_t>(1),
+                  texture["ysize"].get<uint32_t>(1),
+                };
 
                 if (td.nCols < 1)
                     td.nCols = 1;
@@ -543,28 +519,26 @@ void BICommandList::SetNote(const char *pcNote, long nX, long nY)
     m_NotePos.y = nY + m_NoteOffset.y;
 }
 
-ATTRIBUTES *BICommandList::GetCurrentCommandAttribute() const
+Attribute *BICommandList::GetCurrentCommandAttribute() const
 {
     if (m_sCurrentCommandName.empty())
         return nullptr;
 
-    ATTRIBUTES *pAR = nullptr;
+    Attribute *pAR = nullptr;
     if (m_nCurrentCommandMode & BI_COMMODE_ABILITY_ICONS)
-        pAR = m_pARoot->GetAttributeClass("AbilityIcons");
+        pAR = &m_pARoot.getProperty("AbilityIcons");
     else
-        pAR = m_pARoot->GetAttributeClass("Commands");
-    if (!pAR)
+        pAR = &m_pARoot.getProperty("Commands");
+    if (pAR->empty())
         return nullptr;
 
-    const size_t q = pAR->GetAttributesNum();
-    for (long n = 0; n < q; n++)
-    {
-        auto *pA = pAR->GetAttributeClass(n);
-        if (!pA)
-            continue;
-        auto *const pcCommName = pA->GetAttribute("event");
-        if (m_sCurrentCommandName == pcCommName)
-            return pA;
+    for (Attribute& attr : *pAR) {
+        if (!attr.empty()) {
+            if (m_sCurrentCommandName == attr["event"].get<std::string_view>()) {
+                return &attr;
+            }
+        }
     }
+
     return nullptr;
 }

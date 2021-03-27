@@ -68,11 +68,11 @@ void ANIMALS::Execute(uint32_t _dTime)
     butterflies->Execute(_dTime);
 }
 
-uint32_t ANIMALS::AttributeChanged(ATTRIBUTES *_pA)
+uint32_t ANIMALS::AttributeChanged(Attribute &_pA)
 {
-    if (*_pA == "midY")
+    if (_pA.getName() == "midY")
     {
-        seagulls->SetStartY(this->AttributesPointer->GetAttributeAsFloat("midY"));
+        seagulls->SetStartY(this->AttributesPointer->getProperty("midY").get<float>());
     }
 
     return 0;

@@ -65,12 +65,14 @@ bool BITimer::ReadAndCreate()
     if (!m_pImgRndr)
         return false;
 
+    Assert(AttributesPointer);
+
     // read position
     RECT rBackPos, rForePos;
     rBackPos.left = rBackPos.top = rBackPos.right = rBackPos.bottom = 0;
     rForePos.left = rForePos.top = rForePos.right = rForePos.bottom = 0;
-    BIUtils::ReadRectFromAttr(AttributesPointer, "timerpos", rBackPos, rBackPos);
-    BIUtils::ReadRectFromAttr(AttributesPointer, "timeroffset", rForePos, rForePos);
+    BIUtils::ReadRectFromAttr(*AttributesPointer, "timerpos", rBackPos, rBackPos);
+    BIUtils::ReadRectFromAttr(*AttributesPointer, "timeroffset", rForePos, rForePos);
     rForePos.left = rBackPos.left + rForePos.left;
     rForePos.top = rBackPos.top + rForePos.top;
     rForePos.right = rBackPos.right - rForePos.right;
@@ -80,22 +82,20 @@ bool BITimer::ReadAndCreate()
     FRECT rBackUV, rForeUV;
     rBackUV.left = rBackUV.top = rForeUV.left = rForeUV.top = 0.f;
     rBackUV.right = rBackUV.bottom = rForeUV.right = rForeUV.bottom = 1.f;
-    BIUtils::ReadRectFromAttr(AttributesPointer, "timerbackuv", rBackUV, rBackUV);
-    BIUtils::ReadRectFromAttr(AttributesPointer, "timerforeuv", rForeUV, rForeUV);
+    BIUtils::ReadRectFromAttr(*AttributesPointer, "timerbackuv", rBackUV, rBackUV);
+    BIUtils::ReadRectFromAttr(*AttributesPointer, "timerforeuv", rForeUV, rForeUV);
 
-    // read texture & color
-    auto *pcBackTexture = AttributesPointer ? AttributesPointer->GetAttribute("timerbacktexture") : nullptr;
-    auto *pcForeTexture = AttributesPointer ? AttributesPointer->GetAttribute("timerforetexture") : nullptr;
-    auto dwColorBack =
-        AttributesPointer ? AttributesPointer->GetAttributeAsDword("timerbackcolor", 0xFFFFFFFF) : 0xFFFFFFFF;
-    auto dwColorFore =
-        AttributesPointer ? AttributesPointer->GetAttributeAsDword("timerforecolor", 0xFFFFFFFF) : 0xFFFFFFFF;
+    const auto dwColorBack = (*AttributesPointer)["timerbackcolor"].get<uint32_t>(0xFFFFFFFF);
+    const auto dwColorFore = (*AttributesPointer)["timerforecolor"].get<uint32_t>(0xFFFFFFFF);
 
-    // create
-    if (pcBackTexture)
-        m_pBackImage = m_pImgRndr->CreateImage(BIType_square, pcBackTexture, dwColorBack, rBackUV, rBackPos);
-    if (pcForeTexture)
-        m_pForeImage = m_pImgRndr->CreateImage(BIType_square, pcForeTexture, dwColorFore, rForeUV, rForePos);
+    if (const Attribute& pcBackTexture = AttributesPointer->getProperty("timerbacktexture"); !pcBackTexture.empty()) {
+        m_pBackImage = m_pImgRndr->CreateImage(BIType_square, pcBackTexture.get<std::string_view>().data(), dwColorBack, rBackUV, rBackPos);
+    }
+
+    if (const Attribute& pcForeTexture = AttributesPointer->getProperty("timerforetexture"); !pcForeTexture.empty()) {
+        m_pForeImage = m_pImgRndr->CreateImage(BIType_square, pcForeTexture.get<std::string_view>().data(), dwColorFore, rForeUV, rForePos);
+    }
+
     return true;
 }
 

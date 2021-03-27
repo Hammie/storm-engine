@@ -77,7 +77,7 @@ class AIFort : public VAI_OBJBASE
             {
             }
 
-            bool Mount(ATTRIBUTES *) override
+            bool Mount(Attribute *) override
             {
                 return false;
             }
@@ -106,7 +106,7 @@ class AIFort : public VAI_OBJBASE
       public:
         CMatrix mOldMatrix;
         CVECTOR vPos;
-        ATTRIBUTES *pFortLabelAP;
+        Attribute *pFortLabelAP;
         TmpVAI_OBJBASE tmpObject;
 
         std::vector<AICannon> aCannons;   // fort cannons container
@@ -168,9 +168,9 @@ class AIFort : public VAI_OBJBASE
 
         bool isNormalMode() const
         {
-            auto *pAFM = GetACharacter()->FindAClass(GetACharacter(), "Fort.Mode");
-            if (pAFM)
-                return (pAFM->GetAttributeAsDword() == FORT_NORMAL);
+            const Attribute& pAFM = GetACharacter()->getProperty("Fort")["Mode"];
+            if (!pAFM.empty())
+                return (pAFM.get<uint32_t>() == FORT_NORMAL);
             return false;
         }
 
@@ -183,7 +183,7 @@ class AIFort : public VAI_OBJBASE
             return &aMortars[dwCannonIndex - (aCannons.size() + aCulverins.size())];
         }
 
-        AI_FORT(ATTRIBUTES *_pFortLabelAP)
+        AI_FORT(Attribute *_pFortLabelAP)
         {
             SetObjType(AIOBJ_FORT);
 
@@ -191,9 +191,11 @@ class AIFort : public VAI_OBJBASE
 
             pFortLabelAP = _pFortLabelAP;
 
-            vPos.x = pFortLabelAP->GetAttributeAsFloat("x");
-            vPos.y = 0.0f; // pFortLabelAP->GetAttributeAsFloat("y");
-            vPos.z = pFortLabelAP->GetAttributeAsFloat("z");
+            Assert(pFortLabelAP != nullptr);
+            const Attribute& aFortLabel = *pFortLabelAP;
+            aFortLabel["x"].get_to(vPos.x);
+            vPos.y = 0.0f;
+            aFortLabel["z"].get_to(vPos.z);
         }
 
         CVECTOR GetPos() const override
@@ -237,7 +239,7 @@ class AIFort : public VAI_OBJBASE
     {
         return aForts.size();
     }
-    AI_FORT *FindFort(ATTRIBUTES *pACharacter);
+    AI_FORT *FindFort(Attribute *pACharacter);
 
     AI_FORT *GetFort(uint32_t k)
     {
@@ -259,8 +261,8 @@ class AIFort : public VAI_OBJBASE
 
     void AddFortHit(long iCharacterIndex, CVECTOR &vHitPos);
     float GetSpeedV0(uint32_t dwFortIndex);
-    bool ScanFortForCannons(AI_FORT *pFort, char *pModelsDir, char *pLocatorsName) const;
-    bool AddFort(ATTRIBUTES *pIslandAP, ATTRIBUTES *pFortAP, ATTRIBUTES *pFortCharacter, entid_t eidModel,
+    bool ScanFortForCannons(AI_FORT *pFort, const char *pModelsDir, const char *pLocatorsName) const;
+    bool AddFort(Attribute *pIslandAP, Attribute *pFortAP, Attribute *pFortCharacter, entid_t eidModel,
                  entid_t eidBlot);
     AI_FORT *FindFort(entid_t eidModel);
 
@@ -304,7 +306,7 @@ class AIFort : public VAI_OBJBASE
 
     uint64_t ProcessMessage(MESSAGE &message) override;
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
 
     // inherit functions COLLISION_OBJECT
     float Trace(const CVECTOR &vSrc, const CVECTOR &vDst) override;
@@ -328,7 +330,7 @@ class AIFort : public VAI_OBJBASE
     float Cannon_Trace(long iBallOwner, const CVECTOR &vSrc, const CVECTOR &vDst) override;
 
     // inherit functions VAI_OBJBASE
-    ATTRIBUTES *GetACharacter() override;
+    Attribute *GetACharacter() override;
 
     CMatrix *GetMatrix() override
     {
@@ -351,7 +353,7 @@ class AIFort : public VAI_OBJBASE
         return CVECTOR(0.0f, 0.0f, 0.0f);
     };
 
-    bool Mount(ATTRIBUTES *pAttribute) override;
+    bool Mount(Attribute *pAttribute) override;
 
     void Save(CSaveLoad *pSL) override;
     void Load(CSaveLoad *pSL) override;

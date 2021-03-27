@@ -13,7 +13,7 @@
 
 #include "WdmRenderObject.h"
 
-class ATTRIBUTES;
+class Attribute;
 class WdmCloud;
 
 class WdmStorm : public WdmRenderObject
@@ -40,7 +40,7 @@ class WdmStorm : public WdmRenderObject
 
   public:
     // Setting parameters
-    void SetSaveAttribute(ATTRIBUTES *save);
+    void SetSaveAttribute(Attribute *save);
     void DeleteUpdate();
 
     bool isTornado;
@@ -66,7 +66,7 @@ class WdmStorm : public WdmRenderObject
     CVECTOR cloudPos[8]; // Positions
     float rotSpd[8];     // Rotational speeds around the center
 
-    ATTRIBUTES *saveAttribute;
+    Attribute *saveAttribute;
 
     // Rain
     long rainTexture;

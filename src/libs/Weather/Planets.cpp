@@ -27,7 +27,7 @@ void Astronomy::PLANETS::ReleasePlanets()
     aPlanets.clear();
 }
 
-void Astronomy::PLANETS::Init(ATTRIBUTES *pAP)
+void Astronomy::PLANETS::Init(Attribute *pAP)
 {
     ReleasePlanets();
     aPlanets.clear();
@@ -38,34 +38,31 @@ void Astronomy::PLANETS::Init(ATTRIBUTES *pAP)
     // fPlanetScale = ((pAScale) ? pAScale->GetAttributeAsFloat() : 1.0f);
     TimeUpdate(pAP);
 
-    auto *pAPlanets = pAP->FindAClass(pAP, "Planets.Planet");
-    if (pAPlanets)
-        for (uint32_t i = 0; i < pAPlanets->GetAttributesNum(); i++)
-        {
-            auto *pAPlanet = pAPlanets->GetAttributeClass(i);
-            auto *pAMag = pAPlanet->GetAttributeClass("Mag");
+    const Attribute &attrPlanets = pAP->getProperty("Planets")["Planet"];
+    if (!attrPlanets.empty())
+        for (const Attribute &aPlanet : attrPlanets) {
+            const Attribute &aMag = aPlanet["Mag"];
 
-            std::string sName = pAPlanet->GetThisName();
+            const auto sName = std::string(aPlanet.getName());
 
-            aPlanets.push_back(Planet{});
-            // Planet & p = aPlanets[aPlanets.Add()];
-            auto &p = aPlanets.back();
-            p.fDiameter = pAPlanet->GetAttributeAsFloat("Diameter");
-            p.fSpeed = pAPlanet->GetAttributeAsFloat("Speed");
-            p.fDistance = pAPlanet->GetAttributeAsFloat("Distance");
-            p.fInclination = pAPlanet->GetAttributeAsFloat("Inclination");
-            p.fFakeScale = pAPlanet->GetAttributeAsFloat("Scale", 1.0f);
-            p.fMagMax = (pAMag) ? pAMag->GetAttributeAsFloat("Max") : 12.0f;
-            p.fMagMin = (pAMag) ? pAMag->GetAttributeAsFloat("Min") : 14.0f;
+            Planet& p = aPlanets.emplace_back(Planet{});
+            aPlanet["Diameter"].get_to(p.fDiameter);
+            aPlanet["Speed"].get_to(p.fSpeed);
+            aPlanet["Distance"].get_to(p.fDistance);
+            aPlanet["Inclination"].get_to(p.fInclination);
+            aPlanet["Scale"].get_to(p.fFakeScale, 1.0f);
+            aMag["Max"].get_to(p.fMagMax, 12.0f);
+            aMag["Min"].get_to(p.fMagMin, 14.0f);
             p.fAngle = PId2 + FRAND(PI);
 
             // string sFilename = string("Weather\\Planets\\") + pAPlanets->GetAttributeName(i);
             // p.pGeo = Astronomy::pGS->CreateGeometry(sFilename, 0, 0);
 
-            p.iTexture = pRS->TextureCreate(("Weather\\Astronomy\\Planets\\" + sName + ".tga").c_str());
+            p.iTexture = pRS->TextureCreate((std::string("Weather\\Astronomy\\Planets\\") + sName + ".tga").c_str());
         }
-
     auto fMaxDistance = 1e-10f;
+
+
 
     for (uint32_t i = 0; i < aPlanets.size(); i++)
         if (aPlanets[i].fDistance > fMaxDistance)
@@ -159,18 +156,19 @@ void Astronomy::PLANETS::Realize(double dDeltaTime, double dHour)
     pRS->SetRenderState(D3DRS_FOGENABLE, true);
 }
 
-void Astronomy::PLANETS::TimeUpdate(ATTRIBUTES *pAP)
+void Astronomy::PLANETS::TimeUpdate(Attribute *pAP)
 {
-    auto *pAPlan = pAP ? pAP->GetAttributeClass("Planets") : nullptr;
+    Assert(pAP != nullptr);
+    const Attribute& aPlanets = pAP->getProperty("Planets");
+
     fPlanetScale = 1.f;
     fPlanetFade = 1.f;
     fFadeTimeStart = -1.f;
     fFadeTime = 0.1f;
-    if (pAPlan)
-    {
-        fPlanetScale = pAPlan->GetAttributeAsFloat("Scale", fPlanetScale);
-        fPlanetFade = pAPlan->GetAttributeAsFloat("FadeValue", fPlanetFade);
-        fFadeTimeStart = pAPlan->GetAttributeAsFloat("FadeStartTime", fFadeTimeStart);
-        fFadeTime = pAPlan->GetAttributeAsFloat("FadeTime", fFadeTime);
+    if (!aPlanets.empty()) {
+        aPlanets["Scale"].get_to(fPlanetScale);
+        aPlanets["FadeValue"].get_to(fPlanetFade);
+        aPlanets["FadeStartTime"].get_to(fFadeTimeStart);
+        aPlanets["FadeTime"].get_to(fFadeTime);
     }
 }

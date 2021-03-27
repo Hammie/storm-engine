@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-class ATTRIBUTES;
+class Attribute;
 class VDATA;
 
 namespace scripting {
@@ -19,7 +19,7 @@ namespace detail {
 template<char c>
 struct MessageFormatTraits;
 
-template<> struct MessageFormatTraits<'a'> { using type = ATTRIBUTES*; };
+template<> struct MessageFormatTraits<'a'> { using type = Attribute*; };
 template<> struct MessageFormatTraits<'e'> { using type = VDATA*; };
 template<> struct MessageFormatTraits<'f'> { using type = float; };
 template<> struct MessageFormatTraits<'i'> { using type = entid_t; };

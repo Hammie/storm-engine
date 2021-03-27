@@ -266,10 +266,12 @@ void Player::Update(float dltTime)
                 auto *chr = FindDialogCharacter();
                 if (chr)
                 {
-                    Assert(AttributesPointer);
-                    Assert(chr->AttributesPointer);
-                    const long first = AttributesPointer->GetAttributeAsDword("index", -1);
-                    const long next = chr->AttributesPointer->GetAttributeAsDword("index", -1);
+                    Assert(AttributesPointer != nullptr);
+                    Assert(chr->AttributesPointer != nullptr);
+                    const Attribute& attr = *AttributesPointer;
+                    const Attribute& chr_attr = *chr->AttributesPointer;
+                    const long first = attr["index"].get<long>(-1);
+                    const long next = chr_attr["index"].get<long>(-1);
                     if (first >= 0 && next >= 0)
                     {
                         core.Event("dlgReady", "ll", next, first);
@@ -321,21 +323,21 @@ void Player::Update(float dltTime)
 }
 
 // Save parameters
-void Player::SetSaveData(ATTRIBUTES *sdata)
+void Player::SetSaveData(Attribute *sdata)
 {
     if (!sdata)
         return;
-    sdata->SetAttributeUseDword("isFight", isFight);
+    sdata->getProperty("isFight") = isFight;
 }
 
 // Restore parameters
-void Player::GetSaveData(ATTRIBUTES *sdata)
+void Player::GetSaveData(Attribute *sdata)
 {
     if (!sdata)
         return;
     if (task.task == npct_none)
     {
-        SetFightMode(sdata->GetAttributeAsDword("isFight", isFight) != 0, false);
+        SetFightMode(sdata->getProperty("isFight").get<bool>(isFight), false);
     }
 }
 

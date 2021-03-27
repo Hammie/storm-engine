@@ -287,39 +287,43 @@ void WdmStorm::LRender(VDX9RENDER *rs)
 }
 
 // Setting parameters
-void WdmStorm::SetSaveAttribute(ATTRIBUTES *save)
+void WdmStorm::SetSaveAttribute(Attribute *save)
 {
     saveAttribute = save;
     if (!saveAttribute)
         return;
-    pos.x = saveAttribute->GetAttributeAsFloat("px", pos.x);
-    pos.y = saveAttribute->GetAttributeAsFloat("py", pos.y);
-    pos.z = saveAttribute->GetAttributeAsFloat("pz", pos.z);
-    dir.x = saveAttribute->GetAttributeAsFloat("dx", dir.x);
-    dir.y = saveAttribute->GetAttributeAsFloat("dy", dir.y);
-    dir.z = saveAttribute->GetAttributeAsFloat("dz", dir.z);
-    isActiveTime = saveAttribute->GetAttributeAsFloat("isActiveTime", isActiveTime);
-    liveTime = saveAttribute->GetAttributeAsFloat("liveTime", liveTime);
-    liveAlpha = saveAttribute->GetAttributeAsFloat("liveAlpha", liveAlpha);
-    speed = saveAttribute->GetAttributeAsFloat("speed", speed);
 
-    isBrn = saveAttribute->GetAttributeAsDword("isBrn", isBrn) != 0;
-    isKl = saveAttribute->GetAttributeAsDword("isKl", isKl) != 0;
-    isTornado = saveAttribute->GetAttributeAsDword("isTornado", isTornado) != 0;
+    Assert(saveAttribute != nullptr);
+    const Attribute& attr = *saveAttribute;
 
-    num = saveAttribute->GetAttributeAsDword("num", num);
+    attr["px"].get_to(pos.x);
+    attr["py"].get_to(pos.y);
+    attr["pz"].get_to(pos.z);
+    attr["dx"].get_to(dir.x);
+    attr["dy"].get_to(dir.y);
+    attr["dz"].get_to(dir.z);
+    attr["isActiveTime"].get_to(isActiveTime);
+    attr["liveTime"].get_to(liveTime);
+    attr["liveAlpha"].get_to(liveAlpha);
+    attr["speed"].get_to(speed);
+
+    attr["isBrn"].get_to(isBrn);
+    attr["isKl"].get_to(isKl);
+    attr["isTornado"].get_to(isTornado);
+
+    attr["num"].get_to(num);
 
     for (char i = 0; i < 8; i++)
     {
         cloudPosName[8] = '0' + i;
         cloudPosName[9] = 'x';
-        cloudPos[i].x = saveAttribute->GetAttributeAsFloat(cloudPosName, cloudPos[i].x);
+        attr[cloudPosName].get_to(cloudPos[i].x);
         cloudPosName[9] = 'y';
-        cloudPos[i].y = saveAttribute->GetAttributeAsFloat(cloudPosName, cloudPos[i].y);
+        attr[cloudPosName].get_to(cloudPos[i].y);
         cloudPosName[9] = 'z';
-        cloudPos[i].z = saveAttribute->GetAttributeAsFloat(cloudPosName, cloudPos[i].z);
+        attr[cloudPosName].get_to(cloudPos[i].z);
         rotSpdName[6] = '0' + i;
-        rotSpd[i] = saveAttribute->GetAttributeAsFloat(rotSpdName, rotSpd[i]);
+        attr[rotSpdName].get_to(rotSpd[i]);
     }
     UpdateSaveData();
 }
@@ -328,7 +332,7 @@ void WdmStorm::DeleteUpdate()
 {
     if (!saveAttribute)
         return;
-    const char *pnt = saveAttribute->GetAttribute("needDelete");
+    const char *pnt = saveAttribute->getProperty("needDelete").get<const char*>(nullptr);
     if (pnt)
     {
         isKl = true;
@@ -340,48 +344,52 @@ void WdmStorm::UpdateSaveData()
 {
     if (!saveAttribute)
         return;
-    saveAttribute->SetAttributeUseFloat("px", pos.x);
-    saveAttribute->SetAttributeUseFloat("py", pos.y);
-    saveAttribute->SetAttributeUseFloat("pz", pos.z);
-    saveAttribute->SetAttributeUseFloat("dx", dir.x);
-    saveAttribute->SetAttributeUseFloat("dy", dir.y);
-    saveAttribute->SetAttributeUseFloat("dz", dir.z);
-    saveAttribute->SetAttributeUseFloat("isActiveTime", isActiveTime);
-    saveAttribute->SetAttributeUseFloat("liveTime", liveTime);
-    saveAttribute->SetAttributeUseFloat("liveAlpha", liveAlpha);
-    saveAttribute->SetAttributeUseFloat("speed", speed);
 
-    saveAttribute->SetAttributeUseDword("isBrn", isBrn);
-    saveAttribute->SetAttributeUseDword("isKl", isKl);
-    saveAttribute->SetAttributeUseDword("isTornado", isTornado);
+    Assert(saveAttribute != nullptr);
+    Attribute& attr = *saveAttribute;
 
-    saveAttribute->SetAttributeUseDword("num", num);
+    attr["px"] = pos.x;
+    attr["py"] = pos.y;
+    attr["pz"] = pos.z;
+    attr["dx"] = dir.x;
+    attr["dy"] = dir.y;
+    attr["dz"] = dir.z;
+    attr["isActiveTime"] = isActiveTime;
+    attr["liveTime"] = liveTime;
+    attr["liveAlpha"] = liveAlpha;
+    attr["speed"] = speed;
+
+    attr["isBrn"] = isBrn;
+    attr["isKl"] = isKl;
+    attr["isTornado"] = isTornado;
+
+    attr["num"] = num;
 
     for (char i = 0; i < 8; i++)
     {
         cloudPosName[8] = '0' + i;
         cloudPosName[9] = 'x';
-        saveAttribute->SetAttributeUseFloat(cloudPosName, cloudPos[i].x);
+        attr[cloudPosName] = cloudPos[i].x;
         cloudPosName[9] = 'y';
-        saveAttribute->SetAttributeUseFloat(cloudPosName, cloudPos[i].y);
+        attr[cloudPosName] = cloudPos[i].y;
         cloudPosName[9] = 'z';
-        saveAttribute->SetAttributeUseFloat(cloudPosName, cloudPos[i].z);
+        attr[cloudPosName] = cloudPos[i].z;
         rotSpdName[6] = '0' + i;
-        saveAttribute->SetAttributeUseFloat(rotSpdName, rotSpd[i]);
+        attr[rotSpdName] = rotSpd[i];
     }
-    saveAttribute->SetAttribute("sec", wdmObjects->attrSec);
-    saveAttribute->SetAttribute("min", wdmObjects->attrMin);
-    saveAttribute->SetAttribute("hour", wdmObjects->attrHour);
-    saveAttribute->SetAttribute("day", wdmObjects->attrDay);
-    saveAttribute->SetAttribute("month", wdmObjects->attrMonth);
-    saveAttribute->SetAttribute("year", wdmObjects->attrYear);
+    attr["sec"] = wdmObjects->attrSec;
+    attr["min"] = wdmObjects->attrMin;
+    attr["hour"] = wdmObjects->attrHour;
+    attr["day"] = wdmObjects->attrDay;
+    attr["month"] = wdmObjects->attrMonth;
+    attr["year"] = wdmObjects->attrYear;
 }
 
 const char *WdmStorm::GetId() const
 {
     if (saveAttribute)
     {
-        return saveAttribute->GetThisName();
+        return saveAttribute->getName().data();
     }
     return "";
 }

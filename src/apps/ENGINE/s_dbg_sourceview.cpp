@@ -1162,14 +1162,15 @@ bool SOURCE_VIEW::SetVariableOnChange(const char *pString, bool bSet)
         return true;
     }
 
-    ATTRIBUTES *pA = pObject->GetAClass();
+    Attribute *pA = pObject->GetAClass();
     if (!pA)
         return false;
-    ATTRIBUTES *pALast = pA->FindAClass(pA, pStr);
+    Attribute *pALast = &pA->getProperty(pStr);
     if (!pALast)
         return false;
 
-    pALast->SetBreak(bSet);
+    Assert(!"Unreachable");
+    // pALast->SetBreak(bSet);
 
     return true;
 }

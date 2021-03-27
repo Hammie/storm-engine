@@ -12,7 +12,7 @@ class AISeaGoods : public Entity
   private:
     struct item_t
     {
-        char sGoodName[48];
+        std::string sGoodName;
         long iCharIndex, iQuantity;
         float fTime;
         CVECTOR vPos, vNormal;
@@ -65,7 +65,7 @@ class AISeaGoods : public Entity
         }
     }
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttributeChanged) override;
+    uint32_t AttributeChanged(Attribute &attribute) override;
 };
 
 #endif

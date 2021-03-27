@@ -31,9 +31,9 @@ bool SEA_OPERATOR::Init()
     return true;
 }
 
-uint32_t SEA_OPERATOR::AttributeChanged(ATTRIBUTES *_newAttr)
+uint32_t SEA_OPERATOR::AttributeChanged(Attribute &_newAttr)
 {
-    if (*_newAttr == "FirstInit")
+    if (_stricmp(_newAttr.getName().data(), "FirstInit") == 0)
         FirstInit();
 
     return 0;
@@ -155,8 +155,10 @@ void SEA_OPERATOR::FirstInit()
         SetIfMyShip(ent);
     }
 
-    enabled = this->AttributesPointer->GetAttributeAsDword("Enabled") != 0;
-    idleTime = this->AttributesPointer->GetAttributeAsDword("IdleTime");
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+    attr["Enabled"].get_to(enabled);
+    attr["IdleTime"].get_to(idleTime);
 
     if (!myShip)
         enabled = false;
@@ -220,7 +222,7 @@ void SEA_OPERATOR::SetIfMyShip(entid_t _shipID)
     if (!ship)
         return;
     auto *attr = ship->GetACharacter();
-    if (attr->GetAttribute("MainCharacter"))
+    if (attr->hasProperty("MainCharacter"))
         myShip = ship;
 }
 

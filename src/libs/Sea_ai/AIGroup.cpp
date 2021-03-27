@@ -27,26 +27,30 @@ AIGroup::~AIGroup()
     aGroupShips.clear();
 }
 
-void AIGroup::AddShip(entid_t eidShip, ATTRIBUTES *pACharacter, ATTRIBUTES *pAShip)
+void AIGroup::AddShip(entid_t eidShip, Attribute *pACharacter, Attribute *pAShip)
 {
-    auto *const pAMode = pACharacter->FindAClass(pACharacter, "Ship.Mode");
+    Assert(pACharacter != nullptr);
+    const Attribute& aCharacter = *pACharacter;
+
+    const Attribute& aMode = aCharacter["Ship"]["Mode"];
     AIShip *pShip = nullptr;
     bool isWarShip = true;
-    if (pAMode)
+    if (!aMode.empty())
     {
-        if (std::string("war") == pAMode->GetThisAttr())
+        const std::string_view strMode = aMode.get<std::string_view>();
+        if (std::string("war") == strMode)
         {
             pShip = new AIShipWar();
             isWarShip = true;
             iWarShipsNum++;
         }
-        else if (std::string("trade") == pAMode->GetThisAttr())
+        else if (std::string("trade") == strMode)
         {
             pShip = new AIShipTrade();
             isWarShip = false;
             iTradeShipsNum++;
         }
-        else if (std::string("boat") == pAMode->GetThisAttr())
+        else if (std::string("boat") == strMode)
         {
             pShip = new AIShipBoat();
             isWarShip = false;
@@ -211,7 +215,7 @@ AIGroup *AIGroup::CreateNewGroup(const char *pGroupName)
     return pAIGroup;
 }
 
-AIGroup *AIGroup::FindGroup(ATTRIBUTES *pACharacter)
+AIGroup *AIGroup::FindGroup(Attribute *pACharacter)
 {
     if (!pACharacter)
         return nullptr;
@@ -241,7 +245,7 @@ AIGroup *AIGroup::FindMainGroup()
     return nullptr;
 }
 
-void AIGroup::SailMainGroup(CVECTOR vPos, float fAngle, ATTRIBUTES *pACharacter)
+void AIGroup::SailMainGroup(CVECTOR vPos, float fAngle, Attribute *pACharacter)
 {
     AIGroup *pMG = FindMainGroup();
     Assert(pMG);
@@ -331,7 +335,7 @@ void AIGroup::SetXYZ_AY(const char *pGroupName, CVECTOR vPos, float _fAY)
     pAIGroup->vInitGroupPos.z = vPos.z;
 }
 
-AIShip *AIGroup::ExtractShip(ATTRIBUTES *pACharacter)
+AIShip *AIGroup::ExtractShip(Attribute *pACharacter)
 {
     for (uint32_t i = 0; i < aGroupShips.size(); i++)
     {
@@ -345,7 +349,7 @@ AIShip *AIGroup::ExtractShip(ATTRIBUTES *pACharacter)
     return nullptr;
 }
 
-ATTRIBUTES *AIGroup::GetCommanderACharacter() const
+Attribute *AIGroup::GetCommanderACharacter() const
 {
     Assert(pACommander);
     return pACommander;
@@ -373,13 +377,16 @@ void AIGroup::GroupHelpMe(const char *pGroupName, AIShip *pMe, AIShip *pEnemy)
     Assert(pG);
 }
 
-void AIGroup::ShipChangeGroup(ATTRIBUTES *pACharacter, const char *pGroupName)
+void AIGroup::ShipChangeGroup(Attribute *pACharacter, const char *pGroupName)
 {
     AIGroup *pGOld = FindGroup(pACharacter);
     if (!pGOld)
     {
+
+        Assert(pACharacter != nullptr);
+        const Attribute& aCharacter = *pACharacter;
         core.Trace("AIGroup::ShipChangeGroup: Can't find group with character id = %s",
-                   pACharacter->GetAttribute("id"));
+                   aCharacter["id"].get<const char*>());
         return;
     }
     AIGroup *pGNew = FindOrCreateGroup(pGroupName);
@@ -389,7 +396,7 @@ void AIGroup::ShipChangeGroup(ATTRIBUTES *pACharacter, const char *pGroupName)
         pGNew->InsertShip(pAIShip);
 }
 
-void AIGroup::SwapCharactersShips(ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2)
+void AIGroup::SwapCharactersShips(Attribute *pACharacter1, Attribute *pACharacter2)
 {
     AIGroup *pG1 = FindGroup(pACharacter1);
     AIGroup *pG2 = FindGroup(pACharacter2);
@@ -406,7 +413,7 @@ void AIGroup::SwapCharactersShips(ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharac
     pG2->InsertShip(pAIShip1);
 }
 
-void AIGroup::SetOfficerCharacter2Ship(ATTRIBUTES *pOfficerCharacter, ATTRIBUTES *pReplacedACharacter)
+void AIGroup::SetOfficerCharacter2Ship(Attribute *pOfficerCharacter, Attribute *pReplacedACharacter)
 {
     AIGroup *pG1 = FindMainGroup();
     AIGroup *pG2 = FindGroup(pReplacedACharacter);
@@ -416,7 +423,7 @@ void AIGroup::SetOfficerCharacter2Ship(ATTRIBUTES *pOfficerCharacter, ATTRIBUTES
     pG1->InsertShip(pAIShip1);
 }
 
-void AIGroup::GroupSetCommander(const char *pGroupName, ATTRIBUTES *_pACommander)
+void AIGroup::GroupSetCommander(const char *pGroupName, Attribute *_pACommander)
 {
     AIGroup *pG = FindOrCreateGroup(pGroupName);
     Assert(pG);

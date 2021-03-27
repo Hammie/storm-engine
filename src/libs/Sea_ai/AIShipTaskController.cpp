@@ -105,13 +105,13 @@ void AIShipTaskController::FindRunAwayPoint()
     if (iNumPoints)
         vRAPoint = vRAPoint / static_cast<float>(iNumPoints);
 
+    const Attribute& aSeaAI = GetAIShip()->GetACharacter()->getProperty("SeaAI");
+
     if ((~vRAPoint) && iNumPoints)
     {
         // Get wind direction
-        auto fWindAngle = -PI;
-        auto *pAWind = GetAIShip()->GetACharacter()->FindAClass(GetAIShip()->GetACharacter(), "SeaAI.WindAngle");
-        if (pAWind)
-            fWindAngle = pAWind->GetAttributeAsFloat();
+        const Attribute& aWindAngle = aSeaAI["WindAngle"];
+        const auto fWindAngle = aWindAngle.get<float>(-PI);
         const auto vWindDir = CVECTOR(cosf(fWindAngle), 0.0f, sinf(fWindAngle));
         // core.Trace("fWindAngle = %.3f", fWindAngle);
 
@@ -127,12 +127,9 @@ void AIShipTaskController::FindRunAwayPoint()
         vRAPoint.z = 0.0f;
 
         auto *pV = core.Event(SHIP_GET_RUNAWAY_POINT, "aff", GetAIShip()->GetACharacter(), vRAPoint.x, vRAPoint.z);
-        auto *pARAP = GetAIShip()->GetACharacter()->FindAClass(GetAIShip()->GetACharacter(), "SeaAI.RunAwayPnt");
-        if (pARAP) {
-            vRAPoint.x = pARAP->GetAttributeAsFloat("x", 0.0f);
-            vRAPoint.z = pARAP->GetAttributeAsFloat("z", 0.0f);
-        }
-        
+        const Attribute& aRunAwayPnt = aSeaAI["RunAwayPnt"];
+        aRunAwayPnt["x"].get_to(vRAPoint.x);
+        aRunAwayPnt["z"].get_to(vRAPoint.z);
         SetDestinationPoint(vRAPoint);
     }
 
@@ -219,7 +216,7 @@ void AIShipTaskController::SetNewTask(uint32_t dwPriority, uint32_t _dwNewTaskTy
     pTask->vTaskPnt = vPnt;
 }
 
-void AIShipTaskController::SetNewTask(uint32_t dwPriority, uint32_t _dwNewTaskType, ATTRIBUTES *_pATaskCharacter)
+void AIShipTaskController::SetNewTask(uint32_t dwPriority, uint32_t _dwNewTaskType, Attribute *_pATaskCharacter)
 {
     auto *pTask = GetTask(dwPriority);
 
@@ -228,7 +225,7 @@ void AIShipTaskController::SetNewTask(uint32_t dwPriority, uint32_t _dwNewTaskTy
     pTask->dwTaskType = _dwNewTaskType;
 }
 
-bool AIShipTaskController::isAttack(ATTRIBUTES *pAOtherCharacter)
+bool AIShipTaskController::isAttack(Attribute *pAOtherCharacter)
 {
     auto *const pTask = GetCurrentTask();
     if (pTask && pTask->pATaskCharacter == pAOtherCharacter) //~!~

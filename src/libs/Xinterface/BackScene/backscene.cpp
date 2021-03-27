@@ -369,21 +369,21 @@ uint64_t InterfaceBackScene::ProcessMessage(MESSAGE &message)
     case 8: // set light source
     {
         message.String(sizeof(param), param); // light attributes name
-        InitLight(AttributesPointer ? AttributesPointer->GetAttributeClass(param) : nullptr);
+        InitLight(AttributesPointer ? &AttributesPointer->getProperty(param) : nullptr);
     }
     break;
 
     case 9: // add animation model
     {
         message.String(sizeof(param), param); // animation model attributes name
-        InitAniModel(AttributesPointer ? AttributesPointer->GetAttributeClass(param) : nullptr);
+        InitAniModel(AttributesPointer ? &AttributesPointer->getProperty(param) : nullptr);
     }
     break;
 
     case 10: // add model
     {
         message.String(sizeof(param), param); // model attributes name
-        InitStaticModel(AttributesPointer ? AttributesPointer->GetAttributeClass(param) : nullptr);
+        InitStaticModel(AttributesPointer ? &AttributesPointer->getProperty(param) : nullptr);
     }
     break;
     }
@@ -437,29 +437,25 @@ void InterfaceBackScene::SetCameraPosition(const char *pcLocatorName)
     // m_vCamAng.x = -4.262f/180.f*PI;
 }
 
-void InterfaceBackScene::SetShipPosition(const char *pcLocName, ATTRIBUTES *pAChar) const
+void InterfaceBackScene::SetShipPosition(const char *pcLocName, Attribute *pAChar) const
 {
     if (!pcLocName || !pAChar || !m_pLocators)
         return;
 
-    auto *pAPos = pAChar->FindAClass(pAChar, "Ship.Pos");
-    if (!pAPos)
-        pAPos = pAChar->CreateSubAClass(pAChar, "Ship.Pos");
-    Assert(pAPos);
-
-    auto *pAAng = pAChar->FindAClass(pAChar, "Ship.Ang");
-    if (!pAAng)
-        pAAng = pAChar->CreateSubAClass(pAChar, "Ship.Ang");
-    Assert(pAAng);
+    Assert(pAChar != nullptr);
+    Attribute& attrChar = *pAChar;
+    Attribute& attrShip = attrChar["Ship"];
+    Attribute& attrPos = attrShip["Pos"];
+    Attribute& attrAng = attrShip["Ang"];
 
     CVECTOR pos;
     float fYAng;
     if (FindLocator(pcLocName, nullptr, &pos, &fYAng))
     {
-        pAPos->SetAttributeUseFloat("x", pos.x);
-        pAPos->SetAttributeUseFloat("y", pos.y);
-        pAPos->SetAttributeUseFloat("z", pos.z);
-        pAAng->SetAttributeUseFloat("y", fYAng);
+        attrPos["x"] = pos.x;
+        attrPos["y"] = pos.y;
+        attrPos["z"] = pos.z;
+        attrAng["y"] = fYAng;
     }
 }
 
@@ -538,28 +534,28 @@ void InterfaceBackScene::ReleaseMenuList()
     m_aMenuDescr.clear();
 }
 
-void InterfaceBackScene::CreateMenuList(long nStartIndex, ATTRIBUTES *pAMenu)
+void InterfaceBackScene::CreateMenuList(long nStartIndex, Attribute *pAMenu)
 {
     ReleaseMenuList();
     if (!pAMenu)
         return;
 
-    ATTRIBUTES *pA;
+    Attribute *pA;
     CMatrix mtx;
-    const long q = pAMenu->GetAttributesNum();
-    for (long n = 0; n < q; n++)
-    {
-        pA = pAMenu->GetAttributeClass(n);
-        if (!pA)
+
+    Assert(pAMenu != nullptr);
+    for (const Attribute &attr : *pAMenu) {
+        if (attr.empty())
             continue;
-        if (!FindLocator(pA->GetAttribute("locname"), &mtx, nullptr, nullptr))
+        const char *locName = attr["locname"].get<const char *>();
+        if (!FindLocator(locName, &mtx, nullptr, nullptr))
         {
-            core.Trace("Warning! Interface Back scene: Can`t find locator %s", pA->GetAttribute("locname"));
+            core.Trace("Warning! Interface Back scene: Can`t find locator %s", locName);
         }
         auto *pMD = new MenuDescr;
         Assert(pMD);
-        pMD->Set(&mtx, pA->GetAttribute("sel"), pA->GetAttribute("norm"), pA->GetAttribute("event"),
-                 pA->GetAttribute("path"), pA->GetAttribute("technique"));
+        pMD->Set(&mtx, attr["sel"].get<const char*>(), attr["norm"].get<const char*>(), attr["event"].get<const char*>(),
+                 attr["path"].get<const char*>(), attr["technique"].get<const char*>());
         m_aMenuDescr.push_back(pMD);
     }
     if (nStartIndex >= 0 && nStartIndex < m_aMenuDescr.size() && m_aMenuDescr[nStartIndex]->bSelectable)
@@ -643,10 +639,14 @@ long InterfaceBackScene::CheckMousePos(float fX, float fY)
     return -1;
 }
 
-void InterfaceBackScene::InitLight(ATTRIBUTES *pAParam)
+void InterfaceBackScene::InitLight(Attribute *pAParam)
 {
     if (!pAParam)
         return;
+
+    Assert(pAParam != nullptr);
+    const Attribute& attr = *pAParam;
+
 
     auto *pLight = new LightParam();
     Assert(pLight);
@@ -661,37 +661,37 @@ void InterfaceBackScene::InitLight(ATTRIBUTES *pAParam)
     pLight->indexLight = -1;
 
     const float fDiv = 1.f / 255.f;
-    uint32_t dwTmp = pAParam->GetAttributeAsDword("lightcolormin", 0xFFFFFFFF);
+    uint32_t dwTmp = attr["lightcolormin"].get<uint32_t>(0xFFFFFFFF);
     pLight->colorMin.a = ALPHA(dwTmp) * fDiv;
     pLight->colorMin.r = RED(dwTmp) * fDiv;
     pLight->colorMin.g = GREEN(dwTmp) * fDiv;
     pLight->colorMin.b = BLUE(dwTmp) * fDiv;
-    dwTmp = pAParam->GetAttributeAsDword("lightcolormax", 0xFFFFFFFF);
+    dwTmp = attr["lightcolormax"].get<uint32_t>(0xFFFFFFFF);
     pLight->colorMax.a = ALPHA(dwTmp) * fDiv;
     pLight->colorMax.r = RED(dwTmp) * fDiv;
     pLight->colorMax.g = GREEN(dwTmp) * fDiv;
     pLight->colorMax.b = BLUE(dwTmp) * fDiv;
-    pLight->fColorPeriod = pAParam->GetAttributeAsFloat("colorperiod", 1.f);
-    pLight->fAddPeriodMax = pAParam->GetAttributeAsFloat("addcolorperiod", 1.f);
+    attr["colorperiod"].get_to(pLight->fColorPeriod, 1.f);
+    attr["addcolorperiod"].get_to(pLight->fAddPeriodMax, 1.f);
     pLight->fColorTimer = 0.f;
 
-    pLight->fRangeMin = pAParam->GetAttributeAsFloat("rangemin", 5.f);
-    pLight->fRangeMax = pAParam->GetAttributeAsFloat("rangemax", 10.f);
-    pLight->fRangePeriod = pAParam->GetAttributeAsFloat("rangeperiod", 1.f);
+    attr["rangemin"].get_to(pLight->fRangeMin, 5.f);
+    attr["rangemax"].get_to(pLight->fRangeMax, 10.f);
+    attr["rangeperiod"].get_to(pLight->fRangePeriod, 1.f);
     pLight->fRangeTimer = 0.f;
 
-    pLight->fMinFlareColor = pAParam->GetAttributeAsFloat("minflarecolor", 200.f);
-    pLight->fMaxFlareColor = pAParam->GetAttributeAsFloat("maxflarecolor", 255.f);
+    attr["minflarecolor"].get_to(pLight->fMinFlareColor, 200.f);
+    attr["maxflarecolor"].get_to(pLight->fMaxFlareColor, 255.f);
 
-    pLight->bUse = pAParam->GetAttributeAsDword("turnon", 0) != 0;
+    attr["turnon"].get_to(pLight->bUse, false);
 
     // find transform from locator
     CMatrix locMtx;
-    FindLocator(pAParam->GetAttribute("locator"), &locMtx, nullptr, nullptr);
+    FindLocator(attr["locator"].get<const char*>(), &locMtx, nullptr, nullptr);
     pLight->vLightPos = locMtx.Pos();
 
     // load model
-    char *pcFonarModel = pAParam->GetAttribute("model");
+    const char *pcFonarModel = attr["model"].get<const char*>();
     if (pcFonarModel)
     {
         VGEOMETRY *pGeo = static_cast<VGEOMETRY *>(core.CreateService("Geometry"));
@@ -709,26 +709,20 @@ void InterfaceBackScene::InitLight(ATTRIBUTES *pAParam)
             pLight->pModel->Update();
 
             pLight->pLightSrcNode = pLight->pModel->GetNode(0);
-            SetLocatorPosition(pLight->pModel, pAParam->GetAttribute("lightlocator"), pLight->vLightPos,
+            SetLocatorPosition(pLight->pModel, attr["lightlocator"].get<const char*>(), pLight->vLightPos,
                                pLight->pLightSrcNode);
             if (m_aLights.size() > 0 && m_aLights[0]->bUse)
             {
                 CVECTOR vFlarePos = pLight->vLightPos;
-                SetLocatorPosition(pLight->pModel, pAParam->GetAttribute("flarelocator"), vFlarePos,
+                SetLocatorPosition(pLight->pModel, attr["flarelocator"].get<const char*>(), vFlarePos,
                                    pLight->pLightSrcNode);
                 m_vFlarePos = pLight->pLightSrcNode->glob_mtx * vFlarePos;
-                m_fFlareSize = pAParam->GetAttributeAsFloat("flaresize", 0.2f);
+                attr["flaresize"].get_to(m_fFlareSize, 0.2f);
                 AddLampFlys(m_vFlarePos);
 
-                ATTRIBUTES *pA = nullptr;
-                if (AttributesPointer)
-                    pA = AttributesPointer->CreateSubAClass(AttributesPointer, "lightpos");
-                if (pA)
-                {
-                    pA->SetAttributeUseFloat("x", m_vFlarePos.x);
-                    pA->SetAttributeUseFloat("y", m_vFlarePos.y);
-                    pA->SetAttributeUseFloat("z", m_vFlarePos.z);
-                }
+                Assert(AttributesPointer != nullptr);
+                Attribute& attrPtr = *AttributesPointer;
+                attrPtr["lightpos"] = m_vFlarePos;
             }
         }
         else
@@ -875,14 +869,17 @@ void InterfaceBackScene::FlareShow(long idx)
                            "Coronas");
 }
 
-void InterfaceBackScene::InitAniModel(ATTRIBUTES *pAParam)
+void InterfaceBackScene::InitAniModel(Attribute *pAParam)
 {
     if (!pAParam)
         return;
 
-    const char *pcMdlName = pAParam->GetAttribute("model");
-    const char *pcAniName = pAParam->GetAttribute("animation");
-    const char *pcAniActionName = pAParam->GetAttribute("aniaction");
+    Assert(pAParam != nullptr);
+    const Attribute& attrParam = *pAParam;
+
+    const char *pcMdlName = attrParam["model"].get<const char*>();
+    const char *pcAniName = attrParam["animation"].get<const char*>();
+    const char *pcAniActionName = attrParam["aniaction"].get<const char*>();
     if (!pcMdlName)
     {
         core.Trace("Warning! Bad model name parameter for ani model into InterfaceBackScene.");
@@ -890,7 +887,7 @@ void InterfaceBackScene::InitAniModel(ATTRIBUTES *pAParam)
     }
 
     CMatrix mtx;
-    if (!FindLocator(pAParam->GetAttribute("locator"), &mtx, nullptr, nullptr))
+    if (!FindLocator(attrParam["locator"].get<const char*>(), &mtx, nullptr, nullptr))
         mtx.SetIdentity();
 
     auto *pObj = new AniModelDescr;
@@ -927,13 +924,16 @@ void InterfaceBackScene::InitAniModel(ATTRIBUTES *pAParam)
     // pObj->pModel->GetAnimation()-
 }
 
-void InterfaceBackScene::InitStaticModel(ATTRIBUTES *pAParam)
+void InterfaceBackScene::InitStaticModel(Attribute *pAParam)
 {
     if (!pAParam)
         return;
 
-    const char *pcMdlName = pAParam->GetAttribute("model");
-    const char *pcTechniqueName = pAParam->GetAttribute("technique");
+    Assert(pAParam != nullptr);
+    const Attribute& attrParam = *pAParam;
+
+    const char *pcMdlName = attrParam["model"].get<const char*>();
+    const char *pcTechniqueName = attrParam["technique"].get<const char*>();
     if (!pcMdlName)
     {
         core.Trace("Warning! Bad model name parameter for static model into InterfaceBackScene.");
@@ -941,7 +941,7 @@ void InterfaceBackScene::InitStaticModel(ATTRIBUTES *pAParam)
     }
 
     CMatrix mtx;
-    if (!FindLocator(pAParam->GetAttribute("locator"), &mtx, nullptr, nullptr))
+    if (!FindLocator(attrParam["locator"].get<const char*>(), &mtx, nullptr, nullptr))
         mtx.SetIdentity();
 
     auto *pObj = new AniModelDescr;
@@ -957,10 +957,10 @@ void InterfaceBackScene::InitStaticModel(ATTRIBUTES *pAParam)
     if (pGeo)
         pGeo->SetTexturePath("");
 
-    if (pAParam->GetAttribute("tfactor"))
+    if (attrParam["tfactor"].get<const char*>())
     {
         pObj->bUseTFactor = true;
-        pObj->dwTFactor = pAParam->GetAttributeAsDword("tfactor");
+        attrParam["tfactor"].get_to(pObj->dwTFactor);
     }
     else
     {

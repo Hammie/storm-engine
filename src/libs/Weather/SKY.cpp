@@ -438,66 +438,66 @@ void SKY::Realize(uint32_t Delta_Time)
                     sTechSkyFog.c_str());
 }
 
-uint32_t SKY::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t SKY::AttributeChanged(Attribute &pAttribute)
 {
-    // if (*pAttribute == "dir")            { sSkyDir = pAttribute->GetThisAttr(); return 0; }
-    if (*pAttribute == "dir")
+    // if (pAttribute == "dir")            { sSkyDir = pAttribute->GetThisAttr(); return 0; }
+    if (pAttribute == "dir")
     {
         FillSkyDirArray(pAttribute);
         return 0;
     }
-    if (*pAttribute == "color")
+    if (pAttribute == "color")
     {
-        dwSkyColor = pAttribute->GetAttributeAsDword();
+        pAttribute.get_to(dwSkyColor);
         return 0;
     }
-    if (*pAttribute == "RotateSpeed")
+    if (pAttribute == "RotateSpeed")
     {
-        fSkySpeedRotate = pAttribute->GetAttributeAsFloat();
+        pAttribute.get_to(fSkySpeedRotate);
         return 0;
     }
-    if (*pAttribute == "Size")
+    if (pAttribute == "Size")
     {
-        fSkySize = pAttribute->GetAttributeAsFloat();
+        pAttribute.get_to(fSkySize);
         return 0;
     }
-    if (*pAttribute == "Angle")
+    if (pAttribute == "Angle")
     {
-        fSkyAngle = pAttribute->GetAttributeAsFloat();
-        return 0;
-    }
-
-    if (*pAttribute == "techSky")
-    {
-        sTechSky = pAttribute->GetThisAttr();
+        pAttribute.get_to(fSkyAngle);
         return 0;
     }
 
-    if (*pAttribute == "techSkyBlend")
+    if (pAttribute == "techSky")
     {
-        sTechSkyBlend = pAttribute->GetThisAttr();
+        pAttribute.get_to(sTechSky);
         return 0;
     }
 
-    if (*pAttribute == "techSkyAlpha")
+    if (pAttribute == "techSkyBlend")
     {
-        sTechSkyBlendAlpha = pAttribute->GetThisAttr();
+        pAttribute.get_to(sTechSkyBlend);
         return 0;
     }
 
-    if (*pAttribute == "techSkyFog")
+    if (pAttribute == "techSkyAlpha")
     {
-        sTechSkyFog = pAttribute->GetThisAttr();
+        pAttribute.get_to(sTechSkyBlendAlpha);
         return 0;
     }
 
-    if (*pAttribute == "isDone")
+    if (pAttribute == "techSkyFog")
+    {
+        pAttribute.get_to(sTechSkyFog);
+        return 0;
+    }
+
+    if (pAttribute == "isDone")
     {
         GenerateSky();
         return 0;
     }
 
-    if (*pAttribute == "TimeUpdate")
+    if (pAttribute == "TimeUpdate")
     {
         UpdateFogSphere();
         return 0;
@@ -513,33 +513,23 @@ uint64_t SKY::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-void SKY::FillSkyDirArray(ATTRIBUTES *pAttribute)
+void SKY::FillSkyDirArray(const Attribute &pAttribute)
 {
     aSkyDirArray.clear();
-    const long q = pAttribute->GetAttributesNum();
-    if (q < 1)
+    if (pAttribute.empty())
         return;
 
-    // aSkyDirArray.AddElements( q );
-    aSkyDirArray.resize(aSkyDirArray.size() + q);
-    if (q > 1)
-    {
-        for (long n = 0; n < q; n++)
-        {
-            const auto *const attrName = pAttribute->GetAttributeName(n);
-            if (attrName && attrName[0] == 'd' && attrName[1] >= '0' && attrName[1] <= '9')
-            {
-                const auto i = atol(&attrName[1]);
-                if (i < q)
-                    aSkyDirArray[i] = pAttribute->GetAttribute(n);
-            }
+    aSkyDirArray.resize(std::distance(pAttribute.begin(), pAttribute.end()));
+
+    std::for_each(pAttribute.begin(), pAttribute.end(),  [this] (const Attribute &attr) {
+        const std::string_view attrName = attr.getName();
+        if (!attrName.empty() && attrName[0] == 'd' && attrName[1] >= '0' && attrName[1] <= '9') {
+            const auto i = atol(&attrName[1]);
+            aSkyDirArray[i] = attr.get<std::string>();
         }
-    }
-    else
-    {
-        aSkyDirArray[0] = pAttribute->GetAttribute(static_cast<size_t>(0U));
-    }
-    fTimeFactor = static_cast<float>(atof(pAttribute->GetThisAttr()));
+    });
+
+    fTimeFactor = static_cast<float>(atof(pAttribute.get<const char*>()));
     if (fTimeFactor < 0.f || fTimeFactor > 24.f)
         fTimeFactor = 0.f;
     fTimeFactor *= (1.f / 24.f) * aSkyDirArray.size();

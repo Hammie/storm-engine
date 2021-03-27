@@ -210,19 +210,17 @@ void MAST::Mount(entid_t modelEI, entid_t shipEI, NODE *mastNodePointer)
     // find the attributes
     VAI_OBJBASE *pVAI = nullptr;
     pVAI = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(shipEI));
-    ATTRIBUTES *pA = nullptr;
+    Attribute *pA = nullptr;
     if (pVAI != nullptr)
         pA = pVAI->GetACharacter();
 
-    ATTRIBUTES *pAMasts = nullptr;
-    if (pA != nullptr)
-        pAMasts = pA->FindAClass(pA, "Ship.Masts");
     float fMastDamage = 0.f;
-    if (pAMasts != nullptr)
-        fMastDamage = pAMasts->GetAttributeAsFloat((char *)mastNodePointer->GetName(), 0.f);
-    long chrIdx = -1;
-    if (pA != nullptr)
-        chrIdx = pA->GetAttributeAsDword("index", -1);
+    if (pA != nullptr) {
+        const Attribute& masts = pA->getProperty("Ship")["Masts"];
+        masts[mastNodePointer->GetName()].get_to(fMastDamage, 0.0f);
+    }
+    Assert(pA != nullptr);
+    long chrIdx = pA->getProperty("index").get<long>(-1);
     core.Event("EventMastFall", "lsl", chrIdx, mastNodePointer->GetName(), fMastDamage < 1.f);
     if (fMastDamage < 1.f)
     {

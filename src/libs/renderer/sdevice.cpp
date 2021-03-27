@@ -471,11 +471,11 @@ bool DX9RENDER::Init()
         auto *pScriptRender = static_cast<VDATA *>(core.GetScriptVariable("Render"));
 
         if  (pScriptRender) {
-            ATTRIBUTES *pARender = pScriptRender->GetAClass();
+            Attribute &aRender = *pScriptRender->GetAClass();
 
-            pARender->SetAttributeUseDword("full_screen", !bWindow);
-            pARender->SetAttributeUseDword("screen_x", screen_size.x);
-            pARender->SetAttributeUseDword("screen_y", screen_size.y);
+            aRender["full_screen"] = !bWindow;
+            aRender["screen_x"] = screen_size.x;
+            aRender["screen_y"] = screen_size.y;
         }
     }
 
@@ -2405,12 +2405,14 @@ void DX9RENDER::RunStart()
     auto *pScriptRender = static_cast<VDATA *>(core.GetScriptVariable("Render"));
 
     if (pScriptRender != nullptr) {
-        ATTRIBUTES *pARender = pScriptRender->GetAClass();
+        Attribute *pARender = pScriptRender->GetAClass();
+        Assert(pARender != nullptr);
+        const Attribute &aRender = *pARender;
 
-        bSeaEffect = pARender->GetAttributeAsDword("SeaEffect", 0) != 0;
-        fSeaEffectSize = pARender->GetAttributeAsFloat("SeaEffectSize", 0.0f);
-        fSeaEffectSpeed = pARender->GetAttributeAsFloat("SeaEffectSpeed", 0.0f);
-        dwBackColor = pARender->GetAttributeAsDword("BackColor", 0);
+        aRender["SeaEffect"].get_to(bSeaEffect, false);
+        aRender["SeaEffectSize"].get_to(fSeaEffectSize, 0.0f);
+        aRender["SeaEffectSpeed"].get_to(fSeaEffectSpeed, 0.0f);
+        aRender["BackColor"].get_to(dwBackColor, 0u);
     }
     else {
         bSeaEffect = false;

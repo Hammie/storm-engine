@@ -45,7 +45,7 @@ class DIALOG final : public Entity
 
     bool Init();
     void Realize(uint32_t Delta_Time);
-    uint32_t AttributeChanged(ATTRIBUTES *pA);
+    uint32_t AttributeChanged(Attribute &pA);
     uint64_t ProcessMessage(MESSAGE &message);
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -159,7 +159,7 @@ class DIALOG final : public Entity
         {
             TextDescribe::Release();
         }
-        void ChangeText(ATTRIBUTES *pALinks);
+        void ChangeText(Attribute *pALinks);
         void Init(VDX9RENDER *pRS, D3DVIEWPORT9 &vp, INIFILE *pIni);
         long GetShowHeight();
         void Show(long nY);

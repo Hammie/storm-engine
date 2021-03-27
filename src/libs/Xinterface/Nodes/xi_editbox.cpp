@@ -109,9 +109,9 @@ void CXI_EDITBOX::Draw(bool bSelected, uint32_t Delta_Time)
 
     // show out string
     auto *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
-    char *tmpstr = nullptr;
+    const char *tmpstr = nullptr;
     if (pA)
-        tmpstr = pA->GetAttribute("strdata");
+        tmpstr = pA->getProperty("strdata").get<const char*>();
     if (tmpstr)
         m_rs->ExtPrint(m_nStrFontNum, 0xFFFFFFFF, 0, PR_ALIGN_CENTER, true, m_fStrScale, m_screenSize.x, m_screenSize.y,
                        (m_rect.left + m_rect.right) / 2, m_nTopStringPos, "%s", tmpstr);
@@ -160,7 +160,7 @@ int CXI_EDITBOX::CommandExecute(int wActCode)
                 break;
             char param[256];
             param[0] = 0;
-            auto *const tmpstr = pA->GetAttribute("strdata");
+            const char* tmpstr = pA->getProperty("strdata").get<const char*>();
             switch (m_alpha[m_bUpChrRegistrOffset + m_nCurAlphaNum])
             {
             case '*':
@@ -168,7 +168,7 @@ int CXI_EDITBOX::CommandExecute(int wActCode)
                     sprintf_s(param, "%s", tmpstr);
                 if (strlen(param) > 0)
                     param[strlen(param) - 1] = 0;
-                pA->SetAttribute("strdata", param);
+                pA->getProperty("strdata") = param;
                 return -1;
                 break;
             case '^':
@@ -195,13 +195,13 @@ int CXI_EDITBOX::CommandExecute(int wActCode)
                 else
                     sprintf_s(param, "%c", m_alpha[m_bUpChrRegistrOffset + m_nCurAlphaNum]);
             }
-            int nLimit = pA->GetAttributeAsDword("maxlen", 0);
+            int nLimit = pA->getProperty("maxlen").get<int>(0);
             if (nLimit > 0 && static_cast<int>(strlen(param)) > nLimit)
                 return -1;
-            nLimit = pA->GetAttributeAsDword("maxwidth", 0);
+            pA->getProperty("maxwidth").get_to(nLimit, 0);
             if (nLimit > 0 && m_rs->StringWidth(param, m_nStrFontNum, m_fStrScale) > nLimit)
                 return -1;
-            pA->SetAttribute("strdata", param);
+            pA->getProperty("strdata") = param;
             return -1;
         }
         break;

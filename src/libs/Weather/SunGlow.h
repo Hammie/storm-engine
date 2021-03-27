@@ -18,7 +18,7 @@ class SUNGLOW : public Entity
     bool Init() override;
     void Realize(uint32_t Delta_Time);
     void Execute(uint32_t Delta_Time);
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
     uint64_t ProcessMessage(MESSAGE &message) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override

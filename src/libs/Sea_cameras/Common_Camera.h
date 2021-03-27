@@ -18,7 +18,7 @@ class COMMON_CAMERA : public Entity
     VAI_OBJBASE *pAIObj;
 
   protected:
-    ATTRIBUTES *pACharacter;
+    Attribute *pACharacter;
 
   public:
     bool FindShip()
@@ -61,7 +61,7 @@ class COMMON_CAMERA : public Entity
         return eidObject;
     };
 
-    virtual void SetCharacter(ATTRIBUTES *_pACharacter)
+    virtual void SetCharacter(Attribute *_pACharacter)
     {
         pACharacter = _pACharacter;
     };

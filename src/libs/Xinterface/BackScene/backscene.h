@@ -119,13 +119,13 @@ class InterfaceBackScene : public Entity
 
     void LoadModel(const char *pcModelName);
     void SetCameraPosition(const char *pcLocatorName);
-    void SetShipPosition(const char *pcLocName, ATTRIBUTES *pAChar) const;
+    void SetShipPosition(const char *pcLocName, Attribute *pAChar) const;
 
     bool FindLocator(const char *pcLocName, CMatrix *pMtx, CVECTOR *pPos, float *pYAng) const;
     void SetLocatorPosition(MODEL *pModel, const char *pcLocName, CVECTOR &pos, NODE *&pNodPtr);
 
     void ReleaseMenuList();
-    void CreateMenuList(long nStartIndex, ATTRIBUTES *pAMenu);
+    void CreateMenuList(long nStartIndex, Attribute *pAMenu);
     void ChooseNextMenu();
     void ChoosePrevMenu();
     void SetNewMenu(long nNewSelectIndex);
@@ -134,13 +134,13 @@ class InterfaceBackScene : public Entity
 
     long CheckMousePos(float fX, float fY);
 
-    void InitLight(ATTRIBUTES *pAParam);
+    void InitLight(Attribute *pAParam);
     void SetLight();
     void RestoreLight();
     void FlareShow(long idx);
 
-    void InitAniModel(ATTRIBUTES *pAParam);
-    void InitStaticModel(ATTRIBUTES *pAParam);
+    void InitAniModel(Attribute *pAParam);
+    void InitStaticModel(Attribute *pAParam);
 
     struct AniModelDescr
     {

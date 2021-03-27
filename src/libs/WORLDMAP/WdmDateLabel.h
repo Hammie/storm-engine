@@ -23,7 +23,7 @@ class WdmDateLabel : public WdmInterfaceObject
     WdmDateLabel();
     virtual ~WdmDateLabel();
 
-    void SetAttributes(ATTRIBUTES *apnt);
+    void SetAttributes(Attribute *apnt);
     // Rendering
     virtual void LRender(VDX9RENDER *rs);
 

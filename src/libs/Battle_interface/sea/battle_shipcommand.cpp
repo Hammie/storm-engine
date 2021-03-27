@@ -6,7 +6,7 @@
 #include "island_descr.h"
 #include "ships_list.h"
 
-BIShipCommandList::BIShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
+BIShipCommandList::BIShipCommandList(entid_t eid, Attribute &pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
 {
     Init();
 }
@@ -74,21 +74,17 @@ void BIShipCommandList::Init()
     m_nCommandTextureNum = -1;
     m_nIconShowMaxQuantity = 8;
 
-    auto *pA = m_pARoot;
-    if (pA)
-        pA = pA->GetAttributeClass("CommandTextures");
-    if (pA)
-    {
-        m_nChargeTextureNum = pA->GetAttributeAsDword("ChargeTexNum", m_nChargeTextureNum);
-        m_nCommandTextureNum = pA->GetAttributeAsDword("CommandTexNum", m_nCommandTextureNum);
+    if (m_pARoot.hasProperty("CommandTexture")) {
+        const Attribute& command_textures = m_pARoot["CommandTexture"];
+
+        m_nChargeTextureNum = command_textures["ChargeTexNum"].get<uint32_t>(m_nChargeTextureNum);
+        m_nCommandTextureNum = command_textures["CommandTexNum"].get<uint32_t>(m_nCommandTextureNum);
     }
 
-    pA = m_pARoot;
-    if (pA)
-        pA = pA->GetAttributeClass("CommandList");
-    if (pA)
-    {
-        m_nIconShowMaxQuantity = pA->GetAttributeAsDword("CommandMaxIconQuantity", m_nIconShowMaxQuantity);
+    if (m_pARoot.hasProperty("CommandList")) {
+        const Attribute& command_list = m_pARoot["CommandList"];
+
+        m_nIconShowMaxQuantity = command_list["CommandMaxIconQuantity"].get<uint32_t>(m_nIconShowMaxQuantity);
     }
 }
 
@@ -110,7 +106,7 @@ long BIShipCommandList::ShipAdding(bool allLabel, bool bMyShip, bool bEnemy, boo
     auto *pA = GetCurrentCommandAttribute();
     auto sqrRadius = -1.f;
     if (pA)
-        sqrRadius = pA->GetAttributeAsFloat("EffectRadius", sqrRadius);
+        sqrRadius = pA->getProperty("EffectRadius").get<float>(sqrRadius);
     if (sqrRadius < 0.f)
         allLabel = true;
     sqrRadius *= sqrRadius;
@@ -133,7 +129,8 @@ long BIShipCommandList::ShipAdding(bool allLabel, bool bMyShip, bool bEnemy, boo
     if (bMyShip && main_sd != selShip)
     {
         n = AddToIconList(main_sd->textureNum, main_sd->pictureNum, main_sd->selectPictureNum, -1,
-                          main_sd->characterIndex, nullptr, -1, nullptr, main_sd->pAttr->GetAttribute("name"));
+                          main_sd->characterIndex, nullptr, -1, nullptr,
+                          main_sd->pAttr->getProperty("name").get<std::string_view>().data());
         if (n > 0)
         {
             retVal += n;
@@ -165,7 +162,7 @@ long BIShipCommandList::ShipAdding(bool allLabel, bool bMyShip, bool bEnemy, boo
                         continue;
                 }
                 n = AddToIconList(sd->textureNum, sd->pictureNum, sd->selectPictureNum, -1, sd->characterIndex, nullptr,
-                                  -1, nullptr, sd->pAttr->GetAttribute("name"));
+                                  -1, nullptr, sd->pAttr->getProperty("name").get<std::string_view>().data());
                 if (n > 0)
                 {
                     retVal += n;
@@ -188,7 +185,7 @@ long BIShipCommandList::FortAdding(bool allLabel, bool bFriend, bool bNeutral, b
     auto *pA = GetCurrentCommandAttribute();
     auto sqrRadius = pL->r;
     if (pA)
-        sqrRadius = pA->GetAttributeAsFloat("EffectRadius", sqrRadius);
+        sqrRadius = pA->getProperty("EffectRadius").get<float>(sqrRadius);
     if (sqrRadius < 0.f)
         allLabel = true;
     sqrRadius *= sqrRadius;
@@ -220,11 +217,11 @@ long BIShipCommandList::FortAdding(bool allLabel, bool bFriend, bool bNeutral, b
             auto *pvdat = core.Event("evntCheckEnableLocator", "sa", m_sCurrentCommandName.c_str(), pL->pA);
             if (pvdat != nullptr && pvdat->GetLong() == 0)
                 continue;
-            char *pLocName = nullptr;
+            std::string_view pLocName;
             if (pL->pA != nullptr)
-                pLocName = pL->pA->GetAttribute("name");
+                pLocName = pL->pA->getProperty("name").get<std::string_view>();
             retVal += AddToIconList(pL->texIdx, pL->picIdx, pL->selPicIdx, -1, pL->characterIndex, nullptr, -1,
-                                    pL->pA->GetAttribute("name"), pL->pchr_note);
+                                    pLocName.data(), pL->pchr_note.data());
         }
     } while ((pL = g_IslandDescr.GetNext()) != nullptr);
 
@@ -243,7 +240,7 @@ long BIShipCommandList::LandAdding(bool allLabel)
     auto *pA = GetCurrentCommandAttribute();
     auto sqrRadius = pL->r;
     if (pA)
-        sqrRadius = pA->GetAttributeAsFloat("EffectRadius", sqrRadius);
+        sqrRadius = pA->getProperty("EffectRadius").get<float>(sqrRadius);
     if (sqrRadius < 0.f)
         allLabel = true;
     sqrRadius *= sqrRadius;
@@ -272,11 +269,11 @@ long BIShipCommandList::LandAdding(bool allLabel)
         auto *pvdat = core.Event("evntCheckEnableLocator", "sa", m_sCurrentCommandName.c_str(), pL->pA);
         if (pvdat != nullptr && pvdat->GetLong() == 0)
             continue;
-        char *pLocName = nullptr;
+        std::string_view pLocName;
         if (pL->pA != nullptr)
-            pLocName = pL->pA->GetAttribute("name");
-        retVal += AddToIconList(pL->texIdx, pL->picIdx, pL->selPicIdx, -1, pL->characterIndex, nullptr, -1, pLocName,
-                                pL->pchr_note);
+            pLocName = pL->pA->getProperty("name").get<std::string_view>();
+        retVal += AddToIconList(pL->texIdx, pL->picIdx, pL->selPicIdx, -1, pL->characterIndex, nullptr, -1, pLocName.data(),
+                                pL->pchr_note.data());
     } while ((pL = g_IslandDescr.GetNext()) != nullptr);
     return retVal;
 }
@@ -285,25 +282,21 @@ long BIShipCommandList::CommandAdding()
 {
     core.Event("BI_SetPossibleCommands", "l", m_nCurrentCommandCharacterIndex);
     long retVal = 0;
-    auto *pAttr = m_pARoot->GetAttributeClass("Commands");
-    if (!pAttr)
-        return 0;
-    const size_t attrQuant = pAttr->GetAttributesNum();
 
-    for (long i = 0; i < attrQuant; i++)
-    {
-        auto *pA = pAttr->GetAttributeClass(i);
-        if (pA == nullptr)
-            continue; // no such attribute
-        if (pA->GetAttributeAsDword("enable", 0) == 0)
-            continue; // command not available
-        const long pictureNum = pA->GetAttributeAsDword("picNum", 0);
-        const long selPictureNum = pA->GetAttributeAsDword("selPicNum", 0);
-        const long cooldownPictureNum = pA->GetAttributeAsDword("cooldownPicNum", -1);
-        const long texNum = pA->GetAttributeAsDword("texNum", m_nCommandTextureNum);
-        auto *const eventName = pA->GetAttribute("event");
-        retVal += AddToIconList(texNum, pictureNum, selPictureNum, cooldownPictureNum, -1, eventName, -1, nullptr,
-                                pA->GetAttribute("note"));
+    if (!m_pARoot.hasProperty("Commands")) {
+        return 0;
+    }
+    const Attribute& commands = m_pARoot["Commands"];
+
+    for (const Attribute& command : commands) {
+        if (command["enable"].get<bool>()) {
+            const long pictureNum = command["picNum"].get<uint32_t>(0);
+            const long selPictureNum = command["selPicNum"].get<uint32_t>(0);
+            const long cooldownPictureNum = command["cooldownPicNum"].get<uint32_t>(-1);
+            const long texNum = command["texNum"].get<uint32_t>(m_nCommandTextureNum);
+            const std::string_view eventName = command["event"].get<std::string_view>();
+            retVal += AddToIconList(texNum, pictureNum, selPictureNum, cooldownPictureNum, -1, eventName.data(), -1, nullptr, command["note"].get<std::string_view>().data());
+        }
     }
 
     return retVal;
@@ -320,7 +313,7 @@ long BIShipCommandList::ChargeAdding()
     if (lIdx <= 0)
         return 0;
 
-    auto *pAList = m_pARoot->GetAttributeClass("charge");
+    const Attribute& charge = m_pARoot["charge"];
     long retVal = 0;
     m_aChargeQuantity.clear();
     for (auto i = 0; i < lIdx; i++)
@@ -328,13 +321,14 @@ long BIShipCommandList::ChargeAdding()
         m_aChargeQuantity.push_back(0);
         tmpDat->Get(m_aChargeQuantity[i], i + 1);
 
-        char param[128];
-        sprintf_s(param, sizeof(param), "charge%d", i + 1);
-        auto *pA = pAList ? pAList->GetAttributeClass(param) : nullptr;
-        const long nNormalPicIndex = pA ? pA->GetAttributeAsDword("picNum", -1) : -1;
-        const long nSelectPicIndex = pA ? pA->GetAttributeAsDword("selPicNum", -1) : -1;
-        retVal += AddToIconList(m_nChargeTextureNum, nNormalPicIndex, nSelectPicIndex, -1, -1, nullptr, i + 1, nullptr,
-                                nullptr);
+        std::string param = fmt::format("charge{}", i + 1);
+        if (charge.hasProperty(param)) {
+            const Attribute& param_attr = charge[param];
+            const long nNormalPicIndex = param_attr["picNum"].get<uint32_t>(-1);
+            const long nSelectPicIndex = param_attr["selPicNum"].get<uint32_t>(-1);
+            retVal += AddToIconList(m_nChargeTextureNum, nNormalPicIndex, nSelectPicIndex, -1, -1, nullptr, i + 1, nullptr,
+                                    nullptr);
+        }
     }
     return retVal;
 }
@@ -342,23 +336,24 @@ long BIShipCommandList::ChargeAdding()
 long BIShipCommandList::UserIconsAdding()
 {
     long retVal = 0;
-    auto *pAttr = m_pARoot->GetAttributeClass("UserIcons");
-    if (!pAttr)
-        return 0;
-    const size_t attrQuant = pAttr->GetAttributesNum();
 
-    for (long i = 0; i < attrQuant; i++)
-    {
-        auto *pA = pAttr->GetAttributeClass(i);
-        if (pA == nullptr)
-            continue; // no such attribute
-        if (pA->GetAttributeAsDword("enable", 0) == 0)
-            continue; // command not available
-        const long pictureNum = pA->GetAttributeAsDword("pic", 0);
-        const long selPictureNum = pA->GetAttributeAsDword("selpic", 0);
-        const long textureNum = pA->GetAttributeAsDword("tex", -1);
-        retVal += AddToIconList(textureNum, pictureNum, selPictureNum, -1, -1, nullptr, i + 1, pA->GetAttribute("name"),
-                                pA->GetAttribute("note"));
+    if (!m_pARoot.hasProperty("UserIcons")) {
+        return 0;
+    }
+    const Attribute& user_icons = m_pARoot["UserIcons"];
+
+    size_t i = 0;
+    for (const Attribute& icon : user_icons) {
+        if (icon["enable"].get<bool>()) {
+            const long pictureNum = icon["pic"].get<uint32_t>(0);
+            const long selPictureNum = icon["selpic"].get<uint32_t>(0);
+            const long textureNum = icon["tex"].get<uint32_t>(-1);
+            const std::string_view name = icon["name"].get<std::string_view>();
+            const std::string_view note = icon["note"].get<std::string_view>();
+            retVal += AddToIconList(textureNum, pictureNum, selPictureNum, -1, -1, nullptr, i + 1, name.data(),
+                                    note.data());
+        }
+        ++i;
     }
 
     return retVal;
@@ -368,27 +363,23 @@ long BIShipCommandList::AbilityAdding()
 {
     core.Event("evntSetUsingAbility", "l", m_nCurrentCommandCharacterIndex);
     long retVal = 0;
-    auto *pAttr = m_pARoot->GetAttributeClass("AbilityIcons");
-    if (!pAttr)
-        return 0;
-    const size_t attrQuant = pAttr->GetAttributesNum();
 
-    for (long i = 0; i < attrQuant; i++)
-    {
-        auto *pA = pAttr->GetAttributeClass(i);
-        if (pA == nullptr)
-            continue; // no such attribute
-        if (pA->GetAttributeAsDword("enable", 0) == 0)
-            continue; // command not available
-        const long pictureNum = pA->GetAttributeAsDword("picNum", 0);
-        const long selPictureNum = pA->GetAttributeAsDword("selPicNum", 0);
-        const long textureNum = pA->GetAttributeAsDword("texNum", -1);
-        // retVal += AddToIconList( textureNum, pictureNum, selPictureNum, -1, -1, pA->GetThisName(), i, null,
-        // pA->GetAttribute("note") );
-        const long cooldownPictureNum = pA->GetAttributeAsDword("cooldownPicNum", -1);
-        auto *const eventName = pA->GetAttribute("event");
-        retVal += AddToIconList(textureNum, pictureNum, selPictureNum, cooldownPictureNum, -1, eventName, -1, nullptr,
-                                pA->GetAttribute("note"));
+    if (!m_pARoot.hasProperty("AbilityIcons")) {
+        return 0;
+    }
+    const Attribute& ability_icons = m_pARoot["AbilityIcons"];
+
+    for (const Attribute& icon : ability_icons) {
+        if (icon["enable"].get<bool>()) {
+            const long pictureNum = icon["picNum"].get<uint32_t>(0);
+            const long selPictureNum = icon["selPicNum"].get<uint32_t>(0);
+            const long textureNum = icon["texNum"].get<uint32_t>(-1);
+            const long cooldownPictureNum = icon["cooldownPicNum"].get<uint32_t>(-1);
+            const std::string_view event_name = icon["event"].get<std::string_view>();
+            const std::string_view note = icon["note"].get<std::string_view>();
+            retVal += AddToIconList(textureNum, pictureNum, selPictureNum, cooldownPictureNum, -1, event_name.data(), -1, nullptr,
+                                    note.data());
+        }
     }
 
     return retVal;
@@ -396,16 +387,22 @@ long BIShipCommandList::AbilityAdding()
 
 long BIShipCommandList::AddCancelIcon()
 {
-    auto *pA = m_pARoot->GetAttributeClass("Commands");
-    if (pA)
-        pA = pA->GetAttributeClass("Cancel");
-    if (!pA)
+    if (!m_pARoot.hasProperty("Commands")) {
         return 0;
-    const long pictureNum = pA->GetAttributeAsDword("picNum", 0);
-    const long selPictureNum = pA->GetAttributeAsDword("selPicNum", 0);
-    const long textureNum = pA->GetAttributeAsDword("texNum", -1);
-    return AddToIconList(textureNum, pictureNum, selPictureNum, -1, -1, pA->GetAttribute("event"), -1, nullptr,
-                         pA->GetAttribute("note"));
+    }
+    const Attribute& commands = m_pARoot["Commands"];
+
+    if (!commands.hasProperty("Cancel")) {
+        return 0;
+    }
+    const Attribute& cancel = m_pARoot["Cancel"];
+
+    const long pictureNum = cancel["picNum"].get<uint32_t>(0);
+    const long selPictureNum = cancel["selPicNum"].get<uint32_t>(0);
+    const long textureNum = cancel["texNum"].get<uint32_t>(-1);
+    const std::string_view event_name = cancel["event"].get<std::string_view>();
+    const std::string_view note = cancel["note"].get<std::string_view>();
+    return AddToIconList(textureNum, pictureNum, selPictureNum, -1, -1, event_name.data(), -1, nullptr, note.data());
 }
 
 long BIShipCommandList::TownAdding(bool allLabel, bool bDiseased, bool bNotDiseased, bool bEnemy, bool bNeutral,
@@ -420,7 +417,7 @@ long BIShipCommandList::TownAdding(bool allLabel, bool bDiseased, bool bNotDisea
     auto *pA = GetCurrentCommandAttribute();
     auto sqrRadius = pL->r;
     if (pA)
-        sqrRadius = pA->GetAttributeAsFloat("EffectRadius", sqrRadius);
+        sqrRadius = pA->getProperty("EffectRadius").get<float>(sqrRadius);
     if (sqrRadius < 0.f)
         allLabel = true;
     sqrRadius *= sqrRadius;
@@ -462,11 +459,11 @@ long BIShipCommandList::TownAdding(bool allLabel, bool bDiseased, bool bNotDisea
         auto *pvdat = core.Event("evntCheckEnableLocator", "sa", m_sCurrentCommandName.c_str(), pL->pA);
         if (pvdat != nullptr && pvdat->GetLong() == 0)
             continue;
-        char *pLocName = nullptr;
+        std::string_view pLocName;
         if (pL->pA != nullptr)
-            pLocName = pL->pA->GetAttribute("name");
-        retVal += AddToIconList(pL->texIdx, pL->picIdx, pL->selPicIdx, -1, pL->characterIndex, nullptr, -1, pLocName,
-                                pL->pchr_note);
+            pLocName = pL->pA->getProperty("name").get<std::string_view>();
+        retVal += AddToIconList(pL->texIdx, pL->picIdx, pL->selPicIdx, -1, pL->characterIndex, nullptr, -1, pLocName.data(),
+                                pL->pchr_note.data());
     } while ((pL = g_IslandDescr.GetNext()) != nullptr);
     return retVal;
 }

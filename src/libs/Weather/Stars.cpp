@@ -37,7 +37,7 @@ Astronomy::STARS::~STARS()
     }
 }
 
-void Astronomy::STARS::Init(ATTRIBUTES *pAP)
+void Astronomy::STARS::Init(Attribute *pAP)
 {
     aStars.clear();
 
@@ -59,40 +59,37 @@ void Astronomy::STARS::Init(ATTRIBUTES *pAP)
     iVertexBuffer = -1;
     iVertexBufferColors = -1;
 
-    pAP = pAP->FindAClass(pAP, "Stars");
-    if (!pAP)
-        return;
-    auto *pASpectrs = pAP->FindAClass(pAP, "Spectr");
+    Assert(pAP != nullptr);
+    const Attribute& attr = *pAP;
 
-    if (pASpectrs)
+    const Attribute& aSpectr = attr["Stars"]["Spectr"];
+    if (!aSpectr.empty())
     {
-        for (uint32_t i = 0; i < pASpectrs->GetAttributesNum(); i++)
-        {
-            auto *pAS = pASpectrs->GetAttributeClass(i);
+        for (const Attribute &aSpec : aSpectr) {
             char str[2];
-            str[0] = pAS->GetThisName()[0];
+            str[0] = aSpec.getName()[0];
             str[1] = 0;
             _strupr(str);
-            Spectr[str[0]] = pAS->GetAttributeAsDword();
+            aSpec.get_to(Spectr[str[0]]);
             _strlwr(str);
-            Spectr[str[0]] = pAS->GetAttributeAsDword();
+            aSpec.get_to(Spectr[str[0]]);
         }
     }
 
-    bEnable = pAP->GetAttributeAsDword("Enable", 0) != 0;
-    sCatalog = pAP->GetAttribute("Catalog");
-    sTexture = pAP->GetAttribute("Texture");
-    fRadius = pAP->GetAttributeAsFloat("Radius", 2000.0f);
-    fSize = pAP->GetAttributeAsFloat("Size", 20.0f);
-    fHeightFade = pAP->GetAttributeAsFloat("HeightFade", 100.0f);
-    fSunFade = pAP->GetAttributeAsFloat("SunFade", 1.0f);
+    attr["Enable"].get_to(bEnable, false);
+    attr["Catalog"].get_to(sCatalog);
+    attr["Texture"].get_to(sTexture);
+    attr["Radius"].get_to(fRadius, 2000.0f);
+    attr["Size"].get_to(fSize, 20.0f);
+    attr["HeightFade"].get_to(fHeightFade, 100.0f);
+    attr["SunFade"].get_to(fSunFade, 1.0f);
 
-    fVisualMagnitude = pAP->GetAttributeAsFloat("VisualMagnitude", 8.5f);
-    fTelescopeMagnitude = pAP->GetAttributeAsFloat("TelescopeMagnitude", 13.0f);
+    attr["VisualMagnitude"].get_to(fVisualMagnitude, 8.5f);
+    attr["TelescopeMagnitude"].get_to(fTelescopeMagnitude, 13.0f);
 
-    fFadeValue = pAP->GetAttributeAsFloat("FadeValue", 1.f);
-    fFadeTimeStart = pAP->GetAttributeAsFloat("FadeStartTime", -1.f);
-    fFadeTime = pAP->GetAttributeAsFloat("FadeTime", 0.2f);
+    attr["FadeValue"].get_to(fFadeValue, 1.f);
+    attr["FadeStartTime"].get_to(fFadeTimeStart, -1.f);
+    attr["FadeTime"].get_to(fFadeTime, 0.2f);
 
     fPrevFov = -1.0f;
 
@@ -427,28 +424,30 @@ void Astronomy::STARS::Realize(double dDeltaTime, double dHour)
     // Astronomy::pRS->SetTransform(D3DTS_VIEW, mView);
 }
 
-uint32_t Astronomy::STARS::AttributeChanged(ATTRIBUTES *pA)
+uint32_t Astronomy::STARS::AttributeChanged(Attribute &pA)
 {
     return 0;
 }
 
-void Astronomy::STARS::TimeUpdate(ATTRIBUTES *pAP)
+void Astronomy::STARS::TimeUpdate(Attribute *pAP)
 {
+
+    Assert(pAP != nullptr);
+    const Attribute& attr = *pAP;
+
     bEnable = false;
-    pAP = pAP->FindAClass(pAP, "Stars");
-    if (!pAP)
-        return;
 
-    bEnable = pAP->GetAttributeAsDword("Enable", 0) != 0;
-    fRadius = pAP->GetAttributeAsFloat("Radius", 2000.0f);
-    fHeightFade = pAP->GetAttributeAsFloat("HeightFade", 100.0f);
+    const Attribute& attrStars = attr["Stars"];
+    attrStars["Enable"].get_to(bEnable, false);
+    attrStars["Radius"].get_to(fRadius, 2000.0f);
+    attrStars["HeightFade"].get_to(fHeightFade, 100.0f);
 
-    fSize = pAP->GetAttributeAsFloat("Size", 20.0f);
-    fSunFade = pAP->GetAttributeAsFloat("SunFade", 1.0f);
+    attrStars["Size"].get_to(fSize, 20.0f);
+    attrStars["SunFade"].get_to(fSunFade, 1.0f);
 
-    fFadeValue = pAP->GetAttributeAsFloat("FadeValue", 1.f);
-    fFadeTimeStart = pAP->GetAttributeAsFloat("FadeStartTime", -1.f);
-    fFadeTime = pAP->GetAttributeAsFloat("FadeTime", 0.2f);
+    attrStars["FadeValue"].get_to(fFadeValue, 1.f);
+    attrStars["FadeStartTime"].get_to(fFadeTimeStart, -1.f);
+    attrStars["FadeTime"].get_to(fFadeTime, 0.2f);
 
     if (!bEnable)
         return;
@@ -467,6 +466,7 @@ void Astronomy::STARS::TimeUpdate(ATTRIBUTES *pAP)
     }
 
     fPrevFov = -1.0f;
+
     for (uint32_t i = 0; i < aStars.size(); i++)
     {
         auto &s = aStars[i];

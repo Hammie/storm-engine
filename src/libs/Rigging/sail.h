@@ -106,7 +106,7 @@ class SAIL : public SAIL_BASE
         return gdata[LastTraceGroup].shipEI;
     }
     SAILONE_BASE *FindSailForCharacter(int chrIdx, char *nodeName, int grNum) override;
-    uint32_t AttributeChanged(ATTRIBUTES *pAttr) override;
+    uint32_t AttributeChanged(Attribute &pAttr) override;
 
     void LostRender();
     void RestoreRender();

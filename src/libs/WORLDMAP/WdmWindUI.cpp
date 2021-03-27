@@ -82,23 +82,23 @@ WdmWindUI::~WdmWindUI()
 //============================================================================================
 
 // Read font name
-void WdmWindUI::SetAttributes(ATTRIBUTES *apnt)
+void WdmWindUI::SetAttributes(Attribute *apnt)
 {
     if (!apnt)
         return;
-    auto *ap = apnt->FindAClass(apnt, "date");
-    if (ap)
+    const Attribute& attrDate = apnt->getProperty("date");
+    if (!attrDate.empty())
     {
         // Font
-        auto *s = ap->GetAttribute("font");
-        if (s && s[0])
-            dateFont = wdmObjects->wm->GetRS()->LoadFont(s);
-        const char* coordinateAttribute = ap->GetAttribute("coordinate");
+        const auto fontName = attrDate["font"].get<std::string>();
+        if (!fontName.empty())
+            dateFont = wdmObjects->wm->GetRS()->LoadFont(fontName.c_str());
+        const char* coordinateAttribute = attrDate["coordinate"].get<const char*>();
         if (coordinateAttribute) {
             strcpy_s(wdmObjects->stCoordinate, coordinateAttribute);
         }
-        auto *a = ap->FindAClass(ap, "monthnames");
-        if (a)
+        const Attribute& attrMonthNames = attrDate["monthnames"];
+        if (!attrMonthNames.empty())
         {
             char buf[4];
             buf[0] = 'm';
@@ -110,13 +110,13 @@ void WdmWindUI::SetAttributes(ATTRIBUTES *apnt)
                 else
                     buf[1] = '1';
                 buf[2] = static_cast<char>('0' + (i % 10));
-                s = a->GetAttribute(buf);
-                if (s && s[0])
+                const auto str = attrMonthNames[buf].get<std::string>();
+                if (!str.empty())
                 {
-                    long sl = strlen(s) + 1;
+                    long sl = str.size() + 1;
                     if (sl > 128)
                         sl = 128;
-                    memcpy(month[i - 1], s, sl);
+                    memcpy(month[i - 1], str.c_str(), sl);
                     month[i - 1][127] = 0;
                 }
             }

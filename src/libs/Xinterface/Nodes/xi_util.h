@@ -99,7 +99,7 @@ class CXI_UTILS
     }
 
     // attribute functions
-    static float GetByStrNumFromAttribute_Float(ATTRIBUTES *pA, const char *pStr, long num, float fDefValue);
+    static float GetByStrNumFromAttribute_Float(Attribute *pA, const char *pStr, long num, float fDefValue);
 
     // vertex processing
     static void WriteSquareToVertexBuffer(XI_ONETEX_VERTEX *pv, uint32_t color, FXYRECT &uv, XYRECT &rect);

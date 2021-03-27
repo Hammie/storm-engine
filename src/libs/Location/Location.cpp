@@ -58,9 +58,9 @@ Location::~Location()
 {
     if (!AttributesPointer)
         return;
-    auto *const atr = AttributesPointer->FindAClass(AttributesPointer, "locators");
-    if (atr)
-        AttributesPointer->DeleteAttributeClassX(atr);
+
+    AttributesPointer->getProperty("locators").clear();
+
     // EntityManager::EraseEntity(cubeShotMaker);
     EntityManager::EraseEntity(lighter);
     EntityManager::EraseEntity(lizards);
@@ -107,7 +107,7 @@ bool Location::Init()
 // Execution
 void Location::Execute(uint32_t delta_time)
 {
-    bSwimming = AttributesPointer->GetAttributeAsDword("swimming", 1) != 0;
+    bSwimming = AttributesPointer->getProperty("swimming").get<bool>(true);
 
     // Updating characters
     if (!isDebugView)
@@ -163,7 +163,7 @@ void Location::Realize(uint32_t delta_time)
         const char *c = nullptr;
         if (AttributesPointer)
         {
-            c = AttributesPointer->GetAttribute("id");
+            c = AttributesPointer->getProperty("id").get<const char*>(nullptr);
         }
         if (!c)
             c = "ID not found";
@@ -728,95 +728,42 @@ void Location::UpdateLocators()
     CMatrix mtx;
     if (!AttributesPointer)
         return;
-    ATTRIBUTES *atr = AttributesPointer->FindAClass(AttributesPointer, "locators");
-    if (atr)
-        AttributesPointer->DeleteAttributeClassX(atr);
-    AttributesPointer->CreateSubAClass(AttributesPointer, "locators");
-    atr = AttributesPointer->FindAClass(AttributesPointer, "locators");
-    if (atr)
+
+    Attribute& attr = *AttributesPointer;
+    Attribute& locators_attr = attr["locators"];
+
+    // Creating new attributes
+    for (long i = 0; i < numLocators; i++)
     {
-        // Creating new attributes
-        for (long i = 0; i < numLocators; i++)
+        char *groupName = locators[i]->GetGroupName();
+        Attribute& group = locators_attr[groupName];
+        for (long j = 0; j < locators[i]->Num(); j++)
         {
-            char *groupName = locators[i]->GetGroupName();
-            atr->CreateSubAClass(atr, groupName);
-            ATTRIBUTES *at = atr->FindAClass(atr, groupName);
-            if (at)
-            {
-                for (long j = 0; j < locators[i]->Num(); j++)
-                {
-                    at->CreateSubAClass(at, locators[i]->Name(j));
-                    ATTRIBUTES *a = at->FindAClass(at, locators[i]->Name(j));
-                    if (a)
-                    {
-                        // Radius
-                        a->CreateSubAClass(a, "radius");
-                        a->SetAttributeUseFloat("radius", locators[i]->GetLocatorRadius(j));
-                        // Matrix
-                        locators[i]->GetLocatorPos(j, mtx);
-                        // Pos
-                        a->SetAttributeUseFloat("x", mtx.Pos().x);
-                        a->SetAttributeUseFloat("y", mtx.Pos().y);
-                        a->SetAttributeUseFloat("z", mtx.Pos().z);
-                        // vz
-                        a->CreateSubAClass(a, "vz");
-                        ATTRIBUTES *v = a->FindAClass(a, "vz");
-                        if (v)
-                        {
-                            v->SetAttributeUseFloat("x", mtx.Vz().x);
-                            v->SetAttributeUseFloat("y", mtx.Vz().y);
-                            v->SetAttributeUseFloat("z", mtx.Vz().z);
-                        }
-                        else
-                        {
-                            core.Trace("Location: Can't create attribute 'locators.%s.%s.vz'!", groupName,
-                                       locators[i]->Name(j));
-                        }
-                        // vy
-                        a->CreateSubAClass(a, "vy");
-                        v = a->FindAClass(a, "vy");
-                        if (v)
-                        {
-                            v->SetAttributeUseFloat("x", mtx.Vy().x);
-                            v->SetAttributeUseFloat("y", mtx.Vy().y);
-                            v->SetAttributeUseFloat("z", mtx.Vy().z);
-                        }
-                        else
-                        {
-                            core.Trace("Location: Can't create attribute 'locators.%s.%s.vy'!", groupName,
-                                       locators[i]->Name(j));
-                        }
-                        // vx
-                        a->CreateSubAClass(a, "vx");
-                        v = a->FindAClass(a, "vx");
-                        if (v)
-                        {
-                            v->SetAttributeUseFloat("x", mtx.Vx().x);
-                            v->SetAttributeUseFloat("y", mtx.Vx().y);
-                            v->SetAttributeUseFloat("z", mtx.Vx().z);
-                        }
-                        else
-                        {
-                            core.Trace("Location: Can't create attribute 'locators.%s.%s.vx'!", groupName,
-                                       locators[i]->Name(j));
-                        }
-                    }
-                    else
-                    {
-                        core.Trace("Location: Can't create attribute 'locators.%s.%s'!", groupName,
-                                   locators[i]->Name(j));
-                    }
-                }
-            }
-            else
-            {
-                core.Trace("Location: Can't create attribute 'locators.%s'!", groupName);
-            }
+            Attribute& a = group[locators[i]->Name(j)];
+            // Radius
+            a["radius"] = locators[i]->GetLocatorRadius(j);
+            // Matrix
+            locators[i]->GetLocatorPos(j, mtx);
+            // Pos
+            a["x"] = mtx.Pos().x;
+            a["y"] = mtx.Pos().y;
+            a["z"] = mtx.Pos().z;
+            // vz
+            Attribute& vz = a["vz"];
+            vz["x"] = mtx.Vz().x;
+            vz["y"] = mtx.Vz().y;
+            vz["z"] = mtx.Vz().z;
+            // vy
+            Attribute& vy = a["vy"];
+            vy["x"] = mtx.Vy().x;
+            vy["y"] = mtx.Vy().y;
+            vy["z"] = mtx.Vy().z;
+            // vx
+            Attribute& vx = a["vx"];
+            vx["x"] = mtx.Vx().x;
+            vx["y"] = mtx.Vx().y;
+            vx["z"] = mtx.Vx().z;
         }
-    }
-    else
-    {
-        core.Trace("Location: Can't create attribute 'locators'!");
     }
 }
 
@@ -1339,18 +1286,21 @@ void Location::LoadCaustic() const
 {
     bCausticEnable = false;
 
-    ATTRIBUTES *pC = AttributesPointer->GetAttributeClass("Caustic");
-    if (!pC)
+    Assert(AttributesPointer != nullptr);
+    const Attribute& attr = *AttributesPointer;
+
+    const Attribute& caustic = attr["Caustic"];
+    if (caustic.empty())
         return;
 
     fCausticDelta = 0.0f;
     fCausticFrame = 0.0f;
 
-    fCausticScale = pC->GetAttributeAsFloat("scale");
-    fFogDensity = pC->GetAttributeAsFloat("fogdensity");
-    fCausticDistance = pC->GetAttributeAsFloat("distance");
-    v4CausticColor = COLOR2VECTOR4(pC->GetAttributeAsDword("color"));
-    fCausticSpeed = pC->GetAttributeAsFloat("speed");
+    caustic["scale"].get_to(fCausticScale);
+    caustic["fogdensity"].get_to(fFogDensity);
+    caustic["distance"].get_to(fCausticDistance);
+    v4CausticColor = COLOR2VECTOR4(caustic["color"].get<uint32_t>());
+    caustic["speed"].get_to(fCausticSpeed);
 
     char tex[256];
     for (long i = 0; i < 32; i++)

@@ -143,14 +143,14 @@ uint64_t SEA_AI::ProcessMessage(MESSAGE &message)
         auto *pAIShip = AIShip::FindShip(pCharacter);
         if (!pAIShip)
         {
-            core.Trace("SeaAI err: SetSailState, can't find ship for character = %s", pCharacter->GetAttribute("id"));
+            core.Trace("SeaAI err: SetSailState, can't find ship for character = %s", pCharacter->getProperty("id").get<const char*>());
             return 0;
         }
         core.Send_Message(pAIShip->GetShipEID(), "lf", MSG_SHIP_SET_SAIL_STATE, fSailState);
     }
     break;
     case AI_MESSAGE_SHIP_SET_TASK: {
-        ATTRIBUTES *pCharacter1, *pCharacter2;
+        Attribute *pCharacter1, *pCharacter2;
         uint32_t dwCommand = message.Long();
         uint32_t dwTaskPriority = message.Long();
         switch (dwCommand)
@@ -390,11 +390,11 @@ void SEA_AI::Load(const char *pStr)
     Helper.Init();
 }
 
-uint32_t SEA_AI::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t SEA_AI::AttributeChanged(Attribute &pAttribute)
 {
     uint32_t i;
 
-    if (*pAttribute == "isDone")
+    if (pAttribute == "isDone")
     {
         // delete all old groups and ships
         Helper.Init();
@@ -403,28 +403,28 @@ uint32_t SEA_AI::AttributeChanged(ATTRIBUTES *pAttribute)
             AIShip::AIShips[i]->CheckStartPosition();
     }
 
-    if (*pAttribute == "DistanceBetweenGroupShips")
+    if (pAttribute == "DistanceBetweenGroupShips")
     {
-        AIGroup::fDistanceBetweenGroupShips = pAttribute->GetAttributeAsFloat();
+        pAttribute.get_to(AIGroup::fDistanceBetweenGroupShips);
     }
 
     return 0;
 }
 
-void SEA_AI::AddShip(entid_t eidShip, ATTRIBUTES *pCharacter, ATTRIBUTES *pAShip)
+void SEA_AI::AddShip(entid_t eidShip, Attribute *pCharacter, Attribute *pAShip)
 {
     Assert(pCharacter && pAShip);
-    auto *pG = pCharacter->FindAClass(pCharacter, "SeaAI.Group");
-    Assert(pG);
+    const Attribute& aGroup = pCharacter->getProperty("SeaAI")["Group"];
+    Assert(!aGroup.empty());
 
     // search group
-    auto *const pGName = pG->GetAttribute("Name");
+    auto *const pGName = aGroup["Name"].get<const char*>();
     Assert(pGName);
 
     AIGroup::FindOrCreateGroup(pGName)->AddShip(eidShip, pCharacter, pAShip);
 }
 
-void SEA_AI::SetCompanionEnemy(ATTRIBUTES *pACharacter)
+void SEA_AI::SetCompanionEnemy(Attribute *pACharacter)
 {
     Assert(pACharacter);
 
@@ -434,9 +434,9 @@ void SEA_AI::SetCompanionEnemy(ATTRIBUTES *pACharacter)
     auto *const pS = pG->ExtractShip(pACharacter);
 
     // create and add to new group
-    auto *pSeaAIG = pACharacter->FindAClass(pACharacter, "SeaAI.Group");
-    Assert(pSeaAIG);
-    auto *const pGName = pSeaAIG->GetAttribute("Name");
+    const Attribute& aGroup = pACharacter->getProperty("SeaAI")["Group"];
+    Assert(!aGroup.empty());
+    auto *const pGName = aGroup["Name"].get<const char*>();
     Assert(pGName);
 
     AIGroup::FindOrCreateGroup(pGName)->InsertShip(pS);

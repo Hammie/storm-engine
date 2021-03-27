@@ -33,7 +33,7 @@ class Entity
         restore_render
     };
 
-    ATTRIBUTES *AttributesPointer = nullptr; // TODO: CHANGE!
+    Attribute* AttributesPointer = nullptr; // TODO: CHANGE!
 
     [[nodiscard]] auto GetId() const
     {
@@ -58,7 +58,7 @@ class Entity
     {
         return {};
     }
-    virtual uint32_t AttributeChanged(ATTRIBUTES *)
+    virtual uint32_t AttributeChanged(Attribute&)
     {
         return {};
     }

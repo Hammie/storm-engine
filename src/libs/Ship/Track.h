@@ -36,7 +36,7 @@ class ShipTracks : public Entity
     void DelShip(SHIP_BASE *pShip);
     void ResetTrack(SHIP_BASE *pShip);
 
-    uint32_t AttributeChanged(ATTRIBUTES *pA);
+    uint32_t AttributeChanged(Attribute &pA);
 
   private:
     class ShipTrack

@@ -16,7 +16,7 @@ class SKY : public Entity
     void Realize(uint32_t Delta_Time);
     bool CreateState(ENTITY_STATE_GEN *state_gen);
     bool LoadState(ENTITY_STATE *state);
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
     uint64_t ProcessMessage(MESSAGE &message) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
@@ -92,7 +92,7 @@ class SKY : public Entity
     void UpdateFogSphere();
     uint32_t CalcFogDiffuse(CVECTOR &vPos);
 
-    void FillSkyDirArray(ATTRIBUTES *pAttribute);
+    void FillSkyDirArray(const Attribute &pAttribute);
     void GetSkyDirStrings(std::string &sSkyDir, std::string &sSkyDirNext);
     void UpdateTimeFactor();
 

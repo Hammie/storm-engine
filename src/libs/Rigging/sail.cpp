@@ -466,7 +466,7 @@ void SAIL::Execute(uint32_t Delta_Time)
             {
                 if (gdata[i].bYesShip)
                 {
-                    ATTRIBUTES *pA =
+                    Attribute *pA =
                         static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[i].shipEI))->GetACharacter();
                     core.Event("Ship_SailsMoveSound", "al", pA, static_cast<long>(gdata[i].bFinalSailDo));
                 }
@@ -513,10 +513,9 @@ void SAIL::Execute(uint32_t Delta_Time)
                 auto *pVai = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[i].shipEI));
                 if (pVai != nullptr && pVai->GetACharacter() != nullptr)
                 {
-                    ATTRIBUTES *pA = pVai->GetACharacter()->GetAttributeClass("Ship");
-                    if (pA != nullptr)
-                        pA->SetAttributeUseDword("SP", fftoi(curSP));
-                    // pA->SetAttributeUseDword("SP", (long)fSP);
+                    Attribute &pA = pVai->GetACharacter()->getProperty("Ship");
+                    if (!pA.empty())
+                        pA["SP"] = fftoi(curSP);
                 }
             }
         }
@@ -1207,35 +1206,24 @@ void SAIL::SetAllSails(int groupNum)
         // see the presence of holes
         if (gdata[groupNum].bYesShip && !gdata[groupNum].bDeleted)
         {
-            ATTRIBUTES *pACh =
+            Attribute *pACh =
                 static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[groupNum].shipEI))->GetACharacter();
-            ATTRIBUTES *pA = nullptr;
             // start installing textures on the sails
-            SetSailTextures(groupNum, core.Event("GetSailTextureData", "l", pACh->GetAttributeAsDword("index", -1)));
-            if (pACh != nullptr)
-            {
-                pA = pACh->FindAClass(pA, "ship.sails");
-                if (pA == nullptr)
-                    pA = pACh->CreateSubAClass(pACh, "ship.sails");
-            }
-            if (pA != nullptr)
-            {
+            SetSailTextures(groupNum, core.Event("GetSailTextureData", "l", pACh->getProperty("index").get<int>(-1)));
+            if (pACh != nullptr) {
+                Attribute&sails = pACh->getProperty("ship")["sails"];
                 char param[256];
                 sprintf_s(param, "%d", gdata[groupNum].maxHole);
-                pA->SetValue(param);
-                for (int i = 0; i < static_cast<int>(pA->GetAttributesNum()); i++)
-                {
-                    ATTRIBUTES *pAttr = pA->GetAttributeClass(i);
-                    if (pAttr != nullptr)
-                        for (int j = 0; j < static_cast<int>(pAttr->GetAttributesNum()); j++)
-                        {
-                            ATTRIBUTES *pASail = pAttr->GetAttributeClass(j);
-                            if (pASail != nullptr)
-                            {
-                                SAILONE *ps = FindSailFromData(groupNum, pAttr->GetThisName(), pASail->GetThisName());
+                sails = param;
+
+                for (const Attribute& attr : sails) {
+                    if (!attr.empty()) {
+                        for (const Attribute& sail : attr) {
+                            if (!sail.empty()) {
+                                SAILONE *ps = FindSailFromData(groupNum, attr.getName().data(), sail.getName().data());
                                 if (ps != nullptr)
                                 {
-                                    ps->SetAllHole(pASail->GetAttributeAsDword("hd"));
+                                    ps->SetAllHole(sail["hd"].get<uint32_t>());
                                     /*if( (ps->ss.eSailType==SAIL_TREANGLE?10:12) == (int)ps->ss.holeCount )
                                     {// the whole sail is damaged - don't need it
                                       ps->bDeleted = true;
@@ -1244,6 +1232,7 @@ void SAIL::SetAllSails(int groupNum)
                                 }
                             }
                         }
+                    }
                 }
             }
         }
@@ -1656,12 +1645,12 @@ float SAIL::Cannon_Trace(long iBallOwner, const CVECTOR &src, const CVECTOR &dst
             const CVECTOR damagePoint = src + (dst - src) * retVal;
             auto *pvai =
                 static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[slist[traceSail]->HostNum].shipEI));
-            ATTRIBUTES *pA = nullptr;
+            Attribute *pA = nullptr;
             if (pvai != nullptr)
                 pA = pvai->GetACharacter();
             long charIdx = -1;
             if (pA != nullptr)
-                charIdx = pA->GetAttributeAsDword("index", -1);
+                charIdx = pA->getProperty("index").get<long>(-1);
             core.Event(SHIP_SAIL_DAMAGE, "lfff", charIdx, damagePoint.x, damagePoint.y, damagePoint.z);
         }
     }
@@ -1770,9 +1759,7 @@ void SAIL::DoSailToNewHost(entid_t newModelEI, entid_t newHostEI, int grNum, NOD
         auto *pVai = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[oldg].shipEI));
         if (pVai && pVai->GetACharacter())
         {
-            ATTRIBUTES *pA = pVai->GetACharacter()->GetAttributeClass("Ship");
-            if (pA)
-                pA->SetAttributeUseDword("SP", 0);
+            pVai->GetACharacter()->getProperty("Ship")["SP"] = 0;
         }
         STORM_DELETE(gdata[oldg].sailIdx);
         gdata[oldg].sailQuantity = 0;
@@ -2108,19 +2095,21 @@ void SAIL::SetSailTextures(long grNum, VDATA *pvd) const
     if (grNum < 0 || grNum >= groupQuantity || pvd == nullptr)
         return;
 
-    ATTRIBUTES *pA = pvd->GetAClass();
+    Attribute *pA = pvd->GetAClass();
     if (pA == nullptr)
         return;
 
-    gdata[grNum].maxSP = pA->GetAttributeAsDword("MaxSP", gdata[grNum].maxSP);
+    const Attribute& attr = *pA;
+
+    attr["MaxSP"].get_to(gdata[grNum].maxSP);
 
     // main texture
-    char *pcNormalName = pA->GetAttribute("normalTex");
+    const char *pcNormalName = attr["normalTex"].get<const char*>();
     // coat of arms of a texture
-    auto *pGeraldTexture = (IDirect3DTexture9 *)pA->GetAttributeAsPointer("geraldTexPointer", 0);
-    char *pcGeraldName = pA->GetAttribute("geraldTex");
+    auto *pGeraldTexture = reinterpret_cast<IDirect3DTexture9 *>(attr["geraldTexPointer"].get<uintptr_t>(0));
+    const char *pcGeraldName = attr["geraldTex"].get<const char*>();
     //
-    gdata[grNum].dwSailsColor = pA->GetAttributeAsDword("sailscolor", 0xFFFFFFFF);
+    attr["sailscolor"].get_to(gdata[grNum].dwSailsColor, 0xFFFFFFFF);
 
     for (int i = 0; i < gdata[grNum].sailQuantity; i++)
     {
@@ -2129,11 +2118,11 @@ void SAIL::SetSailTextures(long grNum, VDATA *pvd) const
             continue;
         char param[256];
         sprintf_s(param, "%s", so->hostNode->GetName());
-        ATTRIBUTES *pAGerald = pA->GetAttributeClass(param);
-        if (pAGerald)
+        const Attribute& aGerald = attr[param];
+        if (!aGerald.empty())
         {
-            if (pAGerald->GetAttribute("Gerald"))
-                so->m_nGeraldTex = RenderService->TextureCreate(pAGerald->GetAttribute("Gerald"));
+            if (aGerald.hasProperty("Gerald"))
+                so->m_nGeraldTex = RenderService->TextureCreate(aGerald["Gerald"].get<const char*>());
             if (so->m_nGeraldTex == -1 && pcGeraldName)
                 so->m_nGeraldTex = RenderService->TextureCreate(pcGeraldName);
             if (so->m_nGeraldTex == -1 && pGeraldTexture)
@@ -2144,8 +2133,8 @@ void SAIL::SetSailTextures(long grNum, VDATA *pvd) const
             if (so->m_nGeraldTex != -1 || so->m_pGeraldTex != nullptr)
             {
                 so->m_bIsGerald = true;
-                so->m_fHorzGeraldScale = pAGerald->GetAttributeAsFloat("hscale", 0.5f);
-                so->m_fVertGeraldScale = pAGerald->GetAttributeAsFloat("vscale", so->m_fHorzGeraldScale);
+                aGerald["hscale"].get_to(so->m_fHorzGeraldScale, 0.5f);
+                aGerald["vscale"].get_to(so->m_fVertGeraldScale, so->m_fHorzGeraldScale);
                 if (so->m_fHorzGeraldScale > 0.f)
                     so->m_fHorzGeraldScale = 1.f / so->m_fHorzGeraldScale;
                 else
@@ -2167,9 +2156,9 @@ int SAIL::FindGroupForCharacter(int chrIdx) const
     {
         if (gdata[gn].bDeleted || !gdata[gn].bYesShip)
             continue;
-        ATTRIBUTES *pA = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[gn].shipEI))->GetACharacter();
+        Attribute *pA = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[gn].shipEI))->GetACharacter();
         if (pA != nullptr)
-            if (static_cast<int>(pA->GetAttributeAsDword("index", -1)) == chrIdx)
+            if (static_cast<int>(pA->getProperty("index").get<int>(-1)) == chrIdx)
                 return gn;
     }
     return -1;
@@ -2177,11 +2166,11 @@ int SAIL::FindGroupForCharacter(int chrIdx) const
 
 int SAIL::GetCharacterForGroup(int grNum) const
 {
-    ATTRIBUTES *pA = nullptr;
+    Attribute *pA = nullptr;
     if (gdata[grNum].bYesShip)
         pA = static_cast<VAI_OBJBASE *>(EntityManager::GetEntityPointer(gdata[grNum].shipEI))->GetACharacter();
     if (pA != nullptr)
-        return static_cast<int>(pA->GetAttributeAsDword("index", -1));
+        return static_cast<int>(pA->getProperty("index").get<int>(-1));
     return -1;
 }
 
@@ -2379,11 +2368,11 @@ void SAIL::DoRandomsSailsDmg(int chrIdx, int gn, float fDmg)
     }
 }
 
-uint32_t SAIL::AttributeChanged(ATTRIBUTES *pAttr)
+uint32_t SAIL::AttributeChanged(Attribute &pAttr)
 {
-    if (pAttr == nullptr)
+    if (pAttr.empty())
         return 0;
-    if (*pAttr == "MinSpeed")
-        m_fMinSpeedVal = pAttr->GetAttributeAsFloat();
+    if (_stricmp(pAttr.getName().data(), "MinSpeed") == 0)
+        pAttr.get_to(m_fMinSpeedVal);
     return 0;
 }

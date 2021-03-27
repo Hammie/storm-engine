@@ -41,7 +41,7 @@ BOOL SHIP::BuildContour(CVECTOR *vContour, long &iNumVContour)
     }
     else
     {
-        core.Trace("SHIP: Up trace error, ship %s", GetAShip()->GetAttribute("Name"));
+        core.Trace("SHIP: Up trace error, ship %s", GetAShip()->getProperty("Name").get<const char*>());
         bDefaultContour = true;
         Beep(1000, 200);
     }
@@ -55,7 +55,7 @@ BOOL SHIP::BuildContour(CVECTOR *vContour, long &iNumVContour)
         vP2 = vSrc + fRes * (vDst - vSrc);
     else
     {
-        core.Trace("SHIP: Down trace error, ship %s", GetAShip()->GetAttribute("Name"));
+        core.Trace("SHIP: Down trace error, ship %s", GetAShip()->getProperty("Name").get<const char*>());
         bDefaultContour = true;
         Beep(1000, 200);
     }
@@ -150,6 +150,10 @@ bool SHIP::BuildMasts()
     auto *pEnt = GetModel();
     Assert(pEnt);
 
+
+    Assert(GetACharacter() != nullptr);
+    Attribute& aCharShip = GetACharacter()->getProperty("Ship");
+
     // build mast list
     long iNum, iIdx = 0;
     while (true)
@@ -160,10 +164,7 @@ bool SHIP::BuildMasts()
         {
             if (iNumMasts)
             {
-                auto *pAQMasts = GetACharacter()->FindAClass(GetACharacter(), "Ship.MastsQty");
-                if (!pAQMasts)
-                    pAQMasts = GetACharacter()->CreateSubAClass(GetACharacter(), "Ship.MastsQty");
-                pAQMasts->SetAttributeUseDword(nullptr, iNumMasts);
+                aCharShip["MastsQty"] = iNumMasts;
             }
             break;
         }
@@ -173,10 +174,7 @@ bool SHIP::BuildMasts()
         {
             CVECTOR vBSize, vBCenter, vUp, vDown, vTemp;
 
-            auto *pAMasts = GetACharacter()->FindAClass(GetACharacter(), "Ship.Masts");
-            if (!pAMasts)
-                pAMasts = GetACharacter()->CreateSubAClass(GetACharacter(), "Ship.Masts");
-
+            Attribute& aMasts = aCharShip["Masts"];
             sscanf(static_cast<const char *>(&cNodeName[_countof(MAST_IDENTIFY) - 1]), "%d", &iNum);
             pMasts.resize(iNumMasts + 1);
 
@@ -208,9 +206,8 @@ bool SHIP::BuildMasts()
                 pM->vDst = CVECTOR(vTemp.x, vUp.y, vTemp.z);
             }
 
-            sprintf_s(str, "%s", pNode->GetName());
-            auto *pAMast = pAMasts->FindAClass(pAMasts, str);
-            if (pAMast && pAMast->GetAttributeAsFloat() >= 1.0f)
+            Attribute aMast = aMasts[pNode->GetName()];
+            if (aMast.get<float>() > 1.0f)
             {
                 pM->fDamage = 1.0f;
                 pM->bBroken = true;
@@ -221,7 +218,7 @@ bool SHIP::BuildMasts()
                 // iIdx--;
             }
             else
-                pAMasts->SetAttributeUseFloat(str, 0.0f);
+                aMast = 0.0f;
 
             iNumMasts++;
         }
@@ -249,9 +246,9 @@ bool SHIP::BuildHulls()
         {
             CVECTOR vBSize, vBCenter, vUp, vDown, vTemp;
 
-            auto *pAHulls = GetACharacter()->FindAClass(GetACharacter(), "Ship.Hulls");
-            if (!pAHulls)
-                pAHulls = GetACharacter()->CreateSubAClass(GetACharacter(), "Ship.Hulls");
+            Assert(GetACharacter() != nullptr);
+            Attribute& aCharShip = GetACharacter()->getProperty("Ship");
+            Attribute& aHulls = aCharShip["Hulls"];
 
             sscanf((const char *)&cNodeName[_countof(HULL_IDENTIFY) - 1], "%d", &iNum);
             pHulls.resize(iNumHulls + 1);
@@ -276,9 +273,8 @@ bool SHIP::BuildHulls()
             pM->vSrc = CVECTOR(vTemp.x, vDown.y, vTemp.z);
             pM->vDst = CVECTOR(vTemp.x, vUp.y, vTemp.z);
 
-            sprintf_s(str, "%s", pNode->GetName());
-            auto *pAHull = pAHulls->FindAClass(pAHulls, str);
-            if (pAHull && pAHull->GetAttributeAsFloat() >= 1.0f)
+            Attribute& aHull = aHulls[pNode->GetName()];
+            if (aHull.get<float>() >= 1.0f)
             {
                 pM->fDamage = 1.0f;
                 pM->bBroken = true;
@@ -289,7 +285,7 @@ bool SHIP::BuildHulls()
                 // iIdx--;
             }
             else
-                pAHulls->SetAttributeUseFloat(str, 0.0f);
+                aHull = 0.0f;
 
             iNumHulls++;
         }

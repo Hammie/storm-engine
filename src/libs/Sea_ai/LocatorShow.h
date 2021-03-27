@@ -5,7 +5,7 @@
 
 class SeaLocatorShow : public Entity
 {
-    ATTRIBUTES *pALocators;
+    Attribute *pALocators;
     bool bShow;
     float fScale;
 
@@ -23,16 +23,16 @@ class SeaLocatorShow : public Entity
 
     void CreateSphere();
 
-    bool isLocator(ATTRIBUTES *pA);
-    CVECTOR GetLocatorPos(ATTRIBUTES *pA);
-    float GetLocatorAng(ATTRIBUTES *pA);
-    float GetLocatorRadius(ATTRIBUTES *pA);
-    const char *GetRealLocatorName(ATTRIBUTES *pA);
-    const char *GetLocatorName(ATTRIBUTES *pA);
-    const char *GetLocatorGroupName(ATTRIBUTES *pA);
+    bool isLocator(const Attribute &pA);
+    CVECTOR GetLocatorPos(const Attribute &attr);
+    float GetLocatorAng(const Attribute &attr);
+    float GetLocatorRadius(const Attribute &attr);
+    const char *GetRealLocatorName(const Attribute &attr);
+    const char *GetLocatorName(const Attribute &attr);
+    const char *GetLocatorGroupName(const Attribute &attr);
 
-    void PrintLocator(ATTRIBUTES *pA);
-    void ProcessLocators(ATTRIBUTES *pA);
+    void PrintLocator(const Attribute &attr);
+    void ProcessLocators(const Attribute &pA);
 
   public:
     SeaLocatorShow();
@@ -67,7 +67,7 @@ class SeaLocatorShow : public Entity
         }
     }
 
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute) override;
+    uint32_t AttributeChanged(Attribute &pAttribute) override;
 };
 
 #endif

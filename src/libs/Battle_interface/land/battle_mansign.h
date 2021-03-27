@@ -16,7 +16,7 @@ class BIManSign
     ~BIManSign();
 
     void Draw();
-    void Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA);
+    void Init(Attribute *pRoot, Attribute *pA);
 
     size_t AddTexture(const char *pcTextureName, long nCols, long nRows) const;
 
@@ -56,15 +56,15 @@ class BIManSign
 
     void CheckDataChange();
 
-    bool LongACompare(ATTRIBUTES *pA, const char *attrName, long &nCompareVal);
-    bool FloatACompare(ATTRIBUTES *pA, const char *attrName, float &fCompareVal);
-    bool StringACompare(ATTRIBUTES *pA, const char *attrName, std::string &sCompareVal);
-    bool FRectACompare(ATTRIBUTES *pA, const char *attrName, FRECT &rCompareVal);
-    bool BoolACompare(ATTRIBUTES *pA, const char *attrName, bool &bCompareVal);
+    bool LongACompare(const Attribute &pA, const char *attrName, long &nCompareVal);
+    bool FloatACompare(const Attribute &pA, const char *attrName, float &fCompareVal);
+    bool StringACompare(const Attribute &pA, const char *attrName, std::string &sCompareVal);
+    bool FRectACompare(const Attribute &pA, const char *attrName, FRECT &rCompareVal);
+    bool BoolACompare(const Attribute &pA, const char *attrName, bool &bCompareVal);
     uint32_t GetColorByFactor(uint32_t dwLowColor, uint32_t dwHighColor, float fFactor);
 
     VDX9RENDER *m_pRS;
-    ATTRIBUTES *m_pARoot;
+    Attribute *m_pARoot = nullptr;
     BIManCommandList *m_pCommandList;
     entid_t m_idHostEntity;
     long m_nCommandMode;
@@ -80,7 +80,7 @@ class BIManSign
     uint32_t m_dwBackColor;
     FRECT m_rBackUV;
     BIFPOINT m_pntBackOffset;
-    FPOINT m_pntBackIconSize;
+    BIFPOINT m_pntBackIconSize;
 
     bool m_bIsAlarmOn;
     long m_nAlarmSquareQ;
@@ -89,7 +89,7 @@ class BIManSign
     uint32_t m_dwAlarmLowColor;
     FRECT m_rAlarmUV;
     BIFPOINT m_pntAlarmOffset;
-    FPOINT m_pntAlarmIconSize;
+    BIFPOINT m_pntAlarmIconSize;
     bool m_bAlarmUpDirection;
     float m_fAlarmTime;
     float m_fAlarmUpSpeed;
@@ -100,10 +100,10 @@ class BIManSign
     uint32_t m_dwManStateColor;
     FRECT m_rManHPUV;
     BIFPOINT m_pntManHPOffset;
-    FPOINT m_pntManHPIconSize;
+    BIFPOINT m_pntManHPIconSize;
     FRECT m_rManEnergyUV;
     BIFPOINT m_pntManEnergyOffset;
-    FPOINT m_pntManEnergyIconSize;
+    BIFPOINT m_pntManEnergyIconSize;
 
     long m_nGunChargeTextureID;
     long m_nGunChargeSquareQ;
@@ -111,13 +111,13 @@ class BIManSign
     uint32_t m_dwGunChargeBackColor;
     FRECT m_rGunChargeUV;
     BIFPOINT m_pntGunChargeOffset;
-    FPOINT m_pntGunChargeIconSize;
+    BIFPOINT m_pntGunChargeIconSize;
 
     std::vector<float> m_aChargeProgress;
 
     FRECT m_rManPicUV;
     BIFPOINT m_pntManPicOffset;
-    FPOINT m_pntManPicIconSize;
+    BIFPOINT m_pntManPicIconSize;
     uint32_t m_dwManFaceColor;
 
     struct ManDescr
@@ -145,53 +145,57 @@ class BIManSign
     bool m_bActive;
 };
 
-inline bool BIManSign::LongACompare(ATTRIBUTES *pA, const char *attrName, long &nCompareVal)
+inline bool BIManSign::LongACompare(const Attribute &pA, const char *attrName, long &nCompareVal)
 {
     const auto tmp = nCompareVal;
-    nCompareVal = pA->GetAttributeAsDword(attrName);
+    nCompareVal = pA[attrName].get<uint32_t>();
     return (nCompareVal != tmp);
 }
 
-inline bool BIManSign::FloatACompare(ATTRIBUTES *pA, const char *attrName, float &fCompareVal)
+inline bool BIManSign::FloatACompare(const Attribute &pA, const char *attrName, float &fCompareVal)
 {
     const auto tmp = fCompareVal;
-    fCompareVal = pA->GetAttributeAsFloat(attrName);
+    fCompareVal = pA[attrName].get<float>();
     return (fCompareVal != tmp);
 }
 
-inline bool BIManSign::StringACompare(ATTRIBUTES *pA, const char *attrName, std::string &sCompareVal)
+inline bool BIManSign::StringACompare(const Attribute &pA, const char *attrName, std::string &sCompareVal)
 {
-    auto *const pVal = pA->GetAttribute(attrName);
-    if (pVal == nullptr) {
-        return sCompareVal != "";
+    if (!pA.hasProperty("attrName")) {
+        return !sCompareVal.empty();
     }
-    if (sCompareVal == pVal)
+    const auto attr_value = pA[attrName].get<std::string_view>();
+    if (sCompareVal == attr_value) {
         return false;
-    sCompareVal = pVal;
+    }
+    sCompareVal = attr_value;
     return true;
 }
 
-inline bool BIManSign::FRectACompare(ATTRIBUTES *pA, const char *attrName, FRECT &rCompareVal)
+inline bool BIManSign::FRectACompare(const Attribute &pA, const char *attrName, FRECT &rCompareVal)
 {
-    auto *const pVal = pA->GetAttribute(attrName);
-    if (!pVal)
+    if (!pA.hasProperty(attrName)) {
         return false;
+    }
+    const auto pVal = pA[attrName].get<std::string_view>();
     FRECT rTmp;
     rTmp.left = rCompareVal.left;
     rTmp.top = rCompareVal.top;
     rTmp.right = rCompareVal.right;
     rTmp.bottom = rCompareVal.bottom;
-    sscanf(pVal, "%f,%f,%f,%f", &rCompareVal.left, &rCompareVal.top, &rCompareVal.right, &rCompareVal.bottom);
+    sscanf(pVal.data(), "%f,%f,%f,%f", &rCompareVal.left, &rCompareVal.top, &rCompareVal.right, &rCompareVal.bottom);
     if (rCompareVal.left == rTmp.left && rCompareVal.top == rTmp.top && rCompareVal.right == rTmp.right &&
         rCompareVal.bottom == rTmp.bottom)
         return false;
     return true;
 }
 
-inline bool BIManSign::BoolACompare(ATTRIBUTES *pA, const char *attrName, bool &bCompareVal)
+inline bool BIManSign::BoolACompare(const Attribute &pA, const char *attrName, bool &bCompareVal)
 {
     const auto tmp = bCompareVal;
-    bCompareVal = pA->GetAttributeAsDword(attrName, bCompareVal ? 1 : 0) != 0;
+    if (pA.hasProperty(attrName)) {
+        bCompareVal = pA[attrName].get<uint32_t>() != 0;
+    }
     return (bCompareVal != tmp);
 }
 

@@ -6,12 +6,12 @@
 
 #define BI_MOUSECURSOR_ICON_ORDER 35000
 
-MousePointer::MousePointer(BI_ManagerBase *pManager, ATTRIBUTES *pARoot)
+MousePointer::MousePointer(BI_ManagerBase *pManager, Attribute& pARoot)
+    : m_pARoot(pARoot)
 {
-    Assert(pManager && pARoot);
+    Assert(pManager);
 
     m_pManager = pManager;
-    m_pARoot = pARoot;
 
     m_pIcon = nullptr;
     m_mousepos.x = 0.f;
@@ -42,31 +42,31 @@ void MousePointer::Update()
 void MousePointer::InitMouseCursors()
 {
     m_nCurrentCursor = -1;
-    auto *pACursors = m_pARoot ? m_pARoot->GetAttributeClass("cursors") : nullptr;
-    if (!pACursors)
+
+    if (!m_pARoot.hasProperty("cursors")) {
         return;
+    }
+
+    Attribute& pACursors = m_pARoot["cursors"];
 
     BIUtils::ReadPosFromAttr(pACursors, "size", m_cursorsize.x, m_cursorsize.y, 32, 32);
     BIUtils::ReadPosFromAttr(pACursors, "startpos", m_mousepos.x, m_mousepos.y, 0.f, 0.f);
     BIUtils::ReadPosFromAttr(pACursors, "sensivity", m_mousesensivity.x, m_mousesensivity.y, 8.f, 8.f);
     BIUtils::ReadRectFromAttr(pACursors, "zone", m_cursorzone, m_cursorzone);
 
-    pACursors = pACursors->GetAttributeClass("list");
-    if (!pACursors)
-        return;
-
-    const size_t q = pACursors->GetAttributesNum();
-    for (long n = 0; n < q; n++)
+    if (!pACursors.hasProperty("list"))
     {
-        auto *pA = pACursors->GetAttributeClass(n);
-        if (pA)
-        {
-            const long i = pA->GetAttributeAsDword("index", -1);
-            if (i >= 0 && i < BI_CURSORS_QUANTITY)
-            {
-                m_aCursors[i].offset.x = pA->GetAttributeAsDword("xoffset", 0);
-                m_aCursors[i].offset.y = pA->GetAttributeAsDword("yoffset", 0);
-                m_aCursors[i].texture = pA->GetAttribute("texture");
+        return;
+    }
+    Attribute& list_attr = pACursors["list"];
+
+    for(const Attribute& pA : list_attr) {
+        if (pA.hasProperty("index")) {
+            const long i = pA["index"].get<uint32_t>();
+            if (i < BI_CURSORS_QUANTITY) {
+                m_aCursors[i].offset.x = pA["xoffset"].get<uint32_t>();
+                m_aCursors[i].offset.y = pA["yoffset"].get<uint32_t>();
+                m_aCursors[i].texture = pA["texture"].get<std::string_view>().data();
                 FULLRECT(m_aCursors[i].uv);
                 BIUtils::ReadRectFromAttr(pA, "uv", m_aCursors[i].uv, m_aCursors[i].uv);
             }

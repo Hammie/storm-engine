@@ -82,7 +82,7 @@ class XINTERFACE : public XINTERFACE_BASE
     bool CreateState(ENTITY_STATE_GEN *state_gen);
     bool LoadState(ENTITY_STATE *state);
     uint64_t ProcessMessage(MESSAGE &message) override;
-    uint32_t AttributeChanged(ATTRIBUTES *patr) override;
+    uint32_t AttributeChanged(Attribute &patr) override;
 
     void ProcessStage(Stage stage, uint32_t delta) override
     {
@@ -257,8 +257,8 @@ class XINTERFACE : public XINTERFACE_BASE
     // Game time function
     void IncrementGameTime(uint32_t dwDeltaTime);
     // Options functions
-    void SaveOptionsFile(char *fileName, ATTRIBUTES *pAttr);
-    void LoadOptionsFile(char *fileName, ATTRIBUTES *pAttr);
+    void SaveOptionsFile(char *fileName, Attribute *pAttr);
+    void LoadOptionsFile(char *fileName, Attribute *pAttr);
     //
     int LoadIsExist();
     //
@@ -426,7 +426,7 @@ class CONTROLS_CONTAINER : public Entity
     }
 
   protected:
-    bool CreateConteinerList(ATTRIBUTES *pA);
+    bool CreateConteinerList(Attribute *pA);
     void AddContainer(const char *container);
     void SetContainerLimitVal(const char *container, float fLimitVal);
     void AddControlsToContainer(const char *container, const char *controlName, float fValLimit);

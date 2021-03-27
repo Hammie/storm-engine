@@ -160,7 +160,7 @@ void CXI_CHANGER::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, const
     m_nCurrentPos = 0;
     auto *pAttr = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (pAttr != nullptr)
-        m_nCurrentPos = pAttr->GetAttributeAsDword("current", 0);
+        pAttr->getProperty("current").get_to(m_nCurrentPos, 0);
 
     SetRectanglesToPosition(0);
 }
@@ -220,7 +220,7 @@ int CXI_CHANGER::CommandExecute(int wActCode)
             // set attribute to new position
             auto *pAttr = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
             if (pAttr != nullptr)
-                pAttr->SetAttributeUseDword("current", m_nCurrentPos);
+                pAttr->getProperty("current") = m_nCurrentPos;
         }
     }
     return -1;
@@ -331,7 +331,7 @@ uint32_t CXI_CHANGER::MessageProc(long msgcode, MESSAGE &message)
             // set attribute to new position
             auto *pAttr = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
             if (pAttr != nullptr)
-                pAttr->SetAttributeUseDword("current", m_nCurrentPos);
+                pAttr->getProperty("current") = m_nCurrentPos;
         }
     }
     break;

@@ -59,8 +59,8 @@ struct RS_SPRITE
 
 struct RS_LINE2D
 {
-    CVECTOR vPos;
-    float rhw;
+    CVECTOR vPos {0.f, 0.f, 1.f};
+    float rhw = 0.5f;
     uint32_t dwColor;
 };
 

@@ -17,19 +17,19 @@ void ISPYGLASS::ImageParam::Release()
     STORM_DELETE(pImage);
 }
 
-void ISPYGLASS::ImageParam::LoadFromAttr(BIImageRender *pImgRender, ATTRIBUTES *pA, const char *pcDefName,
+void ISPYGLASS::ImageParam::LoadFromAttr(BIImageRender *pImgRender, const Attribute &attribute, const char *pcDefName,
                                          long nDefLeftPos, long nDefTopPos, long nDefRightPos, long nDefBottomPos,
                                          long nPrior)
 {
-    sTextureName = BIUtils::GetStringFromAttr(pA, "texture", pcDefName);
-    dwColor = BIUtils::GetLongFromAttr(pA, "color", 0xFF808080);
+    sTextureName = BIUtils::GetStringFromAttr(attribute, "texture", pcDefName);
+    dwColor = BIUtils::GetLongFromAttr(attribute, "color", 0xFF808080);
     FULLRECT(rUV);
-    BIUtils::ReadRectFromAttr(pA, "uv", rUV, rUV);
+    BIUtils::ReadRectFromAttr(attribute, "uv", rUV, rUV);
     rPos.left = nDefLeftPos;
     rPos.top = nDefTopPos;
     rPos.right = nDefRightPos;
     rPos.bottom = nDefBottomPos;
-    BIUtils::ReadRectFromAttr(pA, "pos", rPos, rPos);
+    BIUtils::ReadRectFromAttr(attribute, "pos", rPos, rPos);
     pImage = static_cast<BIImage *>(
         pImgRender->CreateImage(BIType_square, sTextureName.c_str(), dwColor, rUV, rPos, nPrior));
     Assert(pImage);
@@ -52,16 +52,16 @@ void ISPYGLASS::ImageParam::ChangeIcon(BIImageRender *pImgRender, const char *pc
     }
 }
 
-void ISPYGLASS::TextParam::LoadFromAttr(VDX9RENDER *rs, ATTRIBUTES *pA, const char *pcDefText, long nDefXPos,
+void ISPYGLASS::TextParam::LoadFromAttr(VDX9RENDER *rs, const Attribute &attribute, const char *pcDefText, long nDefXPos,
                                         long nDefYPos)
 {
     this->rs = rs;
-    nFontID = BIUtils::GetFontIDFromAttr(pA, "font", rs, "interface_normal");
-    BIUtils::ReadPosFromAttr(pA, "pos", pos.x, pos.y, nDefXPos, nDefYPos);
-    fScale = BIUtils::GetFloatFromAttr(pA, "scale", 1.f);
-    dwColor = BIUtils::GetLongFromAttr(pA, "color", 0xFFFFFFFF);
-    nAlign = BIUtils::GetAlignmentFromAttr(pA, "align", PR_ALIGN_LEFT);
-    sText = BIUtils::GetStringFromAttr(pA, "text", pcDefText);
+    nFontID = BIUtils::GetFontIDFromAttr(attribute, "font", rs, "interface_normal");
+    BIUtils::ReadPosFromAttr(attribute, "pos", pos.x, pos.y, nDefXPos, nDefYPos);
+    fScale = BIUtils::GetFloatFromAttr(attribute, "scale", 1.f);
+    dwColor = BIUtils::GetLongFromAttr(attribute, "color", 0xFFFFFFFF);
+    nAlign = BIUtils::GetAlignmentFromAttr(attribute, "align", PR_ALIGN_LEFT);
+    sText = BIUtils::GetStringFromAttr(attribute, "text", pcDefText);
 }
 
 void ISPYGLASS::TextParam::Print() const
@@ -99,58 +99,58 @@ bool ISPYGLASS::Init()
     m_pImgRender = new BIImageRender(rs);
     Assert(m_pImgRender);
 
-    m_Lens.LoadFromAttr(m_pImgRender, GetAttr("lens"), "battle_interface\\spyglass\\eye_badTub.tga", 0, 0, 1024, 768,
+    m_Lens.LoadFromAttr(m_pImgRender, *GetAttr("lens"), "battle_interface\\spyglass\\eye_badTub.tga", 0, 0, 1024, 768,
                         8000);
-    m_ShipImage.LoadFromAttr(m_pImgRender, GetAttr("shipsign.ship"), "battle_interface\\ship_icons1.tga", 80, 600, 144,
+    m_ShipImage.LoadFromAttr(m_pImgRender, *GetAttr("shipsign.ship"), "battle_interface\\ship_icons1.tga", 80, 600, 144,
                              664, 9000);
-    m_ShipBack.LoadFromAttr(m_pImgRender, GetAttr("shipsign.back"), "battle_interface\\shipbackicon.tga", 80, 600, 208,
+    m_ShipBack.LoadFromAttr(m_pImgRender, *GetAttr("shipsign.back"), "battle_interface\\shipbackicon.tga", 80, 600, 208,
                             728, 10000);
-    m_ShipHP.LoadFromAttr(m_pImgRender, GetAttr("shipsign.hp"), "battle_interface\\ShipState.tga", 80, 600, 208, 728,
+    m_ShipHP.LoadFromAttr(m_pImgRender, *GetAttr("shipsign.hp"), "battle_interface\\ShipState.tga", 80, 600, 208, 728,
                           10000);
-    m_ShipSP.LoadFromAttr(m_pImgRender, GetAttr("shipsign.sp"), "battle_interface\\ShipState.tga", 80, 600, 208, 728,
+    m_ShipSP.LoadFromAttr(m_pImgRender, *GetAttr("shipsign.sp"), "battle_interface\\ShipState.tga", 80, 600, 208, 728,
                           10000);
-    m_Class.LoadFromAttr(m_pImgRender, GetAttr("shipsign.class"), "battle_interface\\ShipClass.tga", 80, 600, 208, 728,
+    m_Class.LoadFromAttr(m_pImgRender, *GetAttr("shipsign.class"), "battle_interface\\ShipClass.tga", 80, 600, 208, 728,
                          10000);
-    m_Nation.LoadFromAttr(m_pImgRender, GetAttr("info.nation"), "flagall.tga", 210, 600, 274, 632, 10000);
-    m_Cannon.LoadFromAttr(m_pImgRender, GetAttr("info.cannon"), "battle_interface\\list_icon2.tga", 320, 600, 384, 664,
+    m_Nation.LoadFromAttr(m_pImgRender, *GetAttr("info.nation"), "flagall.tga", 210, 600, 274, 632, 10000);
+    m_Cannon.LoadFromAttr(m_pImgRender, *GetAttr("info.cannon"), "battle_interface\\list_icon2.tga", 320, 600, 384, 664,
                           10000);
-    m_Sail.LoadFromAttr(m_pImgRender, GetAttr("info.speed"), "battle_interface\\list_icon2.tga", 420, 600, 484, 664,
+    m_Sail.LoadFromAttr(m_pImgRender, *GetAttr("info.speed"), "battle_interface\\list_icon2.tga", 420, 600, 484, 664,
                         10000);
-    m_Charge.LoadFromAttr(m_pImgRender, GetAttr("info.charge"), "battle_interface\\list_icon2.tga", 520, 600, 584, 664,
+    m_Charge.LoadFromAttr(m_pImgRender, *GetAttr("info.charge"), "battle_interface\\list_icon2.tga", 520, 600, 584, 664,
                           10000);
-    m_SailTo.LoadFromAttr(m_pImgRender, GetAttr("info.sailto"), "battle_interface\\list_icon2.tga", 620, 600, 684, 664,
+    m_SailTo.LoadFromAttr(m_pImgRender, *GetAttr("info.sailto"), "battle_interface\\list_icon2.tga", 620, 600, 684, 664,
                           10000); // boal
 
     // captain image data
-    m_CaptainBack.LoadFromAttr(m_pImgRender, GetAttr("captain.back"), "battle_interface\\shipbackicon.tga", 816, 600,
+    m_CaptainBack.LoadFromAttr(m_pImgRender, *GetAttr("captain.back"), "battle_interface\\shipbackicon.tga", 816, 600,
                                944, 728, 10000);
-    m_CaptainFace.LoadFromAttr(m_pImgRender, GetAttr("captain.face"), "battle_interface\\portraits\\face_0.tga", 816,
+    m_CaptainFace.LoadFromAttr(m_pImgRender, *GetAttr("captain.face"), "battle_interface\\portraits\\face_0.tga", 816,
                                600, 880, 664, 9000);
-    m_ImgCaptainFencing.LoadFromAttr(m_pImgRender, GetAttr("captain.fencing"), "interfaces\\skills.tga", 680, 600, 764,
+    m_ImgCaptainFencing.LoadFromAttr(m_pImgRender, *GetAttr("captain.fencing"), "interfaces\\skills.tga", 680, 600, 764,
                                      664, 10000);
-    m_ImgCaptainCannon.LoadFromAttr(m_pImgRender, GetAttr("captain.cannon"), "interfaces\\skills.tga", 552, 600, 616,
+    m_ImgCaptainCannon.LoadFromAttr(m_pImgRender, *GetAttr("captain.cannon"), "interfaces\\skills.tga", 552, 600, 616,
                                     664, 10000);
-    m_ImgCaptainAccuracy.LoadFromAttr(m_pImgRender, GetAttr("captain.accuracy"), "interfaces\\skills.tga", 424, 600,
+    m_ImgCaptainAccuracy.LoadFromAttr(m_pImgRender, *GetAttr("captain.accuracy"), "interfaces\\skills.tga", 424, 600,
                                       488, 664, 10000);
-    m_ImgCaptainNavigation.LoadFromAttr(m_pImgRender, GetAttr("captain.navigation"), "interfaces\\skills.tga", 296, 600,
+    m_ImgCaptainNavigation.LoadFromAttr(m_pImgRender, *GetAttr("captain.navigation"), "interfaces\\skills.tga", 296, 600,
                                         360, 664, 10000);
-    m_ImgCaptainBoarding.LoadFromAttr(m_pImgRender, GetAttr("captain.boarding"), "interfaces\\skills.tga", 168, 600,
+    m_ImgCaptainBoarding.LoadFromAttr(m_pImgRender, *GetAttr("captain.boarding"), "interfaces\\skills.tga", 168, 600,
                                       232, 664, 10000);
 
     // captain text data
-    m_TextCaptainName.LoadFromAttr(rs, GetAttr("captext.capname"), "?", 210, 640);
-    m_TextCaptainFencing.LoadFromAttr(rs, GetAttr("captext.fencing"), "", 210, 640); // replaced "?" with empty
-    m_TextCaptainCannon.LoadFromAttr(rs, GetAttr("captext.cannon"), "", 210, 640);
-    m_TextCaptainAccuracy.LoadFromAttr(rs, GetAttr("captext.accuracy"), "", 210, 640);
-    m_TextCaptainNavigation.LoadFromAttr(rs, GetAttr("captext.navigation"), "", 210, 640);
-    m_TextCaptainBoarding.LoadFromAttr(rs, GetAttr("captext.boarding"), "", 210, 640);
+    m_TextCaptainName.LoadFromAttr(rs, *GetAttr("captext.capname"), "?", 210, 640);
+    m_TextCaptainFencing.LoadFromAttr(rs, *GetAttr("captext.fencing"), "", 210, 640); // replaced "?" with empty
+    m_TextCaptainCannon.LoadFromAttr(rs, *GetAttr("captext.cannon"), "", 210, 640);
+    m_TextCaptainAccuracy.LoadFromAttr(rs, *GetAttr("captext.accuracy"), "", 210, 640);
+    m_TextCaptainNavigation.LoadFromAttr(rs, *GetAttr("captext.navigation"), "", 210, 640);
+    m_TextCaptainBoarding.LoadFromAttr(rs, *GetAttr("captext.boarding"), "", 210, 640);
 
-    m_txtShipType.LoadFromAttr(rs, GetAttr("text.shiptype"), "Caravella", 210, 640);
-    m_txtShipName.LoadFromAttr(rs, GetAttr("text.shipname"), "Noname", 210, 660);
-    m_txtCannons.LoadFromAttr(rs, GetAttr("text.cannons"), "14/16", 390, 610);
-    m_txtShipSpeed.LoadFromAttr(rs, GetAttr("text.speed"), "6.3", 490, 610);
-    m_txtSailTo.LoadFromAttr(rs, GetAttr("text.sailto"), "6.3", 590, 610); // boal
-    m_txtShipCrew.LoadFromAttr(rs, GetAttr("text.crew"), "", 144, 700);
+    m_txtShipType.LoadFromAttr(rs, *GetAttr("text.shiptype"), "Caravella", 210, 640);
+    m_txtShipName.LoadFromAttr(rs, *GetAttr("text.shipname"), "Noname", 210, 660);
+    m_txtCannons.LoadFromAttr(rs, *GetAttr("text.cannons"), "14/16", 390, 610);
+    m_txtShipSpeed.LoadFromAttr(rs, *GetAttr("text.speed"), "6.3", 490, 610);
+    m_txtSailTo.LoadFromAttr(rs, *GetAttr("text.sailto"), "6.3", 590, 610); // boal
+    m_txtShipCrew.LoadFromAttr(rs, *GetAttr("text.crew"), "", 144, 700);
 
     FillUVArrayFromAttributes(m_aNationUV, GetAttr("nationuvarray"));
     FillUVArrayFromAttributes(m_aChargeUV, GetAttr("chargeuvarray"));
@@ -340,10 +340,10 @@ void ISPYGLASS::Release()
     STORM_DELETE(m_pImgRender);
 }
 
-ATTRIBUTES *ISPYGLASS::GetAttr(const char *pcAttrName) const
+Attribute *ISPYGLASS::GetAttr(const char *pcAttrName) const
 {
     if (AttributesPointer)
-        return AttributesPointer->FindAClass(AttributesPointer, pcAttrName);
+        return &(AttributesPointer->getProperty(pcAttrName));
     return nullptr;
 }
 
@@ -465,9 +465,9 @@ void ISPYGLASS::FindNewTargetShip()
         if (fTrace <= 1.f && fTrace < fFindedDistance)
         {
             fFindedDistance = fTrace;
-            ATTRIBUTES *pA = pFort->GetACharacter();
+            Attribute *pA = pFort->GetACharacter();
             if (pA)
-                nFindedCharIndex = pA->GetAttributeAsDword("index", -1);
+                pA->getProperty("index").get_to(nFindedCharIndex, -1l);
         }
     }
 
@@ -777,17 +777,13 @@ void ISPYGLASS::ChangeTargetData(const char *pcShipName, const char *pcShipType,
     m_TextCaptainName.sText = pcCaptainName;
 }
 
-void ISPYGLASS::FillUVArrayFromAttributes(std::vector<FRECT> &m_aUV, ATTRIBUTES *pA) const
+void ISPYGLASS::FillUVArrayFromAttributes(std::vector<FRECT> &m_aUV, Attribute *pA) const
 {
     m_aUV.clear();
     if (!pA)
         return;
-    for (long n = 0; n < static_cast<long>(pA->GetAttributesNum()); n++)
-    {
-        FRECT rUV;
-        rUV.left = rUV.top = 0.f;
-        rUV.right = rUV.bottom = 1.f;
-        BIUtils::ReadRectFromAttr(pA, pA->GetAttributeName(n), rUV, rUV);
+    for (const Attribute& attr : *pA) {
+        const auto rUV = attr.get<FRECT>();
         m_aUV.push_back(rUV);
     }
 }

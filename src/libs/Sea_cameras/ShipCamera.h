@@ -63,9 +63,9 @@ class SHIP_CAMERA : public COMMON_CAMERA
         }
     }
 
-    void SetCharacter(ATTRIBUTES *_pACharacter) override;
+    void SetCharacter(Attribute *_pACharacter) override;
 
-    uint32_t AttributeChanged(ATTRIBUTES *) override;
+    uint32_t AttributeChanged(Attribute &) override;
     void ShipsCollision(CVECTOR &pos);
     bool IslandCollision(CVECTOR &pos);
 

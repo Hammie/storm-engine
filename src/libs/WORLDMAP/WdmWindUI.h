@@ -22,7 +22,7 @@ class WdmWindUI : public WdmInterfaceObject
     WdmWindUI();
     virtual ~WdmWindUI();
 
-    void SetAttributes(ATTRIBUTES *apnt);
+    void SetAttributes(Attribute *apnt);
     // Rendering
     void LRender(VDX9RENDER *rs) override;
 

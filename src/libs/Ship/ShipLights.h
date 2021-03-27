@@ -9,7 +9,7 @@
 
 class ShipLights : public IShipLights
 {
-  private:
+  public:
     struct Color
     {
         float r, g, b, a;
@@ -44,6 +44,7 @@ class ShipLights : public IShipLights
         }
     };
 
+  private:
     struct LightType
     {
         std::string sLightType;
@@ -115,7 +116,6 @@ class ShipLights : public IShipLights
 
     bool LoadLights();
     LightType *FindLightType(std::string sLightType);
-    float GetAttributeAsFloat(ATTRIBUTES *pA, const char *pName, float fDefault);
     void AddFlare(VAI_OBJBASE *pObject, bool bLight, MODEL *pModel, const GEOS::LABEL &label);
     bool SetLabel(ShipLight *pL, MODEL *pModel, const char *pStr);
 
@@ -154,5 +154,16 @@ class ShipLights : public IShipLights
         }
     }
 };
+
+template<>
+inline ShipLights::Color Attribute::getValue<ShipLights::Color>() const {
+    Assert(m_Children.empty());
+    ShipLights::Color result{};
+    getProperty('r').get_to(result.r, 1.f);
+    getProperty('g').get_to(result.g, 1.f);
+    getProperty('b').get_to(result.b, 1.f);
+    getProperty('a').get_to(result.a, 1.f);
+    return result;
+}
 
 #endif

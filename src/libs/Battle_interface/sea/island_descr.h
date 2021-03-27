@@ -26,9 +26,9 @@ class ISLAND_DESCRIBER
     {
         int locatorType;
         int relation;
-        ATTRIBUTES *pA;
+        Attribute *pA;
         float x, z, r;
-        char *pchr_note;
+        std::string_view pchr_note;
         int picIdx;
         int selPicIdx;
         int texIdx;
@@ -41,7 +41,7 @@ class ISLAND_DESCRIBER
     {
         return m_bYesIsland;
     }
-    void SetIsland(ATTRIBUTES *pAIsland);
+    void SetIsland(Attribute *pAIsland);
     LOCATOR_DESCR *GetFirstLocator();
     LOCATOR_DESCR *GetFirstLand();
     LOCATOR_DESCR *GetFirstFort();
@@ -50,7 +50,7 @@ class ISLAND_DESCRIBER
     LOCATOR_DESCR *GetFirstEnemyFort();
     LOCATOR_DESCR *GetFirstBrokenFort();
     LOCATOR_DESCR *GetNext();
-    LOCATOR_DESCR *FindLocatorByName(char *name) const;
+    const LOCATOR_DESCR *FindLocatorByName(char *name) const;
 
     void Refresh() const;
 
@@ -58,9 +58,8 @@ class ISLAND_DESCRIBER
     LOCATOR_DESCR *FindLocator(LOCATOR_DESCR *p, size_t nMax);
 
     bool m_bYesIsland;
-    ATTRIBUTES *m_pIslandAttributes;
-    LOCATOR_DESCR *m_pLocators;
-    size_t m_nLocators;
+    Attribute *m_pIslandAttributes;
+    mutable std::vector<LOCATOR_DESCR> m_pLocators;
     // find data
     size_t m_lastFindIdx;
     int m_nFindType;

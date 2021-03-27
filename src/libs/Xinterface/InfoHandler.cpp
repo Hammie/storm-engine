@@ -107,24 +107,24 @@ bool InfoHandler::DoPreOut()
 
     auto isOK = false;
     uint32_t dwBCol, dwFCol;
-    char *inStrStart;
+    const char *inStrStart;
     char outStr[1048];
     D3DSURFACE_DESC desc;
     float fScale;
     int nOutOffset, nOutWidth, nBorderWidth, nInsideRectWidth, nInsideRectHeight;
     int nRowQ;
 
-    inStrStart = AttributesPointer->GetAttribute("infoStr");
+    inStrStart = AttributesPointer->getProperty("infoStr").get<const char*>();
     if (inStrStart != nullptr)
     {
-        dwBCol = AttributesPointer->GetAttributeAsDword("backColor", 0);
-        dwFCol = AttributesPointer->GetAttributeAsDword("foreColor", 0);
-        nBorderWidth = AttributesPointer->GetAttributeAsDword("borderWidth", 0);
-        fScale = AttributesPointer->GetAttributeAsFloat("scale", 1.f);
-        nOutOffset = AttributesPointer->GetAttributeAsDword("offset", m_rs->CharHeight(0));
+        AttributesPointer->getProperty("backColor").get_to(dwBCol, 0u);
+        AttributesPointer->getProperty("foreColor").get_to(dwFCol, 0u);
+        AttributesPointer->getProperty("borderWidth").get_to(nBorderWidth, 0);
+        fScale = AttributesPointer->getProperty("scale").get<float>(1.f);
+        nOutOffset = AttributesPointer->getProperty("offset").get<int>(m_rs->CharHeight(0));
     }
-    auto *const picTexureFile = AttributesPointer->GetAttribute("picfilename");
-    auto *const picBackTexureFile = AttributesPointer->GetAttribute("picbackfilename");
+    const char* picTexureFile = AttributesPointer->getProperty("picfilename").get<const char*>();
+    const char* picBackTexureFile = AttributesPointer->getProperty("picbackfilename").get<const char*>();
     const uint32_t TMP_VERTEX_FORMAT = (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1 | D3DFVF_TEXTUREFORMAT2);
     struct TMP_VERTEX
     {
@@ -147,7 +147,7 @@ bool InfoHandler::DoPreOut()
         return false;
 
     auto ntmp = 0;
-    char *ps = nullptr;
+    const char *ps = nullptr;
     if (inStrStart)
     {
         ntmp = m_rs->StringWidth(inStrStart, 0, fScale);
@@ -310,7 +310,7 @@ bool InfoHandler::DoPreOut()
     return isOK;
 }
 
-char *InfoHandler::GetCutString(char *pstr, int nOutWidth, float fScale) const
+const char *InfoHandler::GetCutString(const char *pstr, int nOutWidth, float fScale) const
 {
     auto spaceWait = false;
     char param[1024];
@@ -319,8 +319,8 @@ char *InfoHandler::GetCutString(char *pstr, int nOutWidth, float fScale) const
     while (pstr && (*pstr == '\n' || *pstr == '\r' || *pstr == 32))
         pstr++;
 
-    char *oldps = nullptr;
-    char *ps;
+    const char *oldps = nullptr;
+    const char *ps;
     for (ps = pstr; ps && *ps; ps++)
     {
         if (*ps == '\n' || *ps == '\r')
@@ -374,7 +374,7 @@ char *InfoHandler::GetCutString(char *pstr, int nOutWidth, float fScale) const
     return ps;
 }
 
-void InfoHandler::StringToBufer(char *outStr, int sizeBuf, char *inStr, int copySize) const
+void InfoHandler::StringToBufer(char *outStr, int sizeBuf, const char *inStr, int copySize) const
 {
     if (outStr == nullptr || sizeBuf <= 0)
         return;

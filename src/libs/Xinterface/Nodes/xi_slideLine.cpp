@@ -209,14 +209,10 @@ uint32_t CXI_SLIDELINE::MessageProc(long msgcode, MESSAGE &message)
         m_nGrateQuantity = message.Long();
         if (m_nGrateQuantity < 2)
             m_nGrateQuantity = 2;
-        auto *pA = core.Entity_GetAttributeClass(g_idInterface, "nodes");
-        if (pA)
-            pA = pA->GetAttributeClass(m_nodeName);
-        if (pA)
-        {
-            m_nMinValue = pA->GetAttributeAsDword("minLimit", -1);
-            m_nMaxValue = pA->GetAttributeAsDword("maxLimit", -1);
-        }
+        const Attribute &attr = *core.Entity_GetAttributeClass(g_idInterface, "nodes");
+        const Attribute &aNode = attr[m_nodeName];
+        aNode["minLimit"].get_to(m_nMinValue, -1l);
+        aNode["maxLimit"].get_to(m_nMaxValue, -1l);
     }
     break;
     case 2: // Set the slide to a specific value
@@ -261,16 +257,12 @@ void CXI_SLIDELINE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, con
 
     m_nCurValue = 0;
     auto *pA = core.Entity_GetAttributeClass(g_idInterface, "nodes");
-    if (pA != nullptr)
-        pA = pA->GetAttributeClass(m_nodeName);
-    if (pA != nullptr)
-        m_nCurValue = static_cast<long>(pA->GetAttributeAsFloat("value", 0.f) * m_nGrateQuantity);
-    m_nMinValue = m_nMaxValue = -1;
-    if (pA)
-    {
-        m_nMinValue = pA->GetAttributeAsDword("minLimit", m_nMinValue);
-        m_nMaxValue = pA->GetAttributeAsDword("maxLimit", m_nMaxValue);
-    }
+
+    const Attribute &attr = *core.Entity_GetAttributeClass(g_idInterface, "nodes");
+    const Attribute &aNode = attr[m_nodeName];
+    m_nCurValue = static_cast<long>(aNode["value"].get<float>(0.f) * m_nGrateQuantity);
+    aNode["minLimit"].get_to(m_nMinValue, -1l);
+    aNode["maxLimit"].get_to(m_nMaxValue, -1l);
 
     m_dwDisableColor = GetIniARGB(ini1, name1, ini2, name2, "disablecolor", 0xA04C4C4C);
 
@@ -327,11 +319,9 @@ void CXI_SLIDELINE::SetNewValue(long newValue)
         m_rs->UnLockVertexBuffer(m_idVBuf);
     }
 
-    ATTRIBUTES *pA = core.Entity_GetAttributeClass(g_idInterface, "nodes");
-    if (pA != nullptr)
-        pA = pA->GetAttributeClass(m_nodeName);
-    if (pA != nullptr)
-        pA->SetAttributeUseFloat("value", static_cast<float>(m_nCurValue) / m_nGrateQuantity);
+    Attribute &attr = *core.Entity_GetAttributeClass(g_idInterface, "nodes");
+    Attribute &aNode = attr[m_nodeName];
+    aNode["value"] = static_cast<float>(m_nCurValue) / m_nGrateQuantity;
     core.PostEvent("eSlideChange", 0, "slf", m_nodeName, m_nCurValue,
                    static_cast<float>(m_nCurValue) / m_nGrateQuantity);
 }

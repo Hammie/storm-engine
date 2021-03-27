@@ -13,30 +13,25 @@ void BI_SeaGroup::Init()
 {
     BI_BaseGroup::Init();
 
-    auto *pARoot = Manager()->AttributesPointer;
-    if (pARoot)
-        pARoot = pARoot->GetAttributeClass("sea");
-    if (!pARoot)
+    if (Manager()->AttributesPointer == nullptr) {
         return;
+    }
+    Attribute& pARoot = Manager()->AttributesPointer->getProperty("sea");
 
-    ATTRIBUTES *pA;
-    char texture[MAX_PATH];
-    uint32_t color;
     FRECT uv;
     RECT pos;
 
     // back
-    pA = pARoot->GetAttributeClass("back");
-    if (pA)
-    {
-        BIUtils::ReadStringFromAttr(pA, "texture", texture, sizeof(texture), "");
-        color = pA->GetAttributeAsDword("color");
+    Attribute& attr = pARoot["back"];
+    if (!attr.empty()) {
+        auto texture = attr["texture"].get<std::string_view>();
+        auto color = attr["color"].get<uint32_t>();
         FULLRECT(uv);
-        BIUtils::ReadRectFromAttr(pA, "uv", uv, uv);
+        BIUtils::ReadRectFromAttr(attr, "uv", uv, uv);
         ZERO(pos);
-        BIUtils::ReadRectFromAttr(pA, "pos", pos, pos);
+        BIUtils::ReadRectFromAttr(attr, "pos", pos, pos);
 
-        auto *const pNod = Manager()->CreateImageNode(texture, uv, pos, color, BIImagePrioritet_Group_Beg);
+        auto *const pNod = Manager()->CreateImageNode(texture.data(), uv, pos, color, BIImagePrioritet_Group_Beg);
         if (pNod)
             m_aNodes.push_back(pNod);
         // Manager()->GetImageRender()->CreateImage( BIType_square, texture, color, uv, pos, BIImagePrioritet_Group_Beg

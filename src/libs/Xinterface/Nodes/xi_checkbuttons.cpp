@@ -562,9 +562,6 @@ void CXI_CHECKBUTTONS::WriteToAttributeButtonState(long nButtonIndex)
         return;
     char atrName[128];
     sprintf_s(atrName, sizeof(atrName), "state%d", nButtonIndex + 1);
-    ATTRIBUTES *pA = ptrOwner->AttributesPointer->GetAttributeClass(m_nodeName);
-    if (!pA)
-        pA = ptrOwner->AttributesPointer->CreateSubAClass(ptrOwner->AttributesPointer, m_nodeName);
-    if (pA)
-        pA->SetAttributeUseDword(atrName, m_aButton[nButtonIndex]->bChoose ? 1 : 0);
+    Attribute &attr = ptrOwner->AttributesPointer->getProperty(m_nodeName);
+    attr[atrName] = m_aButton[nButtonIndex]->bChoose;
 }

@@ -31,7 +31,7 @@ class BIShipIcon
     ~BIShipIcon();
 
     void Draw();
-    void Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA);
+    void Init(Attribute *pRoot, Attribute *pA);
 
     size_t AddTexture(const char *pcTextureName, long nCols, long nRows) const;
 
@@ -62,7 +62,7 @@ class BIShipIcon
     long GetCurrentCommandCharacterIndex();
     long GetCurrentCommandMode() const;
 
-    ATTRIBUTES *GetSailorQuantityAttribute(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD);
+    Attribute *GetSailorQuantityAttribute(SHIP_DESCRIBE_LIST::SHIP_DESCR *pSD);
     float GetProgressShipHP(long nShipNum) const;
     float GetProgressShipSP(long nShipNum);
     float GetProgressShipClass(long nShipNum);
@@ -113,8 +113,8 @@ class BIShipIcon
     {
         long nCharacterIndex;
         FPOINT pntPos; // center
-        ATTRIBUTES *pASailorQuantity;
-        ATTRIBUTES *pAShip;
+        Attribute *pASailorQuantity;
+        Attribute *pAShip;
         long nMaxHP;
         long nMaxSP;
         FRECT rUV;
@@ -138,7 +138,7 @@ class BIShipIcon
 
     bool m_bMakeUpdate;
 
-    ATTRIBUTES *m_pARoot;
+    Attribute *m_pARoot;
 
     BIShipCommandList *m_pCommandList;
     entid_t m_idHostEntity;

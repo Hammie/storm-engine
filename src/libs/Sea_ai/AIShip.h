@@ -62,24 +62,24 @@ class VAI_INNEROBJ : public AIAttributesHolder
     // enemy / friend / neutral / main character
     virtual bool isMainCharacter()
     {
-        return GetACharacter()->GetAttributeAsDword("MainCharacter") != 0;
+        return GetACharacter()->getProperty("MainCharacter").get<bool>(false);
     };
 
-    virtual bool isFriend(ATTRIBUTES *pAOtherCharacter) const
+    virtual bool isFriend(Attribute *pAOtherCharacter) const
     {
         if (isDead() || isDead(pAOtherCharacter))
             return true;
         return Helper.isFriend(GetACharacter(), pAOtherCharacter);
     }
 
-    virtual bool isEnemy(ATTRIBUTES *pAOtherCharacter) const
+    virtual bool isEnemy(Attribute *pAOtherCharacter) const
     {
         if (isDead() || isDead(pAOtherCharacter))
             return false;
         return Helper.isEnemy(GetACharacter(), pAOtherCharacter);
     };
 
-    virtual bool isNeutral(ATTRIBUTES *pAOtherCharacter) const
+    virtual bool isNeutral(Attribute *pAOtherCharacter) const
     {
         if (isDead() || isDead(pAOtherCharacter))
             return false;
@@ -102,7 +102,7 @@ class VAI_INNEROBJ : public AIAttributesHolder
         return bDead;
     };
 
-    virtual bool isDead(ATTRIBUTES *pACharacter) const
+    virtual bool isDead(Attribute *pACharacter) const
     {
         auto *const pAIObj = AIHelper::FindAIInnerObj(pACharacter);
         Assert(pAIObj);
@@ -116,7 +116,7 @@ class VAI_INNEROBJ : public AIAttributesHolder
         return bOldDead;
     };
 
-    bool operator==(const ATTRIBUTES *pOtherAICharacter) const
+    bool operator==(const Attribute *pOtherAICharacter) const
     {
         return (GetACharacter() == pOtherAICharacter);
     };
@@ -184,7 +184,7 @@ class AIShip : public VAI_INNEROBJ
         float fAngle;       // angle of attack
     };
 
-    ATTRIBUTES *pAShipBase;
+    Attribute *pAShipBase;
 
     AIShipTaskController *pTaskController;
     AIShipMoveController *pMoveController;
@@ -204,29 +204,29 @@ class AIShip : public VAI_INNEROBJ
     static std::vector<can_fire_t> aShipFire;
     std::vector<AI_POINT> aFollowPoints, aAttackPoints;
 
-    void SetSeaAIAttributes(ATTRIBUTES *pAAttr, VAI_INNEROBJ *pObj) const;
+    void SetSeaAIAttributes(Attribute &attr, VAI_INNEROBJ *pObj) const;
 
   public:
-    ATTRIBUTES *GetAShip() const
+    Attribute *GetAShip() const
     {
-        return GetACharacter()->FindAClass(GetACharacter(), "Ship");
+        return &GetACharacter()->getProperty("Ship");
     };
 
     // some static functions
-    static AIShip *FindShip(ATTRIBUTES *pACharacter);
+    static AIShip *FindShip(Attribute *pACharacter);
 
-    static bool ShipFire(ATTRIBUTES *pACharacter, bool bCameraOutside);
+    static bool ShipFire(Attribute *pACharacter, bool bCameraOutside);
 
-    static void ShipSetAttack(uint32_t dwPriority, ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
-    static void ShipSetRunAway(uint32_t dwPriority, ATTRIBUTES *pACharacter1);
-    static void ShipSetMove(uint32_t dwPriority, ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
-    static void ShipSetMove(uint32_t dwPriority, ATTRIBUTES *pACharacter1, CVECTOR &vPnt);
-    static void ShipSetDrift(uint32_t dwPriority, ATTRIBUTES *pACharacter1);
-    static void ShipSetDefend(uint32_t dwPriority, ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
-    static void ShipSetBrander(uint32_t dwPriority, ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
-    static void ShipSetAbordage(uint32_t dwPriority, ATTRIBUTES *pACharacter1, ATTRIBUTES *pACharacter2);
+    static void ShipSetAttack(uint32_t dwPriority, Attribute *pACharacter1, Attribute *pACharacter2);
+    static void ShipSetRunAway(uint32_t dwPriority, Attribute *pACharacter1);
+    static void ShipSetMove(uint32_t dwPriority, Attribute *pACharacter1, Attribute *pACharacter2);
+    static void ShipSetMove(uint32_t dwPriority, Attribute *pACharacter1, CVECTOR &vPnt);
+    static void ShipSetDrift(uint32_t dwPriority, Attribute *pACharacter1);
+    static void ShipSetDefend(uint32_t dwPriority, Attribute *pACharacter1, Attribute *pACharacter2);
+    static void ShipSetBrander(uint32_t dwPriority, Attribute *pACharacter1, Attribute *pACharacter2);
+    static void ShipSetAbordage(uint32_t dwPriority, Attribute *pACharacter1, Attribute *pACharacter2);
 
-    static void ReloadCannons(ATTRIBUTES *pACharacter);
+    static void ReloadCannons(Attribute *pACharacter);
 
     // Group section
     void SetGroupName(std::string &_sGroupName)
@@ -241,7 +241,7 @@ class AIShip : public VAI_INNEROBJ
     // AI section
     void SwapShips(AIShip *pOtherShip);
 
-    bool isAttack(ATTRIBUTES *pAOtherCharacter) const;
+    bool isAttack(Attribute *pAOtherCharacter) const;
     void CheckSituation();
     float GetPower() const;
     float GetShipHP() const;
@@ -286,7 +286,7 @@ class AIShip : public VAI_INNEROBJ
     static std::vector<AIShip *> AIShips;
 
     // inherit functions from VAI_INNEROBJ
-    void SetACharacter(ATTRIBUTES *pAP) override;
+    void SetACharacter(Attribute *pAP) override;
     void ReleasePoint(VAI_INNEROBJ *) override;
 
     CVECTOR GetAttackPoint(VAI_INNEROBJ *) override;
@@ -369,7 +369,7 @@ class AIShip : public VAI_INNEROBJ
     virtual ~AIShip();
 
     void Unload() const;
-    void CreateShip(entid_t _eidShip, ATTRIBUTES *_pACharacter, ATTRIBUTES *_pAShip, CVECTOR *vInitPos);
+    void CreateShip(entid_t _eidShip, Attribute *_pACharacter, Attribute *_pAShip, CVECTOR *vInitPos);
     void CheckStartPosition() const;
     bool isCanPlace(CVECTOR vNewPos) const;
 

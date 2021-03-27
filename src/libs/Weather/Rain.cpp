@@ -537,9 +537,9 @@ uint64_t RAIN::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t RAIN::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t RAIN::AttributeChanged(Attribute &pAttribute)
 {
-    if (*pAttribute == "Clear")
+    if (pAttribute == "Clear")
     {
         Release();
         bRainbowEnable = false;
@@ -548,119 +548,119 @@ uint32_t RAIN::AttributeChanged(ATTRIBUTES *pAttribute)
         return 0;
     }
 
-    if (*pAttribute == "isDone")
+    if (pAttribute == "isDone")
     {
         GenerateRain();
         return 0;
     }
 
-    ATTRIBUTES *pParent = pAttribute->GetParent();
+    const Attribute *pParent = pAttribute.getParent();
     if (*pParent == "RainDrops")
     {
-        if (*pAttribute == "DropsNearNum")
+        if (pAttribute == "DropsNearNum")
         {
-            dwDropsNearNum = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwDropsNearNum);
             return 0;
         }
-        if (*pAttribute == "DropsFarNum")
+        if (pAttribute == "DropsFarNum")
         {
-            dwDropsFarNum = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwDropsFarNum);
             return 0;
         }
-        if (*pAttribute == "DropsNearRadius")
+        if (pAttribute == "DropsNearRadius")
         {
-            fDropsNearRadius = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fDropsNearRadius);
             return 0;
         }
-        if (*pAttribute == "DropsFarRadius")
+        if (pAttribute == "DropsFarRadius")
         {
-            fDropsFarRadius = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fDropsFarRadius);
             return 0;
         }
-        if (*pAttribute == "DropsLifeTime")
+        if (pAttribute == "DropsLifeTime")
         {
-            fDropsLifeTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fDropsLifeTime);
             return 0;
         }
-        if (*pAttribute == "DropsSize")
+        if (pAttribute == "DropsSize")
         {
-            fDropsSize = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fDropsSize);
             return 0;
         }
-        if (*pAttribute == "DropsColor")
+        if (pAttribute == "DropsColor")
         {
-            dwDropsColor = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwDropsColor);
             return 0;
         }
-        if (*pAttribute == "DropsTexture")
+        if (pAttribute == "DropsTexture")
         {
-            sDropsTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(sDropsTexture);
             return 0;
         }
     }
     else if (*pParent == "Rainbow")
     {
-        if (*pAttribute == "Enable")
+        if (pAttribute == "Enable")
         {
-            bRainbowEnable = pAttribute->GetAttributeAsDword() == 1;
+            pAttribute.get_to(bRainbowEnable);
             return 0;
         }
-        if (*pAttribute == "Texture")
+        if (pAttribute == "Texture")
         {
-            sRainbowTexture = pAttribute->GetThisAttr();
+            pAttribute.get_to(sRainbowTexture);
             return 0;
         }
     }
     else
     {
-        if (*pAttribute == "color")
+        if (pAttribute == "color")
         {
-            dwRainColor = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwRainColor);
             return 0;
         }
-        if (*pAttribute == "NumDrops")
+        if (pAttribute == "NumDrops")
         {
-            dwNumDrops = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwNumDrops);
             return 0;
         }
-        if (*pAttribute == "DropLength")
+        if (pAttribute == "DropLength")
         {
-            fDropLength = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fDropLength);
             return 0;
         }
-        if (*pAttribute == "Height")
+        if (pAttribute == "Height")
         {
-            fRainHeight = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fRainHeight);
             return 0;
         }
-        if (*pAttribute == "Radius")
+        if (pAttribute == "Radius")
         {
-            fRainRadius = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fRainRadius);
             return 0;
         }
-        if (*pAttribute == "Speed")
+        if (pAttribute == "Speed")
         {
-            fRainSpeed = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fRainSpeed);
             return 0;
         }
-        if (*pAttribute == "Jitter")
+        if (pAttribute == "Jitter")
         {
-            fRainJitter = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fRainJitter);
             return 0;
         }
-        if (*pAttribute == "WindSpeedJitter")
+        if (pAttribute == "WindSpeedJitter")
         {
-            fRainWindSpeedJitter = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fRainWindSpeedJitter);
             return 0;
         }
-        if (*pAttribute == "TimeBlend")
+        if (pAttribute == "TimeBlend")
         {
-            dwRainTimeBlend = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwRainTimeBlend);
             return 0;
         }
-        if (*pAttribute == "MaxBlend")
+        if (pAttribute == "MaxBlend")
         {
-            dwRainMaxBlend = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwRainMaxBlend);
             return 0;
         }
     }

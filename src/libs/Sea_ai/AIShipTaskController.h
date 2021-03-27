@@ -24,7 +24,7 @@ class AITask
 
     uint32_t dwTaskType;
 
-    ATTRIBUTES *pATaskCharacter;
+    Attribute *pATaskCharacter;
     CVECTOR vTaskPnt;
 
     void SetActive(bool _bActive)
@@ -86,7 +86,7 @@ class AIShipTaskController
     void FindRunAwayPoint();
 
   public:
-    bool isAttack(ATTRIBUTES *pAOtherCharacter);
+    bool isAttack(Attribute *pAOtherCharacter);
 
     bool Init()
     {
@@ -99,7 +99,7 @@ class AIShipTaskController
     };
 
     void SetNewTask(uint32_t dwPriority, uint32_t dwNewTaskType, CVECTOR &vPnt);
-    void SetNewTask(uint32_t dwPriority, uint32_t dwNewTaskType, ATTRIBUTES *_pATaskCharacter);
+    void SetNewTask(uint32_t dwPriority, uint32_t dwNewTaskType, Attribute *_pATaskCharacter);
 
     // controller execute
     void Execute(float);

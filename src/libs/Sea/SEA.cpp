@@ -1985,13 +1985,16 @@ float SEA::Cannon_Trace(long iBallOwner, const CVECTOR &vSrc, const CVECTOR &vDs
     return fRes;
 }
 
-uint32_t SEA::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t SEA::AttributeChanged(Attribute &attribute)
 {
-    ATTRIBUTES *pParent = pAttribute->GetParent();
-    ATTRIBUTES *pParent2 = (pParent) ? pParent->GetParent() : nullptr;
+    const Attribute *pParent = attribute.getParent();
+    const Attribute *pParent2 = (pParent) ? pParent->getParent() : nullptr;
 
-    const char *sName = pAttribute->GetThisName();
-    const char *sValue = pAttribute->GetThisAttr();
+    Assert(pParent != nullptr);
+    Assert(pParent2 != nullptr);
+
+    const char *sName = attribute.getName().data();
+    const char *sValue = attribute.get<const char*>();
 
     if (*pParent == "isDone")
     {
@@ -2000,137 +2003,137 @@ uint32_t SEA::AttributeChanged(ATTRIBUTES *pAttribute)
 
     if (*pParent == "Sea2")
     {
-        if (*pAttribute == "WaterColor")
+        if (attribute == "WaterColor")
         {
-            v4SeaColor = COLOR2VECTOR4(pAttribute->GetAttributeAsDword());
+            v4SeaColor = COLOR2VECTOR4(attribute.get<uint32_t>());
             return 0;
         }
-        if (*pAttribute == "SkyColor")
+        if (attribute == "SkyColor")
         {
-            v4SkyColor = COLOR2VECTOR4(pAttribute->GetAttributeAsDword());
-            return 0;
-        }
-
-        if (*pAttribute == "Amp1")
-        {
-            _fAmp1 = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "AnimSpeed1")
-        {
-            fAnimSpeed1 = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "Scale1")
-        {
-            fScale1 = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "MoveSpeed1")
-        {
-            sscanf(pAttribute->GetThisAttr(), "%f, %f, %f", &vMoveSpeed1.x, &vMoveSpeed1.y, &vMoveSpeed1.z);
+            v4SkyColor = COLOR2VECTOR4(attribute.get<uint32_t>());
             return 0;
         }
 
-        if (*pAttribute == "Amp2")
+        if (attribute == "Amp1")
         {
-            _fAmp2 = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(_fAmp1);
             return 0;
         }
-        if (*pAttribute == "AnimSpeed2")
+        if (attribute == "AnimSpeed1")
         {
-            fAnimSpeed2 = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fAnimSpeed1);
             return 0;
         }
-        if (*pAttribute == "Scale2")
+        if (attribute == "Scale1")
         {
-            fScale2 = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fScale1);
             return 0;
         }
-        if (*pAttribute == "MoveSpeed2")
+        if (attribute == "MoveSpeed1")
         {
-            sscanf(pAttribute->GetThisAttr(), "%f, %f, %f", &vMoveSpeed2.x, &vMoveSpeed2.y, &vMoveSpeed2.z);
-            return 0;
-        }
-
-        if (*pAttribute == "PosShift")
-        {
-            fPosShift = pAttribute->GetAttributeAsFloat();
+            sscanf(attribute.get<const char*>(), "%f, %f, %f", &vMoveSpeed1.x, &vMoveSpeed1.y, &vMoveSpeed1.z);
             return 0;
         }
 
-        if (*pAttribute == "BumpScale")
+        if (attribute == "Amp2")
         {
-            fBumpScale = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(_fAmp2);
             return 0;
         }
-        if (*pAttribute == "BumpSpeed")
+        if (attribute == "AnimSpeed2")
         {
-            fBumpSpeed = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fAnimSpeed2);
             return 0;
         }
-        if (*pAttribute == "LodScale")
+        if (attribute == "Scale2")
         {
-            fLodScale = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fScale2);
             return 0;
         }
-        if (*pAttribute == "GridStep")
+        if (attribute == "MoveSpeed2")
         {
-            fGridStep = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-
-        if (*pAttribute == "Reflection")
-        {
-            v4SeaParameters.y = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "Transparency")
-        {
-            v4SeaParameters.z = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "Attenuation")
-        {
-            v4SeaParameters.x = pAttribute->GetAttributeAsFloat();
+            sscanf(attribute.get<const char*>(), "%f, %f, %f", &vMoveSpeed2.x, &vMoveSpeed2.y, &vMoveSpeed2.z);
             return 0;
         }
 
-        if (*pAttribute == "Frenel")
+        if (attribute == "PosShift")
         {
-            fFrenel = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fPosShift);
             return 0;
         }
 
-        if (*pAttribute == "FoamV")
+        if (attribute == "BumpScale")
         {
-            fFoamV = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fBumpScale);
             return 0;
         }
-        if (*pAttribute == "FoamK")
+        if (attribute == "BumpSpeed")
         {
-            fFoamK = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fBumpSpeed);
             return 0;
         }
-        if (*pAttribute == "FoamUV")
+        if (attribute == "LodScale")
         {
-            fFoamUV = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fLodScale);
             return 0;
         }
-        if (*pAttribute == "FoamTexDisturb")
+        if (attribute == "GridStep")
         {
-            fFoamTextureDisturb = pAttribute->GetAttributeAsFloat();
-            return 0;
-        }
-        if (*pAttribute == "FoamEnable")
-        {
-            bFoamEnable = pAttribute->GetAttributeAsDword() != 0;
+            attribute.get_to(fGridStep);
             return 0;
         }
 
-        if (*pAttribute == "SimpleSea")
+        if (attribute == "Reflection")
         {
-            bSimpleSea = pAttribute->GetAttributeAsDword() != 0;
+            attribute.get_to(v4SeaParameters.y);
+            return 0;
+        }
+        if (attribute == "Transparency")
+        {
+            attribute.get_to(v4SeaParameters.z);
+            return 0;
+        }
+        if (attribute == "Attenuation")
+        {
+            attribute.get_to(v4SeaParameters.x);
+            return 0;
+        }
+
+        if (attribute == "Frenel")
+        {
+            attribute.get_to(fFrenel);
+            return 0;
+        }
+
+        if (attribute == "FoamV")
+        {
+            attribute.get_to(fFoamV);
+            return 0;
+        }
+        if (attribute == "FoamK")
+        {
+            attribute.get_to(fFoamK);
+            return 0;
+        }
+        if (attribute == "FoamUV")
+        {
+            attribute.get_to(fFoamUV);
+            return 0;
+        }
+        if (attribute == "FoamTexDisturb")
+        {
+            attribute.get_to(fFoamTextureDisturb);
+            return 0;
+        }
+        if (attribute == "FoamEnable")
+        {
+            attribute.get_to(bFoamEnable);
+            return 0;
+        }
+
+        if (attribute == "SimpleSea")
+        {
+            attribute.get_to(bSimpleSea);
             BuildVolumeTexture();
             return 0;
         }
@@ -2139,42 +2142,42 @@ uint32_t SEA::AttributeChanged(ATTRIBUTES *pAttribute)
 
     if (*pParent == "fog")
     {
-        if (*pAttribute == "Enable")
+        if (attribute == "Enable")
         {
-            bFogEnable = pAttribute->GetAttributeAsDword() != 0;
+            attribute.get_to(bFogEnable);
             return 0;
         }
-        if (*pAttribute == "Start")
+        if (attribute == "Start")
         {
-            fFogStartDistance = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fFogStartDistance);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (attribute == "Color")
         {
-            vFogColor = (1.0f / 255.0f) * COLOR2VECTOR(pAttribute->GetAttributeAsDword());
+            vFogColor = (1.0f / 255.0f) * COLOR2VECTOR(attribute.get<uint32_t>());
             return 0;
         }
-        if (*pAttribute == "SeaDensity")
+        if (attribute == "SeaDensity")
         {
-            fFogSeaDensity = pAttribute->GetAttributeAsFloat();
+            attribute.get_to(fFogSeaDensity);
             return 0;
         }
         return 0;
     }
 
-    if (*pAttribute == "Stop")
+    if (attribute == "Stop")
     {
-        bStop = AttributesPointer->GetAttributeAsDword("Stop") != 0;
+        AttributesPointer->getProperty("Stop").get_to(bStop);
     }
 
-    if (*pAttribute == "UnderWater")
+    if (attribute == "UnderWater")
     {
-        bUnderSeaEnable = AttributesPointer->GetAttributeAsDword("UnderWater") != 0;
+        AttributesPointer->getProperty("UnderWater").get_to(bUnderSeaEnable);
     }
 
-    if (*pAttribute == "MaxSeaHeight")
+    if (attribute == "MaxSeaHeight")
     {
-        fMaxSeaHeight = AttributesPointer->GetAttributeAsFloat("MaxSeaHeight", 50.0f);
+        AttributesPointer->getProperty("MaxSeaHeight").get_to(fMaxSeaHeight, 50.0f);
 
         const float fScale = (fMaxSeaHeight >= _fAmp1 + _fAmp2) ? 1.0f : fMaxSeaHeight / (_fAmp1 + _fAmp2);
 

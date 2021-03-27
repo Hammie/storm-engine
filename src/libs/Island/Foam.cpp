@@ -47,7 +47,7 @@ bool CoastFoam::Init()
 
     Load();
 
-    bCanEdit = AttributesPointer->GetAttributeAsDword("edit", 0) != 0;
+    AttributesPointer->getProperty("edit").get_to(bCanEdit, false);
     return true;
 }
 
@@ -765,7 +765,7 @@ void CoastFoam::Save()
         return;
 
     char cKey[128], cSection[128], cTemp[1024];
-    const auto sID = std::string("resource\\foam\\locations\\") + AttributesPointer->GetAttribute("id") + ".ini";
+    const std::string sID = fmt::format("resource\\foam\\locations\\{}.ini", AttributesPointer->getProperty("id").get<std::string_view>());
     fio->_DeleteFile(sID.c_str());
 
     auto *pI = fio->CreateIniFile(sID.c_str(), false);
@@ -829,7 +829,7 @@ void CoastFoam::Load()
 {
     char cSection[256], cKey[256], cTemp[1024];
 
-    const auto sID = std::string("resource\\foam\\locations\\") + AttributesPointer->GetAttribute("id") + ".ini";
+    const std::string sID = fmt::format("resource\\foam\\locations\\{}.ini", AttributesPointer->getProperty("id").get<std::string_view>());
     auto *pI = fio->OpenIniFile(sID.c_str());
     if (!pI)
         return;
@@ -909,7 +909,7 @@ void CoastFoam::Load()
     STORM_DELETE(pI);
 }
 
-uint32_t CoastFoam::AttributeChanged(ATTRIBUTES *pA)
+uint32_t CoastFoam::AttributeChanged(Attribute &pA)
 {
     return 0;
 }

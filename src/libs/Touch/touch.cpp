@@ -641,11 +641,11 @@ BOOL TOUCH::FakeTouch()
     return true;
 }
 
-uint32_t TOUCH::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t TOUCH::AttributeChanged(Attribute &pAttribute)
 {
-    if (*pAttribute == "CollisionDepth")
+    if (pAttribute == "CollisionDepth")
     {
-        fCollisionDepth = pAttribute->GetAttributeAsFloat();
+        pAttribute.get_to(fCollisionDepth);
         return 0;
     }
     return 0;

@@ -37,7 +37,7 @@ class CXI_KEYCHANGER : public CINODE
     }
 
   protected:
-    void SetChoosingControls(ATTRIBUTES *pA);
+    void SetChoosingControls(Attribute *pA);
 
   protected:
     long *m_pControlsID;

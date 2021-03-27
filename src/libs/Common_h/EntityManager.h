@@ -207,7 +207,7 @@ class EntityManager final
         }
     }
 
-    static entid_t CreateEntity(const char *name, ATTRIBUTES *attr = nullptr)
+    static entid_t CreateEntity(const char *name, Attribute* attr = nullptr)
     {
         /* FIND VMA */
         const auto hash = MakeHashValue(name);

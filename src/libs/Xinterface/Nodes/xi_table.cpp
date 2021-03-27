@@ -60,14 +60,14 @@ void XI_TableLineDescribe::DrawSpecColor(float fTop) const
     }
 }
 
-void XI_TableLineDescribe::SetData(long nRowIndex, ATTRIBUTES *pLA, bool bHeader)
+void XI_TableLineDescribe::SetData(long nRowIndex, Attribute *pLA, bool bHeader)
 {
     m_nRowIndex = nRowIndex;
     char pcAttrName[64];
     m_bUseSpecColor = false;
     uint32_t dwSpecColor = 0;
     if (pLA)
-        dwSpecColor = pLA->GetAttributeAsDword("speccolor", 0);
+        pLA->getProperty("speccolor").get_to(dwSpecColor, 0u);
     if (dwSpecColor != 0)
     {
         m_bUseSpecColor = true;
@@ -76,7 +76,7 @@ void XI_TableLineDescribe::SetData(long nRowIndex, ATTRIBUTES *pLA, bool bHeader
 
     if (pLA && m_pTable->m_bVariableLineHeight)
     {
-        m_nHeight = pLA->GetAttributeAsDword("height", m_pTable->m_nNormalLineHeight);
+        pLA->getProperty("height").get_to(m_nHeight, m_pTable->m_nNormalLineHeight);
     }
     else
         m_nHeight = m_pTable->m_anRowsHeights[nRowIndex];
@@ -85,8 +85,8 @@ void XI_TableLineDescribe::SetData(long nRowIndex, ATTRIBUTES *pLA, bool bHeader
     for (c = 0; c < 10000; c++)
     {
         sprintf_s(pcAttrName, "td%d", c + 1);
-        auto *const pA = (pLA ? pLA->GetAttributeClass(pcAttrName) : nullptr);
-        if (!pA && c >= m_pTable->m_nColQuantity)
+        Attribute &pA = pLA->getProperty(pcAttrName);
+        if (pA.empty() && c >= m_pTable->m_nColQuantity)
             break;
         XI_TableCellDescribe *pTD = nullptr;
         if (c >= m_aCell.size())
@@ -99,7 +99,7 @@ void XI_TableLineDescribe::SetData(long nRowIndex, ATTRIBUTES *pLA, bool bHeader
             pTD = m_aCell[c];
         }
         Assert(pTD);
-        pTD->SetData(c, pA, bHeader);
+        pTD->SetData(c, &pA, bHeader);
     }
     while (c < m_aCell.size())
     {
@@ -170,7 +170,7 @@ void XI_TableCellDescribe::Draw(float fLeft, float fTop)
     }
 }
 
-void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHeader)
+void XI_TableCellDescribe::SetData(long nColIndex, Attribute *pAttr, bool bHeader)
 {
     if (!pAttr)
     {
@@ -179,7 +179,6 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
         m_aImage.clear();
         return;
     }
-    ATTRIBUTES *pA;
     const char *pcStr, *pcTmpStr;
 
     m_nColIndex = nColIndex;
@@ -189,12 +188,17 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
 
     // read the picture
     long nIconQuantity = 0;
-    pA = pAttr->GetAttributeClass("icon");
-    if (pA)
+
+
+    Assert(pAttr != nullptr);
+    Attribute &attr = *pAttr;
+    Attribute &attrIcon = attr["icon"];
+
+    if (!attrIcon.empty())
     {
         if (m_aImage.empty())
             m_aImage.push_back(ImgDescribe{});
-        LoadImageParam(&m_aImage[nIconQuantity], pA);
+        LoadImageParam(&m_aImage[nIconQuantity], &attrIcon);
         nIconQuantity++;
     }
     else
@@ -203,12 +207,12 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
         while (true)
         {
             sprintf_s(tmpaname, sizeof(tmpaname), "icon%d", nIconQuantity + 1);
-            pA = pAttr->GetAttributeClass(tmpaname);
-            if (!pA)
+            Attribute &attrIconTmp = attrIcon[tmpaname];
+            if (attrIconTmp.empty())
                 break;
             if (static_cast<long>(m_aImage.size()) <= nIconQuantity)
                 m_aImage.push_back(ImgDescribe{});
-            LoadImageParam(&m_aImage[nIconQuantity], pA);
+            LoadImageParam(&m_aImage[nIconQuantity], &attrIconTmp);
             nIconQuantity++;
         }
     }
@@ -217,16 +221,15 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
         m_aImage.erase(m_aImage.begin() + nIconQuantity);
 
     // read the line
-    m_dwColor =
-        pAttr->GetAttributeAsDword("color", bHeader ? m_pTable->m_dwFontTitleColor : m_pTable->m_dwFontCellColor);
-    m_fScale = pAttr->GetAttributeAsFloat("scale", bHeader ? m_pTable->m_fFontTitleScale : m_pTable->m_fFontCellScale);
+    attr["color"].get_to(m_dwColor, bHeader ? m_pTable->m_dwFontTitleColor : m_pTable->m_dwFontCellColor);
+    attr["scale"].get_to(m_fScale, bHeader ? m_pTable->m_fFontTitleScale : m_pTable->m_fFontCellScale);
     m_nFontID = bHeader ? m_pTable->m_nFontTitleID : m_pTable->m_nFontCellID;
-    m_nFontIndex = pAttr->GetAttributeAsDword("fontidx", -1);
+    attr["fontidx"].get_to(m_nFontIndex, -1l);
     if (m_nFontIndex < 0 || m_nFontIndex >= m_pTable->m_anFontList.size())
         m_nFontIndex = -1;
     m_nAlignment = bHeader ? m_pTable->m_nFontTitleAlignment : m_pTable->m_nFontCellAlignment;
     m_nVAlignment = bHeader ? m_pTable->m_nFontTitleVAlignment : m_pTable->m_nFontCellVAlignment;
-    pcTmpStr = pAttr->GetAttribute("align");
+    pcTmpStr = pAttr->getProperty("align").get<const char*>();
     if (pcTmpStr)
     {
         if (_stricmp(pcTmpStr, "left") == 0)
@@ -236,7 +239,7 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
         if (_stricmp(pcTmpStr, "right") == 0)
             m_nAlignment = PR_ALIGN_RIGHT;
     }
-    pcTmpStr = pAttr->GetAttribute("valign");
+    pcTmpStr = pAttr->getProperty("valign").get<const char*>();
     if (pcTmpStr)
     {
         if (_stricmp(pcTmpStr, "top") == 0)
@@ -248,8 +251,8 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
     }
 
     m_TextOffset.x = m_TextOffset.y = 0;
-    if (pAttr->GetAttribute("textoffset"))
-        sscanf(pAttr->GetAttribute("textoffset"), "%f,%f", &m_TextOffset.x, &m_TextOffset.y);
+    if (pAttr->getProperty("textoffset").get<const char*>())
+        sscanf(pAttr->getProperty("textoffset").get<const char*>(), "%f,%f", &m_TextOffset.x, &m_TextOffset.y);
     m_TextOffset.y += m_nTopLineHeight;
 
     auto nWidth = m_pTable->m_anColsWidth[nColIndex] - 2 * m_pTable->m_pntSpaceSize.x - m_nLeftLineWidth -
@@ -259,7 +262,7 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
         nWidth = 32;
     }
 
-    pcStr = pAttr->GetAttribute("str");
+    pcStr = pAttr->getProperty("str").get<const char*>();
     std::vector<std::string> asStr;
     CXI_UTILS::SplitStringByWidth(pcStr, m_nFontID, m_fScale, nWidth, asStr);
 
@@ -274,7 +277,7 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
     }
 
     m_aStrings.clear();
-    pA = pAttr->GetAttributeClass("textoffsets");
+    Attribute& attrTextOffset = attr["textoffsets"];
     for (long n = 0; n < asStr.size(); n++)
     {
         // m_aStrings.Add();
@@ -284,7 +287,7 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
 
         m_aStrings[n].str = asStr[n];
 
-        m_aStrings[n].offset.y = CXI_UTILS::GetByStrNumFromAttribute_Float(pA, "s", n + 1, NOTUSE_OFFSET);
+        m_aStrings[n].offset.y = CXI_UTILS::GetByStrNumFromAttribute_Float(&attrTextOffset, "s", n + 1, NOTUSE_OFFSET);
         m_aStrings[n].offset.x = static_cast<float>(m_nLeftLineWidth);
         if (m_nAlignment == PR_ALIGN_CENTER)
             m_aStrings[n].offset.x += static_cast<float>(
@@ -295,11 +298,15 @@ void XI_TableCellDescribe::SetData(long nColIndex, ATTRIBUTES *pAttr, bool bHead
     }
 }
 
-void XI_TableCellDescribe::LoadImageParam(ImgDescribe *pImg, ATTRIBUTES *pA) const
+void XI_TableCellDescribe::LoadImageParam(ImgDescribe *pImg, Attribute *pA) const
 {
     Assert(pImg && pA);
     const char *pcStr;
     long nW, nH, nImgAlign;
+
+
+    Assert(pA != nullptr);
+    const Attribute& attr = *pA;
 
     if (!pImg->pImage)
     {
@@ -307,26 +314,26 @@ void XI_TableCellDescribe::LoadImageParam(ImgDescribe *pImg, ATTRIBUTES *pA) con
         Assert(pImg->pImage);
     }
 
-    if (pA->GetAttribute("group"))
+    if (pA->getProperty("group").get<const char*>())
     {
-        pImg->pImage->LoadFromBase(pA->GetAttribute("group"), pA->GetAttribute("image"), true);
+        pImg->pImage->LoadFromBase(pA->getProperty("group").get<const char*>(), pA->getProperty("image").get<const char*>(), true);
     }
     else
     {
-        if (pA->GetAttribute("texture"))
-            pImg->pImage->LoadFromFile(pA->GetAttribute("texture"));
+        if (pA->getProperty("texture").get<const char*>())
+            pImg->pImage->LoadFromFile(pA->getProperty("texture").get<const char*>());
 
-        if (pA->GetAttribute("texturepointer"))
-            pImg->pImage->SetPointerToTexture((IDirect3DTexture9 *)pA->GetAttributeAsPointer("texturepointer"));
+        if (pA->getProperty("texturepointer").get<const char*>())
+            pImg->pImage->SetPointerToTexture((IDirect3DTexture9 *)attr["texturepointer"].get<uintptr_t>());
 
         auto fL = 0.f, fT = 0.f, fR = 1.f, fB = 1.f;
-        if (pA->GetAttribute("uv"))
-            sscanf(pA->GetAttribute("uv"), "%f,%f,%f,%f", &fL, &fT, &fR, &fB);
+        if (pA->getProperty("uv").get<const char*>())
+            sscanf(pA->getProperty("uv").get<const char*>(), "%f,%f,%f,%f", &fL, &fT, &fR, &fB);
         pImg->pImage->SetUV(fL, fT, fR, fB);
     }
-    nW = pA->GetAttributeAsDword("width", 0);
-    nH = pA->GetAttributeAsDword("height", 0);
-    if (pA->GetAttributeAsDword("cellsize", 0) > 0)
+    attr["width"].get_to(nW, 0l);
+    attr["height"].get_to(nH, 0l);
+    if (attr["cellsize"].get<bool>(false))
     {
         nW = m_pTable->m_anColsWidth[m_nColIndex] - m_nLeftLineWidth;
         nH = m_pLine->GetLineHeight() - m_nTopLineHeight;
@@ -334,9 +341,9 @@ void XI_TableCellDescribe::LoadImageParam(ImgDescribe *pImg, ATTRIBUTES *pA) con
     if (nW > 0 && nH > 0)
         pImg->pImage->SetSize(nW, nH);
     pImg->offset.x = pImg->offset.y = 0;
-    if (pA->GetAttribute("offset"))
-        sscanf(pA->GetAttribute("offset"), "%d,%d", &pImg->offset.x, &pImg->offset.y);
-    if ((pcStr = pA->GetAttribute("valign")) != nullptr)
+    if (pA->getProperty("offset").get<const char*>())
+        sscanf(pA->getProperty("offset").get<const char*>(), "%d,%d", &pImg->offset.x, &pImg->offset.y);
+    if ((pcStr = pA->getProperty("valign").get<const char*>()) != nullptr)
     {
         nImgAlign = ALIGN_TOP;
         if (_stricmp(pcStr, "center") == 0)
@@ -1151,7 +1158,7 @@ void CXI_TABLE::WriteSquare(XI_ONETEX_VERTEX *pV, long nImgID, uint32_t dwCol, l
 void CXI_TABLE::UpdateTableCells()
 {
     // Set new current image
-    ATTRIBUTES *pARoot = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
+    Attribute *pARoot = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (!pARoot)
     {
         m_nLineQuantity = 0;
@@ -1163,18 +1170,22 @@ void CXI_TABLE::UpdateTableCells()
 
     long nY = m_rect.top;
 
-    long nNewSel = pARoot->GetAttributeAsDword("select", m_nSelectIndex + 1) - 1;
+
+    Assert(pARoot != nullptr);
+    Attribute& attrRoot = *pARoot;
+
+    long nNewSel = attrRoot["select"].get<long>(m_nSelectIndex + 1) - 1;
 
     // read lines from attributes
-    m_nTopIndex = pARoot->GetAttributeAsDword("top", 0); // first index of the attribute being read
+    attrRoot["top"].get_to(m_nTopIndex, 0l); // first index of the attribute being read
     // first check for header
-    ATTRIBUTES *pAttr = pARoot->GetAttributeClass("hr");
-    if (pAttr)
+    Attribute attrHr = attrRoot["hr"];
+    if (!attrHr.empty())
     {
         if (!m_pHeader)
             m_pHeader = new XI_TableLineDescribe(this);
         Assert(m_pHeader);
-        m_pHeader->SetData(0, pAttr, true);
+        m_pHeader->SetData(0, &attrHr, true);
         nY += m_anRowsHeights[0];
     }
     else
@@ -1186,8 +1197,8 @@ void CXI_TABLE::UpdateTableCells()
     for (r = 0; (nY < m_rect.bottom) && (r < q); r++)
     {
         sprintf_s(pcTmp, "tr%d", r + m_nTopIndex + 1);
-        pAttr = pARoot->GetAttributeClass(pcTmp);
-        if (!pAttr)
+        Attribute &attrTmp = attrRoot[pcTmp];
+        if (attrTmp.empty())
             break;
         XI_TableLineDescribe *pTL = nullptr;
         if (r >= m_aLine.size())
@@ -1198,7 +1209,7 @@ void CXI_TABLE::UpdateTableCells()
         else
             pTL = m_aLine[r];
         Assert(pTL);
-        pTL->SetData(r + (m_pHeader ? 1 : 0), pAttr, false);
+        pTL->SetData(r + (m_pHeader ? 1 : 0), &attrTmp, false);
         nY += pTL->GetLineHeight();
     }
     // delete extra lines
@@ -1329,14 +1340,9 @@ void CXI_TABLE::UpdateSelectImage()
         }
         m_SelectImg.SetPosition(pos);
     }
-    ATTRIBUTES *pA = ptrOwner->AttributesPointer->GetAttributeClass(m_nodeName);
-    if (!pA)
-        pA = ptrOwner->AttributesPointer->CreateSubAClass(ptrOwner->AttributesPointer, m_nodeName);
-    if (pA)
-    {
-        pA->SetAttributeUseDword("select", m_nSelectIndex + 1);
-        pA->SetAttributeUseDword("selectcol", m_nSelectColIndex + 1);
-    }
+    Attribute &attr = ptrOwner->AttributesPointer->getProperty(m_nodeName);
+    attr["select"] = m_nSelectIndex + 1;
+    attr["selectcol"] = m_nSelectColIndex + 1;
 }
 
 long CXI_TABLE::GetRowTop(long nRow)
@@ -1387,11 +1393,11 @@ void CXI_TABLE::SetTopIndexForSelect(long nSelIndex)
 void CXI_TABLE::UpdateLineQuantity()
 {
     m_nLineQuantity = 0;
-    ATTRIBUTES *pARoot = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
+    Attribute *pARoot = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (!pARoot)
         return;
 
-    if (!pARoot->GetAttributeClass("tr1"))
+    if (!pARoot->hasProperty("tr1"))
         return; // no one
 
     long nmin = 1;
@@ -1401,7 +1407,7 @@ void CXI_TABLE::UpdateLineQuantity()
     while (true)
     {
         sprintf_s(pcAttrName, "tr%d", nmin * 2);
-        if (pARoot->GetAttributeClass(pcAttrName))
+        if (pARoot->hasProperty(pcAttrName))
             nmin *= 2;
         else
             break; // the next element of the binary tree does not exist
@@ -1415,7 +1421,7 @@ void CXI_TABLE::UpdateLineQuantity()
         if (n == nmin)
             break;
         sprintf_s(pcAttrName, "tr%d", n);
-        if (pARoot->GetAttributeClass(pcAttrName)) // there is an element - it means that the older half can have an end
+        if (pARoot->hasProperty(pcAttrName)) // there is an element - it means that the older half can have an end
         {
             nmin = n;
         }
@@ -1431,9 +1437,9 @@ void CXI_TABLE::UpdateLineQuantity()
 void CXI_TABLE::SetTopIndex(long nTopIndex)
 {
     m_nTopIndex = nTopIndex;
-    ATTRIBUTES *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
+    Attribute *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
     if (pA)
-        pA->SetAttributeUseDword("top", nTopIndex);
+        pA->getProperty("top") = nTopIndex;
 }
 
 void CXI_TABLE::UpdateScroller() const

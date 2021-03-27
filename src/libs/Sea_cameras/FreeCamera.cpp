@@ -72,7 +72,7 @@ void FREE_CAMERA::Execute(uint32_t Delta_Time)
     if (!isOn())
         return;
 
-    SetPerspective(AttributesPointer->GetAttributeAsFloat("Perspective"));
+    SetPerspective(AttributesPointer->getProperty("Perspective").get<float>());
 
     if (!pIslandBase)
         pIslandBase = static_cast<ISLAND_BASE *>(EntityManager::GetEntityPointer(EntityManager::GetEntityId("island")));

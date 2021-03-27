@@ -1393,7 +1393,7 @@ uint32_t _InterfaceFindFolders(VS_STACK *pS)
     pDat = (VDATA *)pS->Pop();
     if (!pDat)
         return IFUNCRESULT_FAILED;
-    ATTRIBUTES *pA = pDat->GetAClass();
+    Attribute *pA = pDat->GetAClass();
     pDat = (VDATA *)pS->Pop();
     if (!pDat)
         return IFUNCRESULT_FAILED;
@@ -1411,7 +1411,7 @@ uint32_t _InterfaceFindFolders(VS_STACK *pS)
                     char pctmp[64];
                     sprintf_s(pctmp, "f%d", n++);
                     std::string FileName = utf8::ConvertWideToUtf8(wfd.cFileName);
-                    pA->SetAttribute(pctmp, FileName.c_str());
+                    pA->getProperty(pctmp) = FileName.c_str();
                 }
             }
         } while (fio->_FindNextFile(h, &wfd));
@@ -1420,7 +1420,7 @@ uint32_t _InterfaceFindFolders(VS_STACK *pS)
     pDat = (VDATA *)pS->Push();
     if (!pDat)
         return IFUNCRESULT_FAILED;
-    const long nSuccess = (pA->GetAttributesNum() > 0);
+    const long nSuccess = std::distance(pA->begin(), pA->end()) > 0;
     pDat->Set(nSuccess);
     return IFUNCRESULT_OK;
 }

@@ -807,25 +807,28 @@ void ShipWalk::Init(entid_t _shipID, int editorMode, char *shipType)
             return;
 
         // Find broken masts
-        auto *attr = ship->GetACharacter();
-        auto *mastsAttr = attr->FindAClass(attr, "Ship.Masts");
+        auto *pAttr = ship->GetACharacter();
+        Assert(pAttr != nullptr);
+        const Attribute& attr = *pAttr;
 
-        const int iNumMasts = mastsAttr->GetAttributesNum();
+        const Attribute &aMasts = attr["Ship"]["Masts"];
 
-        for (auto i = 0; i < iNumMasts; i++)
-        {
-            if (mastsAttr->GetAttributeClass(i)->GetAttributeAsFloat())
+        int i =0;
+        int iNumMasts = std::distance(aMasts.begin(), aMasts.end());
+        for (const Attribute& aMast : aMasts) {
+            if (!aMast.empty() && aMast.get<float>()) {
                 SetMastBroken(((iNumMasts - 1) - i) + 1); // ??? The masts are opposite ???
+            }
+            ++i;
         }
+
 
         // people count
         // ATTRIBUTES *att = ship->GetACharacter();
         auto *paShip = ship->GetAShip();
-        auto peopleCount = 5;
-        if (paShip)
-        {
-            peopleCount = paShip->GetAttributeAsDword("lowpolycrew", peopleCount);
-        }
+        Assert(paShip != nullptr);
+        const Attribute& aShip = *paShip;
+        auto peopleCount = aShip["lowpolycrew"].get<uint32_t>(5);
         // ATTRIBUTES *crewAttr = att->FindAClass(attr, "ship.crew");
         // int peopleCount = (int) ceilf(CREW2VISIBLE((float) crewAttr->GetAttributeAsDword("quantity", 1)));
 
@@ -1119,11 +1122,10 @@ void Sailors::Realize(uint32_t dltTime)
             {
                 /// shipState
                 auto *shipAttr = shipWalk[m].ship->GetACharacter();
-                auto *shipModeAttr = shipAttr->FindAClass(shipAttr, "ship.POS.mode");
-
-                if (shipModeAttr)
+                const Attribute& aShipMode = shipAttr->getProperty("ship")["POS"]["mode"];
+                if (!aShipMode.empty())
                 {
-                    shipWalk[m].shipState.mode = shipModeAttr->GetAttributeAsDword();
+                    aShipMode.get_to(shipWalk[m].shipState.mode);
                 }
             }
         }
@@ -1275,20 +1277,20 @@ uint64_t Sailors::ProcessMessage(MESSAGE &message)
 };
 
 //------------------------------------------------------------------------------------
-uint32_t Sailors::AttributeChanged(ATTRIBUTES *_newAttr)
+uint32_t Sailors::AttributeChanged(Attribute &_newAttr)
 {
     // GUARD_SAILORS(Sailors::AttributeChanged())
 
     // Remove people from deck
-    if (*_newAttr == "IsOnDeck")
+    if (_stricmp(_newAttr.getName().data(), "IsOnDeck") == 0)
     {
-        IsOnDeck = this->AttributesPointer->GetAttributeAsDword("IsOnDeck") != 0;
+        IsOnDeck = this->AttributesPointer->getProperty("IsOnDeck").get<bool>();
 
         if (IsOnDeck)
         {
             for (auto i = 0; i < shipsCount; i++)
             {
-                if (shipWalk[i].ship->GetACharacter()->GetAttribute("MainCharacter"))
+                if (shipWalk[i].ship->GetACharacter()->hasProperty("MainCharacter"))
                 {
                     shipWalk[i].bHide = true;
                     shipWalk[i].Reset();

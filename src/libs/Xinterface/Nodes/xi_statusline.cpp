@@ -83,17 +83,14 @@ void CXI_STATUSLINE::LoadIni(INIFILE *ini1, const char *name1, INIFILE *ini2, co
         // get lenght of filled status line
         m_fLineOffset = GetIniFloat(ini1, name1, ini2, name2, "lineOffset", 0.f);
         auto fMediumX = static_cast<float>(m_rect.right - m_rect.left) - m_fLineOffset * 2.f;
-        auto *pAttr = core.Entity_GetAttributeClass(g_idInterface, "StatusLine");
-        if (pAttr != nullptr)
-            pAttr = pAttr->GetAttributeClass(m_nodeName);
-        if (pAttr != nullptr)
-        {
-            const auto fMaxValue = pAttr->GetAttributeAsFloat("Max", 0);
-            const auto fMinValue = pAttr->GetAttributeAsFloat("Min", 0);
-            const auto fCurValue = pAttr->GetAttributeAsFloat("Value", 0);
-            if (fMaxValue - fMinValue > 0 && fCurValue >= fMinValue)
-                fMediumX *= (fCurValue - fMinValue) / (fMaxValue - fMinValue);
-        }
+
+        const Attribute &attr = *core.Entity_GetAttributeClass(g_idInterface, "StatusLine");
+        const Attribute &aNode = attr[m_nodeName];
+        const auto fMaxValue = aNode["Max"].get<float>(0);
+        const auto fMinValue = aNode["Min"].get<float>(0);
+        const auto fCurValue = aNode["Value"].get<float>(0);
+        if (fMaxValue - fMinValue > 0 && fCurValue >= fMinValue)
+            fMediumX *= (fCurValue - fMinValue) / (fMaxValue - fMinValue);
         fMediumX += m_fLineOffset;
 
         // get screen coordinates
@@ -221,71 +218,67 @@ void CXI_STATUSLINE::Refresh() const
         return;
     auto *pVBuf = static_cast<XI_ONLYONETEX_VERTEX *>(m_rs->LockVertexBuffer(m_vBuf));
 
-    auto *pAttr = core.Entity_GetAttributeClass(g_idInterface, "StatusLine");
-    if (pAttr != nullptr)
-        pAttr = pAttr->GetAttributeClass(m_nodeName);
-    if (pAttr != nullptr)
-    {
-        auto fMediumX = static_cast<float>(m_rect.right - m_rect.left) - m_fLineOffset * 2.f;
-        const auto fMaxValue = pAttr->GetAttributeAsFloat("Max", 0);
-        const auto fMinValue = pAttr->GetAttributeAsFloat("Min", 0);
-        const float fCurValue = pAttr->GetAttributeAsFloat("Value", 0);
-        if (fMaxValue > fMinValue && fCurValue >= fMinValue && fCurValue <= fMaxValue)
-            fMediumX *= (fCurValue - fMinValue) / (fMaxValue - fMinValue);
+    const Attribute &attr = *core.Entity_GetAttributeClass(g_idInterface, "StatusLine");
+    const Attribute &aNode = attr[m_nodeName];
+    const auto fMaxValue = aNode["Max"].get<float>(0);
+    const auto fMinValue = aNode["Min"].get<float>(0);
+    const auto fCurValue = aNode["Value"].get<float>(0);
+    auto fMediumX = static_cast<float>(m_rect.right - m_rect.left) - m_fLineOffset * 2.f;
+    if (fMaxValue > fMinValue && fCurValue >= fMinValue && fCurValue <= fMaxValue)
+        fMediumX *= (fCurValue - fMinValue) / (fMaxValue - fMinValue);
 
-        FXYRECT scrRect1, scrRect2;
-        // get screen coordinates
-        scrRect1.left = static_cast<float>(m_rect.left);
-        scrRect2.left = static_cast<float>(m_rect.left) + fMediumX;
-        scrRect1.top = scrRect2.top = static_cast<float>(m_rect.top);
-        scrRect1.right = static_cast<float>(m_rect.left) + fMediumX;
-        scrRect2.right = static_cast<float>(m_rect.right);
-        scrRect1.bottom = scrRect2.bottom = static_cast<float>(m_rect.bottom);
+    FXYRECT scrRect1, scrRect2;
+    // get screen coordinates
+    scrRect1.left = static_cast<float>(m_rect.left);
+    scrRect2.left = static_cast<float>(m_rect.left) + fMediumX;
+    scrRect1.top = scrRect2.top = static_cast<float>(m_rect.top);
+    scrRect1.right = static_cast<float>(m_rect.left) + fMediumX;
+    scrRect2.right = static_cast<float>(m_rect.right);
+    scrRect1.bottom = scrRect2.bottom = static_cast<float>(m_rect.bottom);
 
-        // get texture coordinates
-        fMediumX /= (m_rect.right - m_rect.left);
+    // get texture coordinates
+    fMediumX /= (m_rect.right - m_rect.left);
 
-        FRECT texRect1, texRect2;
-        memcpy(&texRect1, &m_texRect1, sizeof(FRECT));
-        texRect1.right = m_texRect1.left + (m_texRect1.right - m_texRect1.left) * fMediumX;
-        memcpy(&texRect2, &m_texRect2, sizeof(FRECT));
-        texRect2.left = m_texRect2.left + (m_texRect2.right - m_texRect2.left) * fMediumX;
+    FRECT texRect1, texRect2;
+    memcpy(&texRect1, &m_texRect1, sizeof(FRECT));
+    texRect1.right = m_texRect1.left + (m_texRect1.right - m_texRect1.left) * fMediumX;
+    memcpy(&texRect2, &m_texRect2, sizeof(FRECT));
+    texRect2.left = m_texRect2.left + (m_texRect2.right - m_texRect2.left) * fMediumX;
 
-        // screen and texture coordinates for filled rectangle
-        pVBuf[0].pos.x = scrRect1.left;
-        pVBuf[0].pos.y = scrRect1.top;
-        pVBuf[0].tu = texRect1.left;
-        pVBuf[0].tv = texRect1.top;
-        pVBuf[1].pos.x = scrRect1.right;
-        pVBuf[1].pos.y = scrRect1.top;
-        pVBuf[1].tu = texRect1.right;
-        pVBuf[1].tv = texRect1.top;
-        pVBuf[2].pos.x = scrRect1.left;
-        pVBuf[2].pos.y = scrRect1.bottom;
-        pVBuf[2].tu = texRect1.left;
-        pVBuf[2].tv = texRect1.bottom;
-        pVBuf[3].pos.x = scrRect1.right;
-        pVBuf[3].pos.y = scrRect1.bottom;
-        pVBuf[3].tu = texRect1.right;
-        pVBuf[3].tv = texRect1.bottom;
-        // screen and texture coordinates for empty rectangle
-        pVBuf[4].pos.x = scrRect2.left;
-        pVBuf[4].pos.y = scrRect2.top;
-        pVBuf[4].tu = texRect2.left;
-        pVBuf[4].tv = texRect2.top;
-        pVBuf[5].pos.x = scrRect2.right;
-        pVBuf[5].pos.y = scrRect2.top;
-        pVBuf[5].tu = texRect2.right;
-        pVBuf[5].tv = texRect2.top;
-        pVBuf[6].pos.x = scrRect2.left;
-        pVBuf[6].pos.y = scrRect2.bottom;
-        pVBuf[6].tu = texRect2.left;
-        pVBuf[6].tv = texRect2.bottom;
-        pVBuf[7].pos.x = scrRect2.right;
-        pVBuf[7].pos.y = scrRect2.bottom;
-        pVBuf[7].tu = texRect2.right;
-        pVBuf[7].tv = texRect2.bottom;
-    }
+    // screen and texture coordinates for filled rectangle
+    pVBuf[0].pos.x = scrRect1.left;
+    pVBuf[0].pos.y = scrRect1.top;
+    pVBuf[0].tu = texRect1.left;
+    pVBuf[0].tv = texRect1.top;
+    pVBuf[1].pos.x = scrRect1.right;
+    pVBuf[1].pos.y = scrRect1.top;
+    pVBuf[1].tu = texRect1.right;
+    pVBuf[1].tv = texRect1.top;
+    pVBuf[2].pos.x = scrRect1.left;
+    pVBuf[2].pos.y = scrRect1.bottom;
+    pVBuf[2].tu = texRect1.left;
+    pVBuf[2].tv = texRect1.bottom;
+    pVBuf[3].pos.x = scrRect1.right;
+    pVBuf[3].pos.y = scrRect1.bottom;
+    pVBuf[3].tu = texRect1.right;
+    pVBuf[3].tv = texRect1.bottom;
+    // screen and texture coordinates for empty rectangle
+    pVBuf[4].pos.x = scrRect2.left;
+    pVBuf[4].pos.y = scrRect2.top;
+    pVBuf[4].tu = texRect2.left;
+    pVBuf[4].tv = texRect2.top;
+    pVBuf[5].pos.x = scrRect2.right;
+    pVBuf[5].pos.y = scrRect2.top;
+    pVBuf[5].tu = texRect2.right;
+    pVBuf[5].tv = texRect2.top;
+    pVBuf[6].pos.x = scrRect2.left;
+    pVBuf[6].pos.y = scrRect2.bottom;
+    pVBuf[6].tu = texRect2.left;
+    pVBuf[6].tv = texRect2.bottom;
+    pVBuf[7].pos.x = scrRect2.right;
+    pVBuf[7].pos.y = scrRect2.bottom;
+    pVBuf[7].tu = texRect2.right;
+    pVBuf[7].tv = texRect2.bottom;
 
     if (pVBuf != nullptr)
         m_rs->UnLockVertexBuffer(m_vBuf);

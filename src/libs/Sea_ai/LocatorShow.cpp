@@ -23,51 +23,47 @@ void SeaLocatorShow::SetDevice()
 {
 }
 
-bool SeaLocatorShow::isLocator(ATTRIBUTES *pA)
+bool SeaLocatorShow::isLocator(const Attribute &pA)
 {
-    return pA->FindAClass(pA, "z") != nullptr;
+    return pA.hasProperty("z");
 }
 
-CVECTOR SeaLocatorShow::GetLocatorPos(ATTRIBUTES *pA)
+CVECTOR SeaLocatorShow::GetLocatorPos(const Attribute &attr)
 {
-    CVECTOR v;
-    v.x = pA->GetAttributeAsFloat("x");
-    v.y = pA->GetAttributeAsFloat("y");
-    v.z = pA->GetAttributeAsFloat("z");
-    return v;
+    return attr.get<CVECTOR>();
 }
 
-const char *SeaLocatorShow::GetRealLocatorName(ATTRIBUTES *pA)
+const char *SeaLocatorShow::GetRealLocatorName(const Attribute &attr)
 {
-    return pA->GetThisName();
+    return attr.getName().data();
 }
 
-const char *SeaLocatorShow::GetLocatorName(ATTRIBUTES *pA)
+const char *SeaLocatorShow::GetLocatorName(const Attribute &attr)
 {
-    const char *pName = pA->GetAttribute("name");
-    if (!pName)
-        pName = pA->GetThisName();
-    return pName;
+    if (attr.hasProperty("name"))
+    {
+        return attr["name"].get<const char*>();
+    }
+
+    return attr.getName().data();
 }
 
-const char *SeaLocatorShow::GetLocatorGroupName(ATTRIBUTES *pA)
+const char *SeaLocatorShow::GetLocatorGroupName(const Attribute &attr)
 {
-    auto *const pAParent = pA->GetParent();
-    Assert(pAParent);
-    return pAParent->GetThisName();
+    return attr.getParent()->getName().data();
 }
 
-float SeaLocatorShow::GetLocatorRadius(ATTRIBUTES *pA)
+float SeaLocatorShow::GetLocatorRadius(const Attribute &attr)
 {
-    return pA->GetAttributeAsFloat("radius", 0.0f);
+    return attr["radius"].get<float>(0.0f);
 }
 
-float SeaLocatorShow::GetLocatorAng(ATTRIBUTES *pA)
+float SeaLocatorShow::GetLocatorAng(const Attribute &attr)
 {
-    return pA->GetAttributeAsFloat("ay", 0.0f);
+    return attr["ay"].get<float>(0.0f);
 }
 
-void SeaLocatorShow::PrintLocator(ATTRIBUTES *pA)
+void SeaLocatorShow::PrintLocator(const Attribute &attr)
 {
     MTX_PRJ_VECTOR vrt;
 
@@ -79,8 +75,8 @@ void SeaLocatorShow::PrintLocator(ATTRIBUTES *pA)
 
     auto fh = static_cast<long>(AIHelper::pRS->CharHeight(FONT_DEFAULT) * fScale);
 
-    auto vPos = GetLocatorPos(pA);
-    auto fAng = GetLocatorAng(pA);
+    auto vPos = GetLocatorPos(attr);
+    auto fAng = GetLocatorAng(attr);
     if ((vPos | view.Vz()) < d)
         return;
 
@@ -100,16 +96,16 @@ void SeaLocatorShow::PrintLocator(ATTRIBUTES *pA)
 
     const char *pName, *pGName;
 
-    if (pGName = GetLocatorGroupName(pA))
+    if (pGName = GetLocatorGroupName(attr))
         AIHelper::Print(vPos.x, vPos.y - fh * 0.8f, fScale, "grp: \"%s\"", pGName);
-    if (pName = GetLocatorName(pA))
+    if (pName = GetLocatorName(attr))
         AIHelper::Print(vPos.x, vPos.y, fScale, "loc: \"%s\"", pName);
-    auto fRadius = GetLocatorRadius(pA);
+    auto fRadius = GetLocatorRadius(attr);
     AIHelper::Print(vPos.x, vPos.y + fh * 0.8f, fScale, "rad: %.2f", fRadius);
     if (fRadius > 0.0f)
     {
         std::vector<SphVertex> Vrts;
-        auto vPos1 = GetLocatorPos(pA);
+        auto vPos1 = GetLocatorPos(attr);
         auto vCenter = CVECTOR(vPos1.x, 2.0f, vPos1.z);
 
         // SphVertex* pVrt = &Vrts[Vrts.Add()];
@@ -133,14 +129,16 @@ void SeaLocatorShow::PrintLocator(ATTRIBUTES *pA)
     }
 }
 
-void SeaLocatorShow::ProcessLocators(ATTRIBUTES *pA)
+void SeaLocatorShow::ProcessLocators(const Attribute &pA)
 {
-    if (!pA)
+    if (pA.empty())
         return;
     if (isLocator(pA))
         PrintLocator(pA);
-    for (uint32_t i = 0; i < pA->GetAttributesNum(); i++)
-        ProcessLocators(pA->GetAttributeClass(i));
+
+    for (const Attribute& attr : pA) {
+        ProcessLocators(attr);
+    }
 }
 
 void SeaLocatorShow::Realize(uint32_t Delta_Time)
@@ -173,7 +171,7 @@ void SeaLocatorShow::Realize(uint32_t Delta_Time)
     AIHelper::pRS->TextureSet(0, -1);
     AIHelper::pRS->TextureSet(1, -1);
 
-    ProcessLocators(pALocators);
+    ProcessLocators(*pALocators);
 }
 
 void SeaLocatorShow::Execute(uint32_t Delta_Time) const
@@ -202,7 +200,7 @@ uint64_t SeaLocatorShow::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-uint32_t SeaLocatorShow::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t SeaLocatorShow::AttributeChanged(Attribute &pAttribute)
 {
     return 0;
 }

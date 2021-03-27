@@ -227,7 +227,7 @@ class SHIP : public SHIP_BASE
     float Cannon_Trace(long iBallOwner, const CVECTOR &src, const CVECTOR &dst);
 
     // inherit functions VAI_OBJBASE
-    void SetACharacter(ATTRIBUTES *pAP);
+    void SetACharacter(Attribute *pAP);
 
     CMatrix *GetMatrix();
     void SetMatrix(CMatrix &mtx);
@@ -239,14 +239,14 @@ class SHIP : public SHIP_BASE
 
     void SetPos(const CVECTOR &vNewPos) override;
 
-    bool Mount(ATTRIBUTES *);
+    bool Mount(Attribute *);
 
     // inherit functions Entity
     bool Init();
     void Realize(uint32_t Delta_Time);
     void Execute(uint32_t Delta_Time);
     uint64_t ProcessMessage(MESSAGE &message);
-    uint32_t AttributeChanged(ATTRIBUTES *pAttribute);
+    uint32_t AttributeChanged(Attribute &pAttribute);
     void ProcessStage(Stage stage, uint32_t delta) override
     {
         switch (stage)

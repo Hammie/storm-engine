@@ -59,6 +59,7 @@ void AIBalls::SetDevice()
 
 void AIBalls::FireBallFromCamera()
 {
+
     auto *pMainCharIndex = static_cast<VDATA *>(core.GetScriptVariable("nMainCharacterIndex"));
     if (!pMainCharIndex)
         return;
@@ -71,14 +72,14 @@ void AIBalls::FireBallFromCamera()
     auto *pAMainCharacter = pMainCharacter->GetAClass(iMainCharIndex);
     if (!pAMainCharacter)
         return;
-    auto *pACannonType = pAMainCharacter->FindAClass(pAMainCharacter, "Ship.Cannons.Type");
-    if (!pACannonType)
+    Assert(pAMainCharacter != nullptr);
+    Attribute& aMainCharacter = *pAMainCharacter;
+    const Attribute& aCannonType = aMainCharacter["Ship"]["Cannons"]["Type"];
+    if (aCannonType.empty())
         return;
-    auto dwCannonType = pACannonType->GetAttributeAsDword();
+    const auto dwCannonType = aCannonType.get<uint32_t>();
 
-    auto *pABall = pAMainCharacter->CreateAttribute("_err324__", "");
-    if (!pABall)
-        return;
+    Attribute& aBall = aMainCharacter["_err324__"] = "";
 
     /*AIHelper::pRS->GetTransform(D3DTS_VIEW, mView);
     CMatrix mIView = mView;
@@ -96,29 +97,29 @@ void AIBalls::FireBallFromCamera()
     auto fY = atan2f(mIView.Vz().x, mIView.Vz().z);
     auto fX = SIGN(mIView.Vz().y) * acosf(mIView.Vz() | CVECTOR(mIView.Vz().x, 0.0f, mIView.Vz().z));
 
-    pABall->SetAttribute("Type", "Balls");
-    pABall->SetAttributeUseDword("CharacterIndex", static_cast<uint32_t>(iMainCharIndex));
-    pABall->SetAttributeUseFloat("x", mIView.Pos().x);
-    pABall->SetAttributeUseFloat("y", mIView.Pos().y);
-    pABall->SetAttributeUseFloat("z", mIView.Pos().z);
-    pABall->SetAttributeUseFloat("SpdV0", 100.0f);
-    pABall->SetAttributeUseFloat("HeightMultiply", 1.0f);
-    pABall->SetAttributeUseFloat("SizeMultiply", 1.0f);
-    pABall->SetAttributeUseFloat("TimeSpeedMultiply", 1.0f);
-    pABall->SetAttributeUseDword("CannonType", dwCannonType);
-    pABall->SetAttributeUseFloat("MaxFireDistance", 15000.0f);
+    aBall["Type"] = "Balls";
+    aBall["CharacterIndex"] = static_cast<uint32_t>(iMainCharIndex);
+    aBall["x"] = mIView.Pos().x;
+    aBall["y"] = mIView.Pos().y;
+    aBall["z"] = mIView.Pos().z;
+    aBall["SpdV0"] = 100.0f;
+    aBall["HeightMultiply"] = 1.0f;
+    aBall["SizeMultiply"] = 1.0f;
+    aBall["TimeSpeedMultiply"] = 1.0f;
+    aBall["CannonType"] = dwCannonType;
+    aBall["MaxFireDistance"] = 15000.0f;
 
-    pABall->SetAttributeUseFloat("Ang", fX);
-    pABall->SetAttributeUseFloat("Dir", fY);
+    aBall["Ang"] = fX;
+    aBall["Dir"] = fY;
 
-    AddBall(pABall);
+    AddBall(aBall);
 
-    pAMainCharacter->DeleteAttributeClassX(pABall);
+    aBall.clear();
 }
 
-void AIBalls::AddBall(ATTRIBUTES *pABall)
+void AIBalls::AddBall(Attribute &aBall)
 {
-    auto *const pBallName = pABall->GetAttribute("Type");
+    auto *const pBallName = aBall["Type"].get<const char*>();
     Assert(pBallName);
 
     uint32_t i;
@@ -132,10 +133,10 @@ void AIBalls::AddBall(ATTRIBUTES *pABall)
     // BALL_PARAMS * pBall = &aBallTypes[i].Balls[aBallTypes[i].Balls.Add()];
     auto *pBall = &aBallTypes[i].Balls.back();
 
-    pBall->iBallOwner = pABall->GetAttributeAsDword("CharacterIndex");
+    aBall["CharacterIndex"].get_to(pBall->iBallOwner);
 
-#define GetAFloat(x) pABall->GetAttributeAsFloat(x)
-#define GetADword(x) pABall->GetAttributeAsDword(x)
+#define GetAFloat(x) aBall[x].get<float>()
+#define GetADword(x) aBall[x].get<uint32_t>()
 
     pBall->fTime = 0.0f;
     pBall->vPos = pBall->vFirstPos = CVECTOR(GetAFloat("x"), GetAFloat("y"), GetAFloat("z"));
@@ -153,8 +154,8 @@ void AIBalls::AddBall(ATTRIBUTES *pABall)
     pBall->fDirZ = sinf(fDir);
     pBall->pParticle = nullptr;
 
-    // pBall->sBallEvent = pABall->GetAttribute("Event");
-    const auto *event_str = pABall->GetAttribute("Event");
+    // pBall->sBallEvent = pABall->getProperty("Event").get<const char*>();
+    const auto *event_str = aBall["Event"].get<const char*>();
     const auto len = std::min(strlen(event_str), static_cast<size_t>(TSE_MAX_EVENT_LENGTH));
     std::copy_n(event_str, len, pBall->sBallEvent);
     pBall->sBallEvent[len] = '\0';
@@ -196,7 +197,10 @@ void AIBalls::Execute(uint32_t Delta_Time)
     {
         auto *pBallsType = &aBallTypes[i];
 
-        AttributesPointer->SetAttributeUseDword("CurrentBallType", pBallsType->dwGoodIndex);
+        Assert(AttributesPointer != nullptr);
+        Attribute& attr = *AttributesPointer;
+
+        attr["CurrentBallType"] = pBallsType->dwGoodIndex;
 
         for (j = 0; j < pBallsType->Balls.size(); j++)
         {
@@ -204,9 +208,9 @@ void AIBalls::Execute(uint32_t Delta_Time)
 
             vSrc = pBall->vPos;
 
-            AttributesPointer->SetAttributeUseDword("CurrentBallCannonType", pBall->dwCannonType);
-            AttributesPointer->SetAttributeUseFloat("CurrentBallDistance", sqrtf(~(pBall->vPos - pBall->vFirstPos)));
-            AttributesPointer->SetAttributeUseFloat("CurrentMaxBallDistance", pBall->fMaxFireDistance);
+            attr["CurrentBallCannonType"] = pBall->dwCannonType;
+            attr["CurrentBallDistance"] = sqrtf(~(pBall->vPos - pBall->vFirstPos));
+            attr["CurrentMaxBallDistance"] = pBall->fMaxFireDistance;
 
             // update ball time
             pBall->fTime += fDeltaTime * fDeltaTimeMultiplyer * pBall->fTimeSpeedMultiply;
@@ -339,9 +343,9 @@ void AIBalls::Realize(uint32_t Delta_Time)
   */
 }
 
-uint32_t AIBalls::AttributeChanged(ATTRIBUTES *pAttributeChanged)
+uint32_t AIBalls::AttributeChanged(Attribute &pAttributeChanged)
 {
-    if (*pAttributeChanged == "clear")
+    if (pAttributeChanged == "clear")
     {
         for (uint32_t i = 0; i < aBallTypes.size(); i++)
         {
@@ -366,49 +370,43 @@ uint32_t AIBalls::AttributeChanged(ATTRIBUTES *pAttributeChanged)
         return 0;
     }
 
-    if (*pAttributeChanged == "add")
+    if (pAttributeChanged == "add")
     {
-        AddBall(AttributesPointer);
+        AddBall(*AttributesPointer);
         return 0;
     }
 
-    if (*pAttributeChanged == "isDone")
+    if (pAttributeChanged == "isDone")
     {
+        Assert(AttributesPointer != nullptr);
+        const Attribute& attr = *AttributesPointer;
+
         // load common parameters
-        fBallFlySoundDistance = AttributesPointer->GetAttributeAsFloat("BallFlySoundDistance");
-        fBallFlySoundStereoMultiplyer = AttributesPointer->GetAttributeAsFloat("BallFlySoundStereoMultiplyer");
-        fDeltaTimeMultiplyer = AttributesPointer->GetAttributeAsFloat("SpeedMultiply");
-        sTextureName = AttributesPointer->GetAttribute("Texture");
-        dwSubTexX = AttributesPointer->GetAttributeAsDword("SubTexX");
-        dwSubTexY = AttributesPointer->GetAttributeAsDword("SubTexY");
+        attr["BallFlySoundDistance"].get_to(fBallFlySoundDistance);
+        attr["BallFlySoundStereoMultiplyer"].get_to(fBallFlySoundStereoMultiplyer);
+        attr["SpeedMultiply"].get_to(fDeltaTimeMultiplyer);
+        attr["Texture"].get_to(sTextureName);
+        attr["SubTexX"].get_to(dwSubTexX);
+        attr["SubTexY"].get_to(dwSubTexY);
 
         dwTextureIndex = AIHelper::pRS->TextureCreate(sTextureName.c_str());
 
         // install balls
-        ATTRIBUTES *pAPBalls = AttributesPointer->GetAttributeClass("Balls");
+        const Attribute &aPBalls = attr["Balls"];
         uint32_t dwIdx = 0;
-        while (pAPBalls && true)
-        {
-            const char *pName = pAPBalls->GetAttributeName(dwIdx);
-            if (!pName)
-                break;
-            ATTRIBUTES *pAP = pAPBalls->GetAttributeClass(pName);
-            if (!pAP)
-                break;
-
-            BALL_TYPE ballType;
-            ballType.sName = pName;
-            ballType.dwSubTexIndex = pAP->GetAttributeAsDword("SubTexIndex");
-            ballType.dwGoodIndex = pAP->GetAttributeAsDword("GoodIndex");
-            ballType.fSize = pAP->GetAttributeAsFloat("Size");
-            ballType.fWeight = pAP->GetAttributeAsFloat("Weight");
-
-            if (pAP->GetAttribute("Particle"))
-                ballType.sParticleName = pAP->GetAttribute("Particle");
-
-            aBallTypes.push_back(ballType);
-
-            dwIdx++;
+        for (const Attribute& aBall : aPBalls) {
+            if (!aBall.empty()) {
+                BALL_TYPE ballType;
+                ballType.sName = aBall.getName().data();
+                aBall["SubTexIndex"].get_to(ballType.dwSubTexIndex);
+                aBall["GoodIndex"].get_to(ballType.dwGoodIndex);
+                aBall["Size"].get_to(ballType.fSize);
+                aBall["Weight"].get_to(ballType.fWeight);
+                if (aBall.hasProperty("Particle")) {
+                    aBall["Particle"].get_to(ballType.sParticleName);
+                }
+                aBallTypes.push_back(ballType);
+            }
         }
         return 0;
     }

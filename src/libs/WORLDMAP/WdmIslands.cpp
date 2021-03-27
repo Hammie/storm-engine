@@ -350,7 +350,7 @@ bool WdmIslands::ObstacleTest(float x, float z, float radius)
 }
 
 // Read Island Data
-void WdmIslands::SetIslandsData(ATTRIBUTES *apnt, bool isChange)
+void WdmIslands::SetIslandsData(Attribute *apnt, bool isChange)
 {
     CVECTOR pos;
     if (!isChange)
@@ -362,32 +362,26 @@ void WdmIslands::SetIslandsData(ATTRIBUTES *apnt, bool isChange)
     if (!apnt)
         return;
     // Get the description of the labels
-    apnt = apnt->FindAClass(apnt, "labels");
-    if (!apnt)
+    const Attribute& attrLabels = apnt->getProperty("labels");
+    if (attrLabels.empty()) {
         return;
-    // Number of labels
-    const uint32_t numAttr = apnt->GetAttributesNum();
-    // Looping through all labels
-    for (uint32_t i = 0; i < numAttr; i++)
-    {
-        // get access to the description of the label
-        ATTRIBUTES *a = apnt->GetAttributeClass(i);
-        if (!a)
-            continue;
+    }
+
+    for (const Attribute& attrLabel : attrLabels) {
         // Get the parameters of the label
-        char *id = a->GetAttribute("id");
-        char *locator = a->GetAttribute("locator");
-        char *text = a->GetAttribute("text");
-        const long icon = static_cast<long>(a->GetAttributeAsDword("icon", static_cast<uint32_t>(-1)));
-        char *font = a->GetAttribute("font");
+        const char *id = attrLabel["id"].get<const char*>();
+        const char *locator = attrLabel["locator"].get<const char*>();
+        const char *text = attrLabel["text"].get<const char*>();
+        const long icon = attrLabel["icon"].get<long>(-1);
+        const char *font = attrLabel["font"].get<const char*>();
         const float pivotX = -0.5f;
         const float pivotY = -0.5f;
-        const float heightView = a->GetAttributeAsFloat("heightView", 250.0);
-        const uint32_t weight = a->GetAttributeAsDword("weight", 0);
+        const float heightView = attrLabel["heightView"].get<float>(250.0f);
+        const uint32_t weight = attrLabel["weight"].get<uint32_t>(0);
         // Check for sufficiency
         if (!id || !text || !locator || !locator[0])
         {
-            core.Trace("World map: label \"%s\" will be skipping...", apnt->GetAttributeName(i));
+            core.Trace("World map: label \"%s\" will be skipping...", attrLabel.getName().data());
             continue;
         }
         // looking for a label among existing
@@ -398,7 +392,7 @@ void WdmIslands::SetIslandsData(ATTRIBUTES *apnt, bool isChange)
             if (!LabelsFindLocator(locator, pos))
             {
                 core.Trace("World map: locator \"%s\" in label \"%s\" not found...", locator,
-                           apnt->GetAttributeName(i));
+                           attrLabel.getName().data());
                 continue;
             }
             // Adding a new label
@@ -470,25 +464,26 @@ void WdmIslands::SetIslandsData(ATTRIBUTES *apnt, bool isChange)
     }
 }
 
-void WdmIslands::LabelsReadIconParams(ATTRIBUTES *apnt)
+void WdmIslands::LabelsReadIconParams(Attribute *apnt)
 {
-    if (!apnt)
+    Assert(apnt != nullptr);
+    const Attribute& attr = *apnt;
+    const Attribute& icon = attr["icon"];
+
+    if (icon.empty()) {
         return;
-    apnt = apnt->FindAClass(apnt, "icon");
-    if (!apnt)
-        return;
-    icons.w = static_cast<float>(apnt->GetAttributeAsDword("width", 32));
-    icons.h = static_cast<float>(apnt->GetAttributeAsDword("height", 32));
-    icons.num = apnt->GetAttributeAsDword("num", 8);
-    icons.frames = apnt->GetAttributeAsDword("frames", 1);
-    icons.fps = apnt->GetAttributeAsFloat("fps", 0.0f);
+    }
+
+    icon["width"].get_to(icons.w, 32.f);
+    icon["height"].get_to(icons.h, 32.f);
+    icon["num"].get_to(icons.num, 8u);
+    icon["frames"].get_to(icons.frames, 8u);
+    icon["fps"].get_to(icons.fps, 0.f);
     icons.frame = 0.0f;
     icons.f[0] = 0.0f;
     icons.f[1] = 0.0f;
     icons.blend = 0;
-    const char *texName = apnt->GetAttribute("texture");
-    if (!texName)
-        texName = "";
+    const std::string texName = icon["texture"].get<std::string>("");
     std::string name = "WorldMap\\Interfaces\\";
     name += texName;
     icons.texture = wdmObjects->rs->TextureCreate(name.c_str());
@@ -602,6 +597,8 @@ void WdmIslands::LabelsRelease()
 
 void WdmIslands::Update(float dltTime)
 {
+    Attribute& attrIsland = wdmObjects->wm->AttributesPointer->getProperty("island");
+
     if (wdmObjects->playerShip)
     {
         CVECTOR pos;
@@ -613,14 +610,9 @@ void WdmIslands::Update(float dltTime)
             {
                 if (wdmObjects->wm->AttributesPointer)
                 {
-                    wdmObjects->wm->AttributesPointer->SetAttribute("island", (char *)islands[i].modelName.c_str());
-                    ATTRIBUTES *a =
-                        wdmObjects->wm->AttributesPointer->FindAClass(wdmObjects->wm->AttributesPointer, "island");
-                    if (a)
-                    {
-                        a->SetAttributeUseFloat("x", islands[i].worldPosition.x);
-                        a->SetAttributeUseFloat("z", islands[i].worldPosition.z);
-                    }
+                    attrIsland = (char *)islands[i].modelName.c_str();
+                    attrIsland["x"] = islands[i].worldPosition.x;
+                    attrIsland["z"] = islands[i].worldPosition.z;
                     wdmObjects->curIsland = (char *)islands[i].modelName.c_str();
                 }
                 return;
@@ -628,13 +620,9 @@ void WdmIslands::Update(float dltTime)
         }
     }
     wdmObjects->curIsland = nullptr;
-    wdmObjects->wm->AttributesPointer->SetAttribute("island", "");
-    ATTRIBUTES *a = wdmObjects->wm->AttributesPointer->FindAClass(wdmObjects->wm->AttributesPointer, "island");
-    if (a)
-    {
-        a->SetAttributeUseFloat("x", 0.0f);
-        a->SetAttributeUseFloat("z", 0.0f);
-    }
+    attrIsland = "";
+    attrIsland["x"] = 0.0f;
+    attrIsland["z"] = 0.0f;
 }
 
 void WdmIslands::LRender(VDX9RENDER *rs)

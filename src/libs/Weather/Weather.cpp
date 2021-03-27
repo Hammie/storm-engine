@@ -362,146 +362,146 @@ void WEATHER::GetVector(uint32_t dwCode, CVECTOR *vOut)
     *vOut = vVectors[dwCode];
 }
 
-uint32_t WEATHER::AttributeChanged(ATTRIBUTES *pAttribute)
+uint32_t WEATHER::AttributeChanged(Attribute &pAttribute)
 {
-    auto *const pParent = pAttribute->GetParent(); // if (*pAttribute == "Hour")
+    const Attribute* pParent = pAttribute.getParent(); // if (*pAttribute == "Hour")
     if (*pParent == "fog")
     {
-        if (*pAttribute == "Enable")
+        if (pAttribute == "Enable")
         {
-            iLongs[whi_fog_enable] = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(iLongs[whi_fog_enable]);
             return 0;
         }
-        if (*pAttribute == "Start")
+        if (pAttribute == "Start")
         {
-            fFloats[whf_fog_start] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_fog_start]);
             return 0;
         }
-        if (*pAttribute == "Density")
+        if (pAttribute == "Density")
         {
-            fFloats[whf_fog_density] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_fog_density]);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (pAttribute == "Color")
         {
-            dwColors[whc_fog_color] = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwColors[whc_fog_color]);
             return 0;
         }
     }
     if (*pParent == "wind")
     {
-        if (*pAttribute == "Angle")
+        if (pAttribute == "Angle")
         {
-            fFloats[whf_wind_angle] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_wind_angle]);
             return 0;
         }
-        if (*pAttribute == "Speed")
+        if (pAttribute == "Speed")
         {
-            fFloats[whf_wind_speed] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_wind_speed]);
             return 0;
         }
         return 0;
     }
     if (*pParent == "sun")
     {
-        if (*pAttribute == "Height")
+        if (pAttribute == "Height")
         {
-            fSunHeight = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fSunHeight);
             return 0;
         }
-        if (*pAttribute == "BegAngle")
+        if (pAttribute == "BegAngle")
         {
-            fSunBegAngle = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fSunBegAngle);
             return 0;
         }
-        if (*pAttribute == "BegTime")
+        if (pAttribute == "BegTime")
         {
-            fSunBegTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fSunBegTime);
             return 0;
         }
-        if (*pAttribute == "EndAngle")
+        if (pAttribute == "EndAngle")
         {
-            fSunEndAngle = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fSunEndAngle);
             return 0;
         }
-        if (*pAttribute == "EndTime")
+        if (pAttribute == "EndTime")
         {
-            fSunEndTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fSunEndTime);
             return 0;
         }
-        if (*pAttribute == "Color")
+        if (pAttribute == "Color")
         {
-            dwColors[whc_sun_color] = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwColors[whc_sun_color]);
             return 0;
         }
-        if (*pAttribute == "Ambient")
+        if (pAttribute == "Ambient")
         {
-            dwColors[whc_sun_ambient] = pAttribute->GetAttributeAsDword();
+            pAttribute.get_to(dwColors[whc_sun_ambient]);
             return 0;
         }
         if (fFloats[whf_time_speed] == 0.f)
         {
-            if (*pAttribute == "HeightAngle")
+            if (pAttribute == "HeightAngle")
             {
-                fFloats[whf_sun_height_angle] = pAttribute->GetAttributeAsFloat();
+                pAttribute.get_to(fFloats[whf_sun_height_angle]);
                 return 0;
             }
-            if (*pAttribute == "AzimuthAngle")
+            if (pAttribute == "AzimuthAngle")
             {
-                fFloats[whf_sun_azimuth_angle] = pAttribute->GetAttributeAsFloat();
+                pAttribute.get_to(fFloats[whf_sun_azimuth_angle]);
                 return 0;
             }
         }
     }
     if (*pParent == "moon")
     {
-        if (*pAttribute == "Height")
+        if (pAttribute == "Height")
         {
-            fMoonHeight = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fMoonHeight);
             return 0;
         }
-        if (*pAttribute == "BegAngle")
+        if (pAttribute == "BegAngle")
         {
-            fMoonBegAngle = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fMoonBegAngle);
             return 0;
         }
-        if (*pAttribute == "BegTime")
+        if (pAttribute == "BegTime")
         {
-            fMoonBegTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fMoonBegTime);
             return 0;
         }
-        if (*pAttribute == "EndAngle")
+        if (pAttribute == "EndAngle")
         {
-            fMoonEndAngle = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fMoonEndAngle);
             return 0;
         }
-        if (*pAttribute == "EndTime")
+        if (pAttribute == "EndTime")
         {
-            fMoonEndTime = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fMoonEndTime);
             return 0;
         }
     }
     if (*pParent == "time")
     {
-        if (*pAttribute == "time")
+        if (pAttribute == "time")
         {
-            fFloats[whf_time_counter] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_time_counter]);
             return 0;
         }
-        if (*pAttribute == "speed")
+        if (pAttribute == "speed")
         {
-            fFloats[whf_time_speed] = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fFloats[whf_time_speed]);
             if (fFloats[whf_time_speed] != 0.f)
                 fFloats[whf_time_speed] = 0.001f / fFloats[whf_time_speed];
             return 0;
         }
-        if (*pAttribute == "updatefrequence")
+        if (pAttribute == "updatefrequence")
         {
-            fUpdateFrequence = pAttribute->GetAttributeAsFloat();
+            pAttribute.get_to(fUpdateFrequence);
             return 0;
         }
     }
-    if (*pAttribute == "isDone")
+    if (pAttribute == "isDone")
     {
         SetCommonStates();
     }

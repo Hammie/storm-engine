@@ -432,7 +432,7 @@ uint64_t LocationCamera::ProcessMessage(MESSAGE &message)
 }
 
 // Changing an attribute
-uint32_t LocationCamera::AttributeChanged(ATTRIBUTES *apnt)
+uint32_t LocationCamera::AttributeChanged(Attribute &apnt)
 {
     // Reading out attributes
     if (!AttributesPointer)
@@ -660,50 +660,48 @@ void LocationCamera::StoreRestoreDynamicFov(bool bStore)
 {
     if (!AttributesPointer)
         return;
-    auto *pA = AttributesPointer->GetAttributeClass("DynamicFov");
-    if (!pA)
-        pA = AttributesPointer->CreateSubAClass(AttributesPointer, "DynamicFov");
-    if (!pA)
-        return;
+
+    Attribute& attr = *AttributesPointer;
+    Attribute&dynamic_fov = attr["DynamicFov"];
 
     if (bStore)
     {
         // store
-        pA->SetAttributeUseDword("ison", dynamic_fog.isOn);
+        dynamic_fov["ison"] = dynamic_fog.isOn;
         if (dynamic_fog.isOn)
         {
-            pA->SetAttributeUseFloat("minfov", dynamic_fog.fMinFov);
-            pA->SetAttributeUseFloat("maxfov", dynamic_fog.fMaxFov);
-            pA->SetAttributeUseFloat("curfov", dynamic_fog.fCurFov);
-            pA->SetAttributeUseDword("fogup", dynamic_fog.bFogUp);
-            pA->SetAttributeUseFloat("speed", dynamic_fog.fFogChangeSpeed);
-            pA->SetAttributeUseFloat("timecur", dynamic_fog.fFogTimeCur);
-            pA->SetAttributeUseFloat("timemax", dynamic_fog.fFogTimeMax);
+            dynamic_fov["minfov"] = dynamic_fog.fMinFov;
+            dynamic_fov["maxfov"] = dynamic_fog.fMaxFov;
+            dynamic_fov["curfov"] = dynamic_fog.fCurFov;
+            dynamic_fov["fogup"] = dynamic_fog.bFogUp;
+            dynamic_fov["speed"] = dynamic_fog.fFogChangeSpeed;
+            dynamic_fov["timecur"] = dynamic_fog.fFogTimeCur;
+            dynamic_fov["timemax"] = dynamic_fog.fFogTimeMax;
 
-            pA->SetAttributeUseFloat("curangle", dynamic_fog.fCurAngle);
-            pA->SetAttributeUseFloat("maxangle", dynamic_fog.fMaxAngle);
-            pA->SetAttributeUseFloat("speedangle", dynamic_fog.fAngleSpeed);
-            pA->SetAttributeUseDword("angleup", dynamic_fog.bAngleUp);
+            dynamic_fov["curangle"] = dynamic_fog.fCurAngle;
+            dynamic_fov["maxangle"] = dynamic_fog.fMaxAngle;
+            dynamic_fov["speedangle"] = dynamic_fog.fAngleSpeed;
+            dynamic_fov["angleup"] = dynamic_fog.bAngleUp;
         }
     }
     else
     {
         // restore
-        dynamic_fog.isOn = pA->GetAttributeAsDword("ison", false) != 0;
+        dynamic_fov["ison"].get_to(dynamic_fog.isOn, false);
         if (dynamic_fog.isOn)
         {
-            dynamic_fog.fMinFov = pA->GetAttributeAsFloat("minfov", LOCATIONCAMERA_PERSPECTIVE);
-            dynamic_fog.fMaxFov = pA->GetAttributeAsFloat("maxfov", LOCATIONCAMERA_PERSPECTIVE);
-            dynamic_fog.fCurFov = pA->GetAttributeAsFloat("curfov", LOCATIONCAMERA_PERSPECTIVE);
-            dynamic_fog.bFogUp = pA->GetAttributeAsDword("fogup", true) != 0;
-            dynamic_fog.fFogChangeSpeed = pA->GetAttributeAsFloat("speed", 0.1f);
-            dynamic_fog.fFogTimeCur = pA->GetAttributeAsFloat("timecur", 0.f);
-            dynamic_fog.fFogTimeMax = pA->GetAttributeAsFloat("timemax", 0.f);
+            dynamic_fov["minfov"].get_to(dynamic_fog.fMinFov, LOCATIONCAMERA_PERSPECTIVE);
+            dynamic_fov["maxfov"].get_to(dynamic_fog.fMaxFov, LOCATIONCAMERA_PERSPECTIVE);
+            dynamic_fov["curfov"].get_to(dynamic_fog.fCurFov, LOCATIONCAMERA_PERSPECTIVE);
+            dynamic_fov["fogup"].get_to(dynamic_fog.bFogUp, true);
+            dynamic_fov["speed"].get_to(dynamic_fog.fFogChangeSpeed, 0.1f);
+            dynamic_fov["timecur"].get_to(dynamic_fog.fFogTimeCur, 0.f);
+            dynamic_fov["timemax"].get_to(dynamic_fog.fFogTimeMax, 0.f);
 
-            dynamic_fog.fCurAngle = pA->GetAttributeAsFloat("curangle", 0.f);
-            dynamic_fog.fMaxAngle = pA->GetAttributeAsFloat("maxangle", 0.f);
-            dynamic_fog.fAngleSpeed = pA->GetAttributeAsFloat("speedangle", 0.1f);
-            dynamic_fog.bAngleUp = pA->GetAttributeAsDword("angleup", true) != 0;
+            dynamic_fov["curangle"].get_to(dynamic_fog.fCurAngle, 0.f);
+            dynamic_fov["maxangle"].get_to(dynamic_fog.fMaxAngle, 0.f);
+            dynamic_fov["speedangle"].get_to(dynamic_fog.fAngleSpeed, 0.1f);
+            dynamic_fov["angleup"].get_to(dynamic_fog.bAngleUp, true);
         }
     }
 }
