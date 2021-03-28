@@ -2185,7 +2185,9 @@ bool DATA::Copy(DATA *pV)
             {
                 if (AttributesClass == nullptr)
                     AttributesClass = new Attribute(*pVCompiler->GetVSC(), "<object>");
-                *AttributesClass = *pV->AttributesClass;
+                if (pV->AttributesClass != nullptr) {
+                    *AttributesClass = *pV->AttributesClass;
+                }
             }
         }
         break;

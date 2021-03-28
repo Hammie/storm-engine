@@ -114,7 +114,7 @@ bool InfoHandler::DoPreOut()
     int nOutOffset, nOutWidth, nBorderWidth, nInsideRectWidth, nInsideRectHeight;
     int nRowQ;
 
-    inStrStart = AttributesPointer->getProperty("infoStr").get<const char*>();
+    inStrStart = AttributesPointer->getProperty("infoStr").get<const char*>(nullptr);
     if (inStrStart != nullptr)
     {
         AttributesPointer->getProperty("backColor").get_to(dwBCol, 0u);

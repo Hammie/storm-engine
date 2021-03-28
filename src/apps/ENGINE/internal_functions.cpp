@@ -2384,7 +2384,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
                 pRoot = pV->GetAClass();
                 if (pRoot)
                 {
-                    pA = &pRoot->getProperty(pChar);
+                    pA = &pRoot->getPropertyEx(pChar);
                     if (!pA->empty())
                         TempLong1 = 1;
                     else
@@ -2444,13 +2444,11 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         pA = pV->GetAClass();
 
-        if (pA)
-            pA = &pA->getProperty(TempLong1);
-        if (pA == nullptr)
-        {
+        if (pA->getStringCodec().Convert(TempLong1) == nullptr) {
             SetError("incorrect argument index");
             break;
         }
+        pA = &pA->getProperty(TempLong1);
         pV = SStack.Push();
         pV->SetType(VAR_AREFERENCE);
         pV->SetAReference(pA);
@@ -2471,7 +2469,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         pA = pV->GetAClass();
         if (pA)
-            pChar = pA->get<const char*>();
+            pChar = pA->get<const char*>("AClass ERROR n1");
         else
             pChar = "AClass ERROR n1";
         pV = SStack.Push();

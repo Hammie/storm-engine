@@ -1179,7 +1179,7 @@ void CXI_TABLE::UpdateTableCells()
     // read lines from attributes
     attrRoot["top"].get_to(m_nTopIndex, 0l); // first index of the attribute being read
     // first check for header
-    Attribute attrHr = attrRoot["hr"];
+    Attribute &attrHr = attrRoot["hr"];
     if (!attrHr.empty())
     {
         if (!m_pHeader)

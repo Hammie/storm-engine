@@ -206,7 +206,7 @@ bool SHIP::BuildMasts()
                 pM->vDst = CVECTOR(vTemp.x, vUp.y, vTemp.z);
             }
 
-            Attribute aMast = aMasts[pNode->GetName()];
+            Attribute &aMast = aMasts[pNode->GetName()];
             if (aMast.get<float>() > 1.0f)
             {
                 pM->fDamage = 1.0f;

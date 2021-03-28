@@ -147,7 +147,7 @@ void AIShip::Execute(float fDeltaTime)
             }
 
         // fill state for forts
-        Attribute aForts = aSeaAIU["Forts"];
+        Attribute &aForts = aSeaAIU["Forts"];
         if (AIFort::pAIFort)
             for (i = 0; i < AIFort::pAIFort->GetNumForts(); i++)
             {

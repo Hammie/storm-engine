@@ -3894,7 +3894,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
     DATA *pVar;
     entid_t eid;
     //    Attribute * pRoot;
-    Attribute *pLeftOperandAClass;
+    Attribute *pLeftOperandAClass = nullptr;
     bool bDebugWaitForThisFunc;
     DATA *pVDst;
     DATA *pVSrc;
@@ -4288,7 +4288,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                 pVV->Get(pAccess_string);
 
                 // pLeftOperandAClass = pLeftOperandAClass->VerifyAttributeClass(pAccess_string);
-                pLeftOperandAClass = &pLeftOperandAClass->getProperty(pAccess_string);
+                pLeftOperandAClass = &pLeftOperandAClass->getPropertyEx(pAccess_string);
                 break;
             }
             if (pLeftOperandAClass == nullptr)
