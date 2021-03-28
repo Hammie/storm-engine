@@ -8,7 +8,6 @@
 
 #define SKIP_COMMENT_TRACING
 #define TRACE_OFF
-#define INVALID_SEGMENT_INDEX 0xffffffff
 #ifndef INVALID_ARRAY_INDEX
 #define INVALID_ARRAY_INDEX 0xffffffff
 #endif
@@ -25,11 +24,12 @@ extern FILE_SERVICE File_Service;
 extern S_DEBUG CDebug;
 extern uint32_t dwNumberScriptCommandsExecuted;
 
+using namespace storm::scripting;
+
 COMPILER::COMPILER()
 {
     SCodec = std::make_unique<STRING_CODEC>();
 
-    CompilerStage = CS_SYSTEM;
     File_Service._DeleteFile(COMPILER_LOG_FILENAME);
     File_Service._DeleteFile(COMPILER_ERRORLOG_FILENAME);
     LabelTable.SetStringDataSize(sizeof(uint32_t));
@@ -377,13 +377,13 @@ void COMPILER::SetError(const char *data_PTR, ...)
 
     switch (CompilerStage)
     {
-    case CS_SYSTEM:
+    case COMPILER_STAGE::CS_SYSTEM:
         sprintf_s(ErrorBuffer, "ERROR in %s(%d): %s", DebugSourceFileName, DebugSourceLine + 1, LogBuffer);
         break;
-    case CS_COMPILATION:
+    case COMPILER_STAGE::CS_COMPILATION:
         sprintf_s(ErrorBuffer, "COMPILE ERROR in %s(%d): %s", DebugSourceFileName, DebugSourceLine + 1, LogBuffer);
         break;
-    case CS_RUNTIME:
+    case COMPILER_STAGE::CS_RUNTIME:
         sprintf_s(ErrorBuffer, "RUNTIME ERROR in %s(%d): %s", DebugSourceFileName, DebugSourceLine + 1, LogBuffer);
         break;
     }
@@ -1247,7 +1247,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
     DEFINFO di;
     CLASS_COMPONENT cc;
 
-    CompilerStage = CS_COMPILATION;
+    CompilerStage = COMPILER_STAGE::CS_COMPILATION;
 
     RunningSegmentID = INVALID_SEGMENT_INDEX;
 
@@ -3713,7 +3713,7 @@ bool COMPILER::BC_CallFunction(uint32_t func_code, uint32_t &ip, DATA *&pVResult
     uint32_t check_sp;
     uint32_t nDebugEnterMode;
 
-    CompilerStage = CS_RUNTIME;
+    CompilerStage = COMPILER_STAGE::CS_RUNTIME;
 
     // get func info
     if (!FuncTab.GetFunc(call_fi, func_code))
@@ -3901,7 +3901,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
     bool bUseIndex;
     long dwBXIndex;
 
-    CompilerStage = CS_RUNTIME;
+    CompilerStage = COMPILER_STAGE::CS_RUNTIME;
 
     if (bRuntimeLog)
         FuncTab.AddCall(function_code);

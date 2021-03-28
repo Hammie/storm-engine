@@ -214,7 +214,7 @@ void CORE::ProcessEngineIniFile()
 
     loadCompatibilitySettings(*engine_ini);
 
-#ifdef NDEBUG
+#ifndef NDEBUG
     const bool enable_file_search = true;
 #else
     // Pirates of the Caribbean has some misplaced texture files

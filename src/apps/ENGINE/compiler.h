@@ -22,6 +22,7 @@
 #include "internal_functions.hpp"
 
 #include <storm/scripting/string_codec.h>
+#include <storm/scripting/compiler.hpp>
 
 #define COMPILER_LOG_FILENAME "compile.log"
 #define COMPILER_ERRORLOG_FILENAME "error.log"
@@ -99,19 +100,13 @@ class SLIBHOLDER
 
 class S_DEBUG;
 
-enum COMPILER_STAGE
-{
-    CS_SYSTEM,
-    CS_COMPILATION,
-    CS_RUNTIME
-};
 class CORE;
 class COMPILER : public VIRTUAL_COMPILER
 {
     friend CORE;
     friend S_DEBUG;
 
-    COMPILER_STAGE CompilerStage;
+    storm::scripting::COMPILER_STAGE CompilerStage = storm::scripting::COMPILER_STAGE::CS_SYSTEM;
     STRINGS_LIST LabelTable;
     // STRINGS_LIST EventTable;
     STRINGS_LIST LabelUpdateTable;
@@ -119,7 +114,7 @@ class COMPILER : public VIRTUAL_COMPILER
     MESSAGE *pEventMessage;
     std::vector<SEGMENT_DESC> SegmentTable;
     uint32_t SegmentsNum;
-    uint32_t RunningSegmentID;
+    uint32_t RunningSegmentID = storm::scripting::INVALID_SEGMENT_INDEX;
     uint32_t InstructionPointer;
 
     char *pBuffer;
