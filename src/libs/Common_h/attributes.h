@@ -8,7 +8,7 @@
 
 #include "storm_assert.h"
 
-#include "string_codec.h"
+#include "storm/scripting/string_codec.h"
 
 // here for now
 constexpr size_t TSE_MAX_EVENT_LENGTH = 64;

@@ -1,4 +1,4 @@
-#include "message.hpp"
+#include "storm/scripting/message.hpp"
 
 #include <catch2/catch.hpp>
 

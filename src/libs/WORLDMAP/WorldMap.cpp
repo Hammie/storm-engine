@@ -27,7 +27,7 @@
 #include "WdmWindUI.h"
 #include "defines.h"
 
-#include "message.hpp"
+#include <storm/scripting/message.hpp>
 
 //============================================================================================
 

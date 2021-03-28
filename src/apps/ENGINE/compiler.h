@@ -17,10 +17,11 @@
 #include "script_libriary.h"
 #include "strings_list.h"
 #include "tclass_list.h"
-#include "string_codec.h"
 #include "token.h"
 
 #include "internal_functions.hpp"
+
+#include <storm/scripting/string_codec.h>
 
 #define COMPILER_LOG_FILENAME "compile.log"
 #define COMPILER_ERRORLOG_FILENAME "error.log"

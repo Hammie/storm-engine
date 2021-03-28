@@ -1,4 +1,4 @@
-#include "string_codec.h"
+#include "storm/scripting/string_codec.h"
 
 namespace {
 

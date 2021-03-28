@@ -7,7 +7,7 @@
 #include "Cvector.h"
 #include "Entity.h"
 
-#include <message.hpp>
+#include <storm/scripting/message.hpp>
 
 #include <string_view>
 
