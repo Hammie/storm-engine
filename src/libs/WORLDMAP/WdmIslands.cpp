@@ -43,7 +43,7 @@ WdmIslands::WdmIslands()
 
     if (!baseModel) {
         baseModel = static_cast<WdmRenderModel *>(
-            wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands", false, false, false, 1));
+            wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands", false, false, true, 2));
     }
 
     if (!baseModel || !baseModel->geo)
