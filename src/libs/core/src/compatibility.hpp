@@ -8,6 +8,7 @@ enum class ENGINE_VERSION {
     CARIBBEAN_TALES,
     CITY_OF_ABANDONED_SHIPS, // 2.8
     TO_EACH_HIS_OWN,
+    LATEST, // Current, modded version
 };
 
 #endif // STORM_ENGINE_COMPATIBILITY_HPP

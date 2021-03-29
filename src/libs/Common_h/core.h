@@ -164,10 +164,12 @@ class CORE
 
     storm::ResourceLocator& getResourceLocationService();
 
+    [[nodiscard]] ENGINE_VERSION getTargetVersion() const noexcept;
+
   private:
     void loadCompatibilitySettings(INIFILE& inifile);
 
-    ENGINE_VERSION m_TargetVersion = ENGINE_VERSION::TO_EACH_HIS_OWN;
+    ENGINE_VERSION m_TargetVersion = ENGINE_VERSION::LATEST;
 
     ScreenSize m_ScreenSize;
     std::unique_ptr<storm::ResourceLocator> m_ResourceLocator;
