@@ -29,7 +29,8 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     }
 
     if (m_EnableFileSearch) {
-        auto result = findResource(root, fixed_resource_path);
+        const path& filename = final_path.filename();
+        auto result = findResource(root, filename.string());
         if (result) {
             spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.", resource_path, result->make_preferred().string());
             return result;
