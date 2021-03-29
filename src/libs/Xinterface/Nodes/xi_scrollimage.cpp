@@ -1081,6 +1081,9 @@ void CXI_SCROLLIMAGE::ChangeScroll(int nScrollItemNum)
 
                 // set pictures
                 char *tmpStr;
+                Assert(m_Image[i].tex.size() == m_nSlotsQnt);
+                Assert(m_Image[i].img.size() == m_nSlotsQnt);
+                Assert(m_Image[i].bUseSpecTechnique.size() == m_nSlotsQnt);
                 for (n = 0; n < m_nSlotsQnt; n++)
                 {
                     sprintf_s(param, "name%d", n + 1);
@@ -1662,12 +1665,11 @@ void CXI_SCROLLIMAGE::IMAGEDESCRIBE::Clear()
     std::for_each(saveName.begin(), saveName.end(), [] (char* str) {
       delete[] str;
     });
-    saveName.clear();
-    bUseSpecTechnique.clear();
-    tex.clear();
-    ptex.clear();
-    img.clear();
-
+    std::fill(saveName.begin(), saveName.end(), nullptr);
+    std::fill(bUseSpecTechnique.begin(), bUseSpecTechnique.end(), false);
+    std::fill(tex.begin(), tex.end(), -1);
+    std::fill(ptex.begin(), ptex.end(), nullptr);
+    std::fill(img.begin(), img.end(), -1);
     str1 = -1;
     str2 = -1;
     STORM_DELETE(string1);
