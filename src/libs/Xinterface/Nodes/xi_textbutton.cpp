@@ -601,14 +601,21 @@ uint32_t CXI_TEXTBUTTON::MessageProc(long msgcode, MESSAGE &message)
         m_idString = -1;
         if (param[0] == '#')
         {
+            const auto len = strlen(param);
+            if ((m_sString = new char[len]) == nullptr)
             {
-                const auto len = strlen(param);
-                if ((m_sString = new char[len]) == nullptr)
-                {
-                    throw std::exception("allocate memory error");
-                }
-                memcpy(m_sString, &param[1], len);
+                throw std::exception("allocate memory error");
             }
+            memcpy(m_sString, param + 1, len);
+        }
+        else if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN)
+        {
+            const auto len = strlen(param);
+            if ((m_sString = new char[len + 1]) == nullptr)
+            {
+                throw std::exception("allocate memory error");
+            }
+            memcpy(m_sString, param, len + 1);
         }
         else
         {
