@@ -1,41 +1,49 @@
-#include <spdlog/spdlog.h>
-
 #include "externs.h"
 #include "fs.h"
 #include "s_debug.h"
+#include "SteamApi.hpp"
 #include "compiler.h"
-#include "steam_api.h"
+
 #include <crtdbg.h>
 #include <dbghelp.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <stdio.h>
 #include <tchar.h>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 constexpr auto DUMP_FILENAME = "engine_dump.dmp";
 
 S_DEBUG CDebug;
+
 bool isHold = false;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 int Alert(const char *lpCaption, const char *lpText);
 void CreateMiniDump(EXCEPTION_POINTERS *pep);
-bool _loopMain();
 
-bool _loopMain()
+bool runExceptionWrapped()
 {
-    //__try
-    //{
-    try {
+    try
+    {
         return core.Run();
     }
-    catch (const std::exception& e) {
-        spdlog::error("Error while running main loop: {}", e.what());
-        return false;
+    catch (const std::exception &e)
+    {
+        spdlog::critical(e.what());
+        throw;
     }
-    //}
-    //__except (CreateMiniDump(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER)
-    //{
-    //}
+}
+
+bool runSehWrapped()
+{
+    __try
+    {
+        return runExceptionWrapped();
+    }
+    __except (CreateMiniDump(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER)
+    {
+        std::terminate();
+    }
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
@@ -63,14 +71,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     /* Init system log */
     log_path = fs::GetLogsPath() / std::filesystem::u8path("system.log");
     fio->_DeleteFile(log_path.string().c_str());
-    core.tracelog = spdlog::basic_logger_mt("system", log_path.string(), true);
-    spdlog::set_default_logger(core.tracelog);
+    core.tracelog = spdlog::basic_logger_st("system", log_path.string(), true);
     core.tracelog->set_level(spdlog::level::trace);
+    core.tracelog->flush_on(spdlog::level::critical);
+    set_default_logger(core.tracelog);
+
 
     /* Init compile and error/warning logs */
     log_path = fs::GetLogsPath() / std::filesystem::u8path(COMPILER_LOG_FILENAME);
     fio->_DeleteFile(log_path.string().c_str());
-    core.Compiler->tracelog = spdlog::basic_logger_mt("compile", log_path.string(), true);
+    core.Compiler->tracelog = spdlog::basic_logger_st("compile", log_path.string(), true);
     core.Compiler->tracelog->set_level(spdlog::level::trace);
     log_path = fs::GetLogsPath() / std::filesystem::u8path(COMPILER_ERRORLOG_FILENAME);
     fio->_DeleteFile(log_path.string().c_str());
@@ -80,9 +90,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     core.Compiler->warninglog = std::make_shared<spdlog::logger>("warning", core.Compiler->error_warning_sink);
     core.Compiler->warninglog->set_level(spdlog::level::trace);
 
+    // Init script debugger
+    CDebug.Init();
+
     /* Read config */
     uint32_t dwMaxFPS = 0;
     auto *ini = File_Service.OpenIniFile(ENGINE_INI_FILE_NAME);
+    bool bSteam = false;
+
     if (ini)
     {
         dwMaxFPS = static_cast<uint32_t>(ini->GetLong(nullptr, "max_fps", 0));
@@ -104,24 +119,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         delete ini;
     }
 
-    if (bSteam)
-    {
-        if (SteamAPI_RestartAppIfNecessary(223330))
-        {
-            return EXIT_FAILURE;
-        }
-
-        if (!SteamAPI_Init())
-        {
-            Alert("Fatal Error", "Steam must be running to play this game - SteamAPI_Init() failed!\n");
-            return EXIT_FAILURE;
-        }
-        else
-        {
-            core.InitAchievements();
-            core.InitSteamDLC();
-        }
-    }
+    // evaluate SteamApi singleton
+    steamapi::SteamApi::getInstance(!bSteam);
 
     /* Register and show window */
     const auto *const windowName = L"Sea Dogs";
@@ -172,10 +171,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
                         continue;
                     dwOldTime = dwNewTime;
                 }
-
-                bool runResult = _loopMain();
-
-                //                if (!isHold && !core.Run())
+                const auto runResult = runSehWrapped();
                 if (!isHold && !runResult)
                 {
                     isHold = true;
@@ -190,14 +186,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     }
 
     /* Release */
-    if (bSteam)
-    {
-        // Shutdown the SteamAPI
-        SteamAPI_Shutdown();
-        core.DeleteAchievements();
-        core.DeleteSteamDLC();
-    }
-
+    core.ReleaseBase();
     ClipCursor(nullptr);
 
     return msg.wParam;
@@ -272,6 +261,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 void CreateMiniDump(EXCEPTION_POINTERS *pep)
 {
+    // flush logs
+    if (core.tracelog)
+    {
+        core.tracelog->flush();
+    }
+
     std::filesystem::path dmpfile = fs::GetStashPath() / std::filesystem::u8path(DUMP_FILENAME);
     // Open the file
     HANDLE hFile =

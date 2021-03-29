@@ -130,12 +130,6 @@ static constexpr const std::array<INTFUNCDESC, 103> IntFuncTable {
     {1, "SetTimeScale", TVOID},
     {1, "CheckFunction", VAR_INTEGER},
     {0, "GetEngineVersion", VAR_INTEGER},
-    {1, "GetDLCenabled", VAR_INTEGER},
-    {0, "GetDLCCount", VAR_INTEGER},
-    {1, "GetDLCData", VAR_INTEGER},
-    {1, "DLCStartOverlay", VAR_INTEGER},
-    {0, "GetSteamEnabled", VAR_INTEGER},
-    {1, "StartBackProcess", TVOID},
 
     // Not yet implemented
     {2, "FindClass", VAR_INTEGER},
@@ -249,10 +243,4 @@ enum FUNCTION_CODE
     FUNC_SETTIMESCALE,
     FUNC_CHECKFUNCTION,
     FUNC_GETENGINEVERSION,
-    FUNC_GET_DLC_ENABLED,
-    FUNC_GET_DLC_COUNT,
-    FUNC_GET_DLC_DATA,
-    FUNC_DLC_START_OVERLAY,
-    FUNC_GET_STEAM_ENABLED,
-    FUNC_STARTBACKPROC
 };

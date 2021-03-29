@@ -160,30 +160,6 @@ class CORE
 
     void *GetScriptVariable(const char *pVariableName, uint32_t *pdwVarIndex = nullptr);
 
-    // steam section
-    CSteamStatsAchievements *g_SteamAchievements;
-
-    bool isSteamEnabled();
-    void InitAchievements();
-    void DeleteAchievements();
-    uint32_t SetAchievementState(const char *ID);
-    uint32_t GetAchievementState(const char *ID);
-    uint32_t SetStatValue(const char *ID, uint32_t Value);
-    uint32_t GetStatValue(const char *ID);
-    uint32_t StoreStats();
-    bool isSteamConnected();
-    bool ResetStats(bool bAchievementsToo);
-    bool ClearAchievement(const char *ID);
-
-    CSteamDLC *g_SteamDLC;
-
-    void InitSteamDLC();
-    void DeleteSteamDLC();
-    bool isDLCActive(uint32_t nDLC);
-    uint32_t getDLCCount();
-    uint32_t getDLCDataByIndex(uint32_t iDLC);
-    bool activateGameOverlayDLC(uint32_t nAppId);
-
     [[nodiscard]] ScreenSize getScreenSize() const noexcept;
 
     storm::ResourceLocator& getResourceLocationService();

@@ -1,10 +1,8 @@
 project(engine)
 
-find_package(SteamSdk REQUIRED)
 find_package(Fmod REQUIRED) # required to set ${Fmod_LIBRARY_PATHS}
 
 add_executable(${PROJECT_NAME} WIN32
-    achievements.cpp
     compiler.cpp
     compiler.h
     Core.cpp
@@ -76,7 +74,6 @@ add_executable(${PROJECT_NAME} WIN32
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${STORM_RESOURCE_DIR}/engine
-    ${SteamSdk_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -115,6 +112,7 @@ target_link_libraries(${PROJECT_NAME}
     sink_effect
     sound
     soundservice
+    steamapi
     teleport
     tornado
     touch
@@ -123,17 +121,12 @@ target_link_libraries(${PROJECT_NAME}
     worldmap
     xinterface
 
-    ${SteamSdk_LIBRARY}
     CONAN_PKG::zlib
     comctl32.lib
     dbghelp.lib
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${SteamSdk_LIBRARY_PATHS}/steam_api64.dll"
-        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${Fmod_LIBRARY_PATHS}/fmod.dll"
         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
