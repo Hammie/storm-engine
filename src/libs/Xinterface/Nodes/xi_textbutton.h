@@ -73,7 +73,7 @@ class CXI_TEXTBUTTON : public CINODE
     int m_nFontNum;
     long m_idString;
     int m_dwStrOffset;
-    char *m_sString;
+    std::string m_sString;
 
     // picture index & vertex buffers
     long m_idVBuf; // identificator of the vertex buffer

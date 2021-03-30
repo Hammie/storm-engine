@@ -26,7 +26,6 @@ CXI_TEXTBUTTON::CXI_TEXTBUTTON()
 
     m_pTex = nullptr;
     m_nNodeType = NODETYPE_TEXTBUTTON;
-    m_sString = nullptr;
     m_bVideoToBack = true;
 
     m_dwBackColor = ARGB(128, 0, 0, 0);
@@ -182,25 +181,25 @@ void CXI_TEXTBUTTON::Draw(bool bSelected, uint32_t Delta_Time)
             }
         }
 
-        if (m_idString != -1 || m_sString != nullptr)
+        if (m_idString != -1 || !m_sString.empty())
             if (m_nPressedDelay > 0)
             {
                 m_rs->ExtPrint(m_nFontNum, m_dwFontColor, 0, PR_ALIGN_CENTER, true, m_fFontScale, m_screenSize.x,
                                m_screenSize.y, (m_rect.left + m_rect.right) / 2 + static_cast<int>(m_fXDeltaPress),
                                m_rect.top + m_dwStrOffset + static_cast<int>(m_fYDeltaPress), "%s",
-                               m_idString != -1 ? pStringService->GetString(m_idString) : m_sString);
+                               m_idString != -1 ? pStringService->GetString(m_idString) : m_sString.c_str());
             }
             else
             {
                 if (m_bSelected)
                     m_rs->ExtPrint(m_nFontNum, m_dwFontColor, 0, PR_ALIGN_CENTER, true, m_fFontScale, m_screenSize.x,
                                    m_screenSize.y, (m_rect.left + m_rect.right) / 2, m_rect.top + m_dwStrOffset, "%s",
-                                   m_idString != -1 ? pStringService->GetString(m_idString) : m_sString);
+                                   m_idString != -1 ? pStringService->GetString(m_idString) : m_sString.c_str());
                 else
                     m_rs->ExtPrint(m_nFontNum, m_dwUnselFontColor, 0, PR_ALIGN_CENTER, true, m_fFontScale,
                                    m_screenSize.x, m_screenSize.y, (m_rect.left + m_rect.right) / 2,
                                    m_rect.top + m_dwStrOffset, "%s",
-                                   m_idString != -1 ? pStringService->GetString(m_idString) : m_sString);
+                                   m_idString != -1 ? pStringService->GetString(m_idString) : m_sString.c_str());
             }
     }
 }
@@ -529,7 +528,7 @@ void CXI_TEXTBUTTON::ReleaseAll()
     PICTURE_TEXTURE_RELEASE(pPictureService, m_sGroupName, m_idTex);
     TEXTURE_RELEASE(m_rs, m_idShadowTex);
     STORM_DELETE(m_sGroupName);
-    STORM_DELETE(m_sString);
+    m_sString.clear();
     VERTEX_BUFFER_RELEASE(m_rs, m_idVBuf);
     INDEX_BUFFER_RELEASE(m_rs, m_idIBuf);
     VIDEOTEXTURE_RELEASE(m_rs, m_pTex);
@@ -597,28 +596,18 @@ uint32_t CXI_TEXTBUTTON::MessageProc(long msgcode, MESSAGE &message)
         char param[256];
         message.String(sizeof(param) - 1, param);
         param[sizeof(param) - 1] = 0;
-        STORM_DELETE(m_sString);
         m_idString = -1;
         if (param[0] == '#')
         {
-            const auto len = strlen(param);
-            if ((m_sString = new char[len]) == nullptr)
-            {
-                throw std::exception("allocate memory error");
-            }
-            memcpy(m_sString, param + 1, len);
+            m_sString = param + 1;
         }
         else if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN)
         {
-            const auto len = strlen(param);
-            if ((m_sString = new char[len + 1]) == nullptr)
-            {
-                throw std::exception("allocate memory error");
-            }
-            memcpy(m_sString, param, len + 1);
+            m_sString = param;
         }
         else
         {
+            m_sString.clear();
             m_idString = pStringService->GetStringNum(param);
         }
     }
