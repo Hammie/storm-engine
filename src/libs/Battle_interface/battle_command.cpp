@@ -305,6 +305,10 @@ void BICommandList::Init()
                 if (td.nRows < 1)
                     td.nRows = 1;
 
+                if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+                    td.nCols *= 2;
+                }
+
                 m_pImgRender->CreateMaterial(td.sFileName.c_str());
 
                 m_aTexture.push_back(td);
@@ -493,8 +497,22 @@ void BICommandList::UpdateShowIcon()
         AdditiveIconAdd(.5f * (rPos.left + rPos.right), static_cast<float>(rPos.bottom), m_aUsedCommand[n].aAddPicList);
         if (n == m_nSelectedCommandIndex)
         {
-            if (m_aUsedCommand[n].nCooldownPictureIndex < 0)
-                i += IconAdd(m_aUsedCommand[n].nSelPictureIndex, m_aUsedCommand[n].nTextureIndex, rPos);
+            if (m_aUsedCommand[n].nCooldownPictureIndex < 0) {
+                if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+                    const long pictureIndex = m_aUsedCommand[n].nNormPictureIndex;
+                    const long textureId = m_aUsedCommand[n].nTextureIndex;
+                    if (m_aTexture.size() > textureId) {
+                        const long textureColumns = m_aTexture[textureId].nCols;
+                        const long potcTextureColumns = textureColumns / 2;
+                        const long selectedRow = pictureIndex / (potcTextureColumns);
+                        const long selectedPictureIndex = selectedRow * textureColumns + (pictureIndex % potcTextureColumns) + potcTextureColumns;
+                        i += IconAdd(selectedPictureIndex, textureId, rPos);
+                    }
+                }
+                else {
+                    i += IconAdd(m_aUsedCommand[n].nSelPictureIndex, m_aUsedCommand[n].nTextureIndex, rPos);
+                }
+            }
             else
                 i += ClockIconAdd(m_aUsedCommand[n].nSelPictureIndex, m_aUsedCommand[n].nCooldownPictureIndex,
                                   m_aUsedCommand[n].nTextureIndex, rPos, m_aUsedCommand[n].fCooldownFactor);
