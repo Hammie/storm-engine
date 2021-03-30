@@ -17,6 +17,31 @@ class BIImageRender;
 #define BISCT_UserIcon 7
 #define BISCT_Cancel 8
 
+struct CommandConfiguration {
+  public:
+    long m_nIconSpace{};
+    POINT m_LeftTopPoint{100, 100};
+    POINT m_IconSize{64, 64};
+    long m_NoteFontID{-1};
+    uint32_t m_NoteFontColor{ARGB(255, 255, 255, 255)};
+    float m_NoteFontScale{1.f};
+    POINT m_NoteOffset{};
+
+    std::string m_sUpDownArrowTexture{};
+    FRECT m_frUpArrowUV{0, 0, 1, 1};
+    FRECT m_frDownArrowUV{0, 0, 1, 1};
+    POINT m_pntUpDownArrowSize{32, 32};
+    POINT m_pntUpArrowOffset{32, -34};
+    POINT m_pntDownArrowOffset{32, 66};
+
+    POINT m_pntActiveIconOffset{-33, 0};
+    POINT m_pntActiveIconSize{64, 64};
+    std::string m_sActiveIconTexture{};
+    FRECT m_frActiveIconUV1{0, 0, 1, 1};
+    FRECT m_frActiveIconUV2{0, 0, 1, 1};
+    std::string m_sActiveIconNote{};
+};
+
 class BICommandList
 {
   public:
@@ -103,35 +128,16 @@ class BICommandList
     bool m_bLeftArrow;
     bool m_bRightArrow;
 
-    POINT m_pntActiveIconOffset;
-    POINT m_pntActiveIconSize;
-    std::string m_sActiveIconTexture;
-    FRECT m_frActiveIconUV1;
-    FRECT m_frActiveIconUV2;
-    std::string m_sActiveIconNote;
+    CommandConfiguration m_Config{};
 
-    bool m_bUpArrow;
-    bool m_bDownArrow;
-    std::string m_sUpDownArrowTexture;
-    FRECT m_frUpArrowUV;
-    FRECT m_frDownArrowUV;
-    POINT m_pntUpDownArrowSize;
-    POINT m_pntUpArrowOffset;
-    POINT m_pntDownArrowOffset;
+    bool m_bUpArrow{false};
+    bool m_bDownArrow{false};
 
     std::string m_sCurrentCommandName;
     long m_nCurrentCommandCharacterIndex;
     long m_nCurrentCommandMode;
 
-    POINT m_LeftTopPoint;
-    POINT m_IconSize;
-    long m_nIconSpace;
-
-    long m_NoteFontID;
-    uint32_t m_NoteFontColor;
-    float m_NoteFontScale;
-    POINT m_NotePos;
-    POINT m_NoteOffset;
+    POINT m_NotePos{};
     std::string m_NoteText;
 
     struct CoolDownUpdateData

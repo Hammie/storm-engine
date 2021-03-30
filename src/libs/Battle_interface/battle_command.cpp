@@ -5,6 +5,69 @@
 #include "image/imgrender.h"
 #include "sea/ships_list.h"
 
+namespace {
+
+CommandConfiguration loadConfig(ATTRIBUTES& attribute, VDX9RENDER *rs) {
+    CommandConfiguration config{};
+
+    // get icon parameters
+    config.m_nIconSpace = attribute.GetAttributeAsDword("CommandIconSpace", 0);
+    config.m_LeftTopPoint.x = attribute.GetAttributeAsDword("CommandIconLeft", 100);
+    config.m_IconSize.x = attribute.GetAttributeAsDword("CommandIconWidth", config.m_IconSize.x);
+    config.m_IconSize.y = attribute.GetAttributeAsDword("CommandIconHeight", config.m_IconSize.y);
+
+    const char *attr = nullptr;
+
+    // get note font parameters
+    if (attribute.GetAttribute("CommandNoteFont"))
+        config.m_NoteFontID = rs->LoadFont(attribute.GetAttribute("CommandNoteFont"));
+    config.m_NoteFontColor = attribute.GetAttributeAsDword("CommandNoteColor", config.m_NoteFontColor);
+    config.m_NoteFontScale = attribute.GetAttributeAsFloat("CommandNoteScale", config.m_NoteFontScale);
+    if (attribute.GetAttribute("CommandNoteOffset"))
+        sscanf(attribute.GetAttribute("CommandNoteOffset"), "%d,%d", &config.m_NoteOffset.x, &config.m_NoteOffset.y);
+
+    // Setting values for arrows (up / down)
+    if (attr = attribute.GetAttribute("UDArrow_Texture"))
+        config.m_sUpDownArrowTexture = attr;
+    BIUtils::ReadRectFromAttr(&attribute, "UDArrow_UV_Up", config.m_frUpArrowUV, config.m_frUpArrowUV);
+    BIUtils::ReadRectFromAttr(&attribute, "UDArrow_UV_Down", config.m_frDownArrowUV, config.m_frDownArrowUV);
+    BIUtils::ReadPosFromAttr(&attribute, "UDArrow_Size", config.m_pntUpDownArrowSize.x, config.m_pntUpDownArrowSize.y,
+                             config.m_pntUpDownArrowSize.x, config.m_pntUpDownArrowSize.y);
+    BIUtils::ReadPosFromAttr(&attribute, "UDArrow_Offset_Up", config.m_pntUpArrowOffset.x, config.m_pntUpArrowOffset.y,
+                             config.m_pntUpArrowOffset.x, config.m_pntUpArrowOffset.y);
+    BIUtils::ReadPosFromAttr(&attribute, "UDArrow_Offset_Down", config.m_pntDownArrowOffset.x, config.m_pntDownArrowOffset.y,
+                             config.m_pntDownArrowOffset.x, config.m_pntDownArrowOffset.y);
+
+    // set values for the menu activity icon
+    if (attr = attribute.GetAttribute("ActiveIcon_Texture"))
+        config.m_sActiveIconTexture = attr;
+    BIUtils::ReadPosFromAttr(&attribute, "ActiveIcon_Offset", config.m_pntActiveIconOffset.x, config.m_pntActiveIconOffset.y,
+                             config.m_pntActiveIconOffset.x, config.m_pntActiveIconOffset.y);
+    BIUtils::ReadPosFromAttr(&attribute, "ActiveIcon_Size", config.m_pntActiveIconSize.x, config.m_pntActiveIconSize.y,
+                             config.m_pntActiveIconSize.x, config.m_pntActiveIconSize.y);
+    BIUtils::ReadRectFromAttr(&attribute, "ActiveIcon_UV1", config.m_frActiveIconUV1, config.m_frActiveIconUV1);
+    BIUtils::ReadRectFromAttr(&attribute, "ActiveIcon_UV2", config.m_frActiveIconUV2, config.m_frActiveIconUV2);
+    if (attr = attribute.GetAttribute("ActiveIcon_Note"))
+        config.m_sActiveIconNote = attr;
+
+    return config;
+}
+
+CommandConfiguration loadConfigPotc(ATTRIBUTES& attribute, VDX9RENDER *rs) {
+    CommandConfiguration config{};
+
+    // get icon parameters
+    config.m_nIconSpace = attribute.GetAttributeAsDword("distCom", 0);
+    config.m_LeftTopPoint.x = attribute.GetAttributeAsDword("leftPosCom", 16);
+    config.m_LeftTopPoint.y = attribute.GetAttributeAsDword("topPosCom", 100);
+    config.m_IconSize.x = attribute.GetAttributeAsDword("widthCom", config.m_IconSize.x);
+    config.m_IconSize.y = attribute.GetAttributeAsDword("heightCom", config.m_IconSize.y);
+
+    return config;
+}
+
+} // namespace
+
 BICommandList::BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs)
 {
     m_idHostObj = eid;
@@ -17,10 +80,6 @@ BICommandList::BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs)
     m_nStartUsedCommandIndex = 0;
     m_nSelectedCommandIndex = 0;
     m_nIconShowMaxQuantity = 5;
-
-    m_NoteFontID = -1;
-    m_NotePos.x = m_NotePos.y = 0;
-    m_NoteOffset.x = m_NoteOffset.y = 0;
 
     m_bUpArrow = m_bDownArrow = false;
 
@@ -57,18 +116,20 @@ void BICommandList::Draw()
         m_pImgRender->Render();
 
     if (!m_NoteText.empty())
-        m_pRS->ExtPrint(m_NoteFontID, m_NoteFontColor, 0, PR_ALIGN_CENTER, true, m_NoteFontScale, 0, 0, m_NotePos.x,
+        m_pRS->ExtPrint(m_Config.m_NoteFontID, m_Config.m_NoteFontColor, 0, PR_ALIGN_CENTER, true, m_Config.m_NoteFontScale, 0, 0, m_NotePos.x,
                         m_NotePos.y, "%s", m_NoteText.c_str());
 }
 
 void BICommandList::Update(long nTopLine, long nCharacterIndex, long nCommandMode)
 {
     long nOldSelIndex = 0;
-    if (nTopLine == m_LeftTopPoint.y && nCharacterIndex == m_nCurrentCommandCharacterIndex &&
+    if (nTopLine == m_Config.m_LeftTopPoint.y && nCharacterIndex == m_nCurrentCommandCharacterIndex &&
         m_nCurrentCommandMode == nCommandMode)
         nOldSelIndex = m_nSelectedCommandIndex;
 
-    m_LeftTopPoint.y = nTopLine;
+    if (core.getTargetVersion() != ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+        m_Config.m_LeftTopPoint.y = nTopLine;
+    }
     if (nCharacterIndex != m_nCurrentCommandCharacterIndex)
         m_sCurrentCommandName = "";
     m_nCurrentCommandCharacterIndex = nCharacterIndex;
@@ -132,7 +193,7 @@ long BICommandList::ExecuteConfirm()
         m_sCurrentCommandName = "";
         break;
     default:
-        Update(m_LeftTopPoint.y, m_nCurrentCommandCharacterIndex, endCode);
+        Update(m_Config.m_LeftTopPoint.y, m_nCurrentCommandCharacterIndex, endCode);
     }
     return endCode;
 }
@@ -204,116 +265,53 @@ void BICommandList::SetUpDown(bool bUp, bool bDown)
 void BICommandList::Init()
 {
     Assert(m_pImgRender);
-    ATTRIBUTES *pAList, *pATextures;
+    ATTRIBUTES *pAList{};
+    ATTRIBUTES *pATextures{};
 
-    m_LeftTopPoint.x = 120;
-    m_LeftTopPoint.y = 100;
-    m_IconSize.x = 64;
-    m_IconSize.y = 64;
-    m_nIconSpace = 8;
+    FONT_RELEASE(m_pRS, m_Config.m_NoteFontID);
 
-    FONT_RELEASE(m_pRS, m_NoteFontID);
-    m_NoteFontColor = ARGB(255, 255, 255, 255);
-    m_NoteFontScale = 1.f;
-    m_NoteOffset.x = m_NoteOffset.y = 0;
+    if (m_pARoot) {
+        if (pAList = m_pARoot->GetAttributeClass("CommandList"); pAList != nullptr)
+        {
+            m_Config = loadConfig(*pAList, m_pRS);
+        }
+        else if(pAList = m_pARoot->GetAttributeClass("Parameters"); pAList != nullptr)
+        {
+            m_Config = loadConfigPotc(*pAList, m_pRS);
+        }
 
-    // default arrow data value
-    m_sUpDownArrowTexture = "";
-    m_pntUpDownArrowSize.x = m_pntUpDownArrowSize.y = 32;
-    FULLRECT(m_frUpArrowUV);
-    FULLRECT(m_frDownArrowUV);
-    m_pntUpArrowOffset.x = 32;
-    m_pntUpArrowOffset.y = -34;
-    m_pntDownArrowOffset.x = 32;
-    m_pntDownArrowOffset.y = 66;
-
-    // default data for active icon
-    m_sActiveIconTexture = "";
-    m_pntActiveIconOffset.x = -33;
-    m_pntActiveIconOffset.y = 0;
-    m_pntActiveIconSize.x = m_pntActiveIconSize.y = 64;
-    FULLRECT(m_frActiveIconUV1);
-    FULLRECT(m_frActiveIconUV2);
-    m_sActiveIconNote = "";
-
-    pAList = nullptr;
-    if (m_pARoot)
-        pAList = m_pARoot->GetAttributeClass("CommandList");
-    if (pAList)
-    {
-        // get icon parameters
-        m_nIconSpace = pAList->GetAttributeAsDword("CommandIconSpace", 0);
-        m_LeftTopPoint.x = pAList->GetAttributeAsDword("CommandIconLeft", 100);
-        m_IconSize.x = pAList->GetAttributeAsDword("CommandIconWidth", m_IconSize.x);
-        m_IconSize.y = pAList->GetAttributeAsDword("CommandIconHeight", m_IconSize.y);
-
-        const char *attr = nullptr;
-
-        // get note font parameters
-        if (pAList->GetAttribute("CommandNoteFont"))
-            m_NoteFontID = m_pRS->LoadFont(pAList->GetAttribute("CommandNoteFont"));
-        m_NoteFontColor = pAList->GetAttributeAsDword("CommandNoteColor", m_NoteFontColor);
-        m_NoteFontScale = pAList->GetAttributeAsFloat("CommandNoteScale", m_NoteFontScale);
-        if (pAList->GetAttribute("CommandNoteOffset"))
-            sscanf(pAList->GetAttribute("CommandNoteOffset"), "%d,%d", &m_NoteOffset.x, &m_NoteOffset.y);
-
-        // Setting values for arrows (up / down)
-        if (attr = pAList->GetAttribute("UDArrow_Texture"))
-            m_sUpDownArrowTexture = attr;
-        BIUtils::ReadRectFromAttr(pAList, "UDArrow_UV_Up", m_frUpArrowUV, m_frUpArrowUV);
-        BIUtils::ReadRectFromAttr(pAList, "UDArrow_UV_Down", m_frDownArrowUV, m_frDownArrowUV);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Size", m_pntUpDownArrowSize.x, m_pntUpDownArrowSize.y,
-                                 m_pntUpDownArrowSize.x, m_pntUpDownArrowSize.y);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Offset_Up", m_pntUpArrowOffset.x, m_pntUpArrowOffset.y,
-                                 m_pntUpArrowOffset.x, m_pntUpArrowOffset.y);
-        BIUtils::ReadPosFromAttr(pAList, "UDArrow_Offset_Down", m_pntDownArrowOffset.x, m_pntDownArrowOffset.y,
-                                 m_pntDownArrowOffset.x, m_pntDownArrowOffset.y);
-
-        // set values for the menu activity icon
-        if (attr = pAList->GetAttribute("ActiveIcon_Texture"))
-            m_sActiveIconTexture = attr;
-        BIUtils::ReadPosFromAttr(pAList, "ActiveIcon_Offset", m_pntActiveIconOffset.x, m_pntActiveIconOffset.y,
-                                 m_pntActiveIconOffset.x, m_pntActiveIconOffset.y);
-        BIUtils::ReadPosFromAttr(pAList, "ActiveIcon_Size", m_pntActiveIconSize.x, m_pntActiveIconSize.y,
-                                 m_pntActiveIconSize.x, m_pntActiveIconSize.y);
-        BIUtils::ReadRectFromAttr(pAList, "ActiveIcon_UV1", m_frActiveIconUV1, m_frActiveIconUV1);
-        BIUtils::ReadRectFromAttr(pAList, "ActiveIcon_UV2", m_frActiveIconUV2, m_frActiveIconUV2);
-        if (attr = pAList->GetAttribute("ActiveIcon_Note"))
-            m_sActiveIconNote = attr;
-    }
-
-    pAList = nullptr;
-    if (m_pARoot)
         pAList = m_pARoot->GetAttributeClass("CommandTextures");
 
-    pATextures = nullptr;
-    if (pAList)
-        pATextures = pAList->GetAttributeClass("list");
-    if (pATextures)
-    {
-        size_t q = pATextures->GetAttributesNum();
-        for (int n = 0; n < q; n++)
+        pATextures = nullptr;
+        if (pAList)
+            pATextures = pAList->GetAttributeClass("list");
+        if (pATextures)
         {
-            auto *pA = pATextures->GetAttributeClass(n);
-            if (pA)
+            size_t q = pATextures->GetAttributesNum();
+            for (int n = 0; n < q; n++)
             {
-                TextureDescr td = {pA->GetAttribute("name") ? pA->GetAttribute("name") : std::string(),
-                                   pA->GetAttributeAsDword("xsize", 1), pA->GetAttributeAsDword("ysize", 1)};
+                auto *pA = pATextures->GetAttributeClass(n);
+                if (pA)
+                {
+                    TextureDescr td = {pA->GetAttribute("name") ? pA->GetAttribute("name") : std::string(),
+                                       pA->GetAttributeAsDword("xsize", 1), pA->GetAttributeAsDword("ysize", 1)};
 
-                if (td.nCols < 1)
-                    td.nCols = 1;
-                if (td.nRows < 1)
-                    td.nRows = 1;
+                    if (td.nCols < 1)
+                        td.nCols = 1;
+                    if (td.nRows < 1)
+                        td.nRows = 1;
 
-                if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
-                    td.nCols *= 2;
+                    if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+                        td.nCols *= 2;
+                    }
+
+                    m_pImgRender->CreateMaterial(td.sFileName.c_str());
+
+                    m_aTexture.push_back(td);
                 }
-
-                m_pImgRender->CreateMaterial(td.sFileName.c_str());
-
-                m_aTexture.push_back(td);
             }
         }
+
     }
     m_nIconShowMaxQuantity = 5;
 }
@@ -384,7 +382,7 @@ void BICommandList::AddAdditiveToIconList(long nTextureNum, long nPictureNum, fl
 void BICommandList::Release()
 {
     STORM_DELETE(m_pImgRender);
-    FONT_RELEASE(m_pRS, m_NoteFontID);
+    FONT_RELEASE(m_pRS, m_Config.m_NoteFontID);
 }
 
 long BICommandList::IconAdd(long nPictureNum, long nTextureNum, RECT &rpos)
@@ -458,10 +456,10 @@ FRECT &BICommandList::GetPictureUV(long nTextureNum, long nPictureNum, FRECT &uv
 
 RECT &BICommandList::GetCurrentPos(long num, RECT &rpos) const
 {
-    rpos.left = m_LeftTopPoint.x + num * (m_IconSize.x + m_nIconSpace);
-    rpos.right = rpos.left + m_IconSize.x;
-    rpos.top = m_LeftTopPoint.y;
-    rpos.bottom = rpos.top + m_IconSize.y;
+    rpos.left = m_Config.m_LeftTopPoint.x + num * (m_Config.m_IconSize.x + m_Config.m_nIconSpace);
+    rpos.right = rpos.left + m_Config.m_IconSize.x;
+    rpos.top = m_Config.m_LeftTopPoint.y;
+    rpos.bottom = rpos.top + m_Config.m_IconSize.y;
     return rpos;
 }
 
@@ -473,19 +471,19 @@ void BICommandList::UpdateShowIcon()
 
     if (!m_bActive)
     {
-        rPos.left = m_LeftTopPoint.x + m_pntActiveIconOffset.x;
-        rPos.top = m_LeftTopPoint.y + m_pntActiveIconOffset.y;
-        rPos.right = rPos.left + m_pntActiveIconSize.x;
-        rPos.bottom = rPos.top + m_pntActiveIconSize.y;
-        m_pImgRender->CreateImage(BIType_square, m_sActiveIconTexture.c_str(), 0xFF808080, m_frActiveIconUV1, rPos);
-        SetNote(m_sActiveIconNote.c_str(), (rPos.left + rPos.right) / 2, (rPos.top + rPos.bottom) / 2);
+        rPos.left = m_Config.m_LeftTopPoint.x + m_Config.m_pntActiveIconOffset.x;
+        rPos.top = m_Config.m_LeftTopPoint.y + m_Config.m_pntActiveIconOffset.y;
+        rPos.right = rPos.left + m_Config.m_pntActiveIconSize.x;
+        rPos.bottom = rPos.top + m_Config.m_pntActiveIconSize.y;
+        m_pImgRender->CreateImage(BIType_square, m_Config.m_sActiveIconTexture.c_str(), 0xFF808080, m_Config.m_frActiveIconUV1, rPos);
+        SetNote(m_Config.m_sActiveIconNote.c_str(), (rPos.left + rPos.right) / 2, (rPos.top + rPos.bottom) / 2);
         return;
     }
-    rPos.left = m_LeftTopPoint.x + m_pntActiveIconOffset.x;
-    rPos.top = m_LeftTopPoint.y + m_pntActiveIconOffset.y;
-    rPos.right = rPos.left + m_pntActiveIconSize.x;
-    rPos.bottom = rPos.top + m_pntActiveIconSize.y;
-    m_pImgRender->CreateImage(BIType_square, m_sActiveIconTexture.c_str(), 0xFF808080, m_frActiveIconUV2, rPos);
+    rPos.left = m_Config.m_LeftTopPoint.x + m_Config.m_pntActiveIconOffset.x;
+    rPos.top = m_Config.m_LeftTopPoint.y + m_Config.m_pntActiveIconOffset.y;
+    rPos.right = rPos.left + m_Config.m_pntActiveIconSize.x;
+    rPos.bottom = rPos.top + m_Config.m_pntActiveIconSize.y;
+    m_pImgRender->CreateImage(BIType_square, m_Config.m_sActiveIconTexture.c_str(), 0xFF808080, m_Config.m_frActiveIconUV2, rPos);
 
     m_bLeftArrow = m_nStartUsedCommandIndex > 0;
     m_bRightArrow = false;
@@ -500,7 +498,10 @@ void BICommandList::UpdateShowIcon()
             if (m_aUsedCommand[n].nCooldownPictureIndex < 0) {
                 if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
                     const long pictureIndex = m_aUsedCommand[n].nNormPictureIndex;
-                    const long textureId = m_aUsedCommand[n].nTextureIndex;
+                    long textureId = m_aUsedCommand[n].nTextureIndex;
+                    if (textureId == -1) {
+                        textureId = 0;
+                    }
                     if (m_aTexture.size() > textureId) {
                         const long textureColumns = m_aTexture[textureId].nCols;
                         const long potcTextureColumns = textureColumns / 2;
@@ -538,27 +539,27 @@ void BICommandList::UpdateShowIcon()
     // add bottom / top arrows for the command list
     if (m_bUpArrow)
     {
-        rPos.left = m_LeftTopPoint.x + m_pntUpArrowOffset.x;
-        rPos.top = m_LeftTopPoint.y + m_pntUpArrowOffset.y;
-        rPos.right = rPos.left + m_pntUpDownArrowSize.x;
-        rPos.bottom = rPos.top + m_pntUpDownArrowSize.y;
-        m_pImgRender->CreateImage(BIType_square, m_sUpDownArrowTexture.c_str(), 0xFF808080, m_frUpArrowUV, rPos);
+        rPos.left = m_Config.m_LeftTopPoint.x + m_Config.m_pntUpArrowOffset.x;
+        rPos.top = m_Config.m_LeftTopPoint.y + m_Config.m_pntUpArrowOffset.y;
+        rPos.right = rPos.left + m_Config.m_pntUpDownArrowSize.x;
+        rPos.bottom = rPos.top + m_Config.m_pntUpDownArrowSize.y;
+        m_pImgRender->CreateImage(BIType_square, m_Config.m_sUpDownArrowTexture.c_str(), 0xFF808080, m_Config.m_frUpArrowUV, rPos);
     }
     if (m_bDownArrow)
     {
-        rPos.left = m_LeftTopPoint.x + m_pntDownArrowOffset.x;
-        rPos.top = m_LeftTopPoint.y + m_pntDownArrowOffset.y;
-        rPos.right = rPos.left + m_pntUpDownArrowSize.x;
-        rPos.bottom = rPos.top + m_pntUpDownArrowSize.y;
-        m_pImgRender->CreateImage(BIType_square, m_sUpDownArrowTexture.c_str(), 0xFF808080, m_frDownArrowUV, rPos);
+        rPos.left = m_Config.m_LeftTopPoint.x + m_Config.m_pntDownArrowOffset.x;
+        rPos.top = m_Config.m_LeftTopPoint.y + m_Config.m_pntDownArrowOffset.y;
+        rPos.right = rPos.left + m_Config.m_pntUpDownArrowSize.x;
+        rPos.bottom = rPos.top + m_Config.m_pntUpDownArrowSize.y;
+        m_pImgRender->CreateImage(BIType_square, m_Config.m_sUpDownArrowTexture.c_str(), 0xFF808080, m_Config.m_frDownArrowUV, rPos);
     }
 }
 
 void BICommandList::SetNote(const char *pcNote, long nX, long nY)
 {
     m_NoteText = pcNote;
-    m_NotePos.x = nX + m_NoteOffset.x;
-    m_NotePos.y = nY + m_NoteOffset.y;
+    m_NotePos.x = nX + m_Config.m_NoteOffset.x;
+    m_NotePos.y = nY + m_Config.m_NoteOffset.y;
 }
 
 ATTRIBUTES *BICommandList::GetCurrentCommandAttribute() const
