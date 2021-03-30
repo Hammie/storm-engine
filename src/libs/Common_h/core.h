@@ -38,8 +38,10 @@ class CORE
 
     std::shared_ptr<spdlog::logger> tracelog;
  
-    CORE();
+    CORE() = default;
     ~CORE() = default;
+
+    void Init();
 
     void InitBase();
     void ReleaseBase();
@@ -156,7 +158,7 @@ class CORE
 
     uint32_t SetScriptFunction(IFUNCINFO *pFuncInfo);
 
-    char *EngineIniFileName();
+    const char *EngineIniFileName();
 
     void *GetScriptVariable(const char *pVariableName, uint32_t *pdwVarIndex = nullptr);
 
@@ -175,4 +177,4 @@ class CORE
     std::unique_ptr<storm::ResourceLocator> m_ResourceLocator;
 };
 // core instance
-inline CORE core;
+extern CORE core;

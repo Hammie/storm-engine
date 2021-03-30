@@ -2,8 +2,9 @@
 #include "VmaInit.h"
 #include "compiler.h"
 #include "controls.h"
-#include "externs.h"
+#include "fs.h"
 #include "SteamApi.hpp"
+#include <fstream>
 
 namespace {
 
@@ -28,7 +29,31 @@ typedef struct
     void *pointer;
 } CODE_AND_POINTER;
 
-CORE::CORE()
+
+void CORE::ResetCore()
+{
+    Initialized = false;
+    bEngineIniProcessed = false;
+
+    ReleaseServices();
+
+    Services_List.Release();
+
+    STORM_DELETE(State_file_name);
+}
+
+void CORE::CleanUp()
+{
+    Initialized = false;
+    bEngineIniProcessed = false;
+    ReleaseServices();
+    Compiler->Release();
+    Services_List.Release();
+    Services_List.Release();
+    delete State_file_name;
+}
+
+void CORE::Init()
 {
     Initialized = false;
     bEngineIniProcessed = false;
@@ -57,29 +82,6 @@ CORE::CORE()
     EntityManager::SetLayerType(EDITOR_REALIZE, EntityManager::Layer::Type::realize);
     EntityManager::SetLayerType(INFO_REALIZE, EntityManager::Layer::Type::realize);
     EntityManager::SetLayerType(SOUND_DEBUG_REALIZE, EntityManager::Layer::Type::realize);
-}
-
-void CORE::ResetCore()
-{
-    Initialized = false;
-    bEngineIniProcessed = false;
-
-    ReleaseServices();
-
-    Services_List.Release();
-
-    STORM_DELETE(State_file_name);
-}
-
-void CORE::CleanUp()
-{
-    Initialized = false;
-    bEngineIniProcessed = false;
-    ReleaseServices();
-    Compiler->Release();
-    Services_List.Release();
-    Services_List.Release();
-    delete State_file_name;
 }
 
 void CORE::InitBase()
@@ -152,10 +154,10 @@ bool CORE::Run()
 
     steamapi::SteamApi::getInstance().RunCallbacks();
 
-    if (Controls && bActive)
+    if (Controls)
         Controls->Update(Timer.rDelta_Time);
 
-    if (Controls && bActive)
+    if (Controls)
         ProcessControls();
 
     EntityManager::NewLifecycle();
@@ -209,7 +211,7 @@ void CORE::ProcessEngineIniFile()
 
     bEngineIniProcessed = true;
 
-    auto *engine_ini = File_Service.OpenIniFile(ENGINE_INI_FILE_NAME);
+    auto *engine_ini = fio->OpenIniFile(fs::ENGINE_INI_FILE_NAME);
     if (engine_ini == nullptr)
         throw std::exception("no 'engine.ini' file");
 
@@ -538,17 +540,19 @@ void CORE::ProcessRealize()
 bool CORE::SaveState(const char *file_name)
 {
     if (!file_name)
+    {
+        throw std::logic_error("Bad file name of save");
+    }
+
+    auto fileS = fio->_CreateFile(file_name, std::ios::binary | std::ios::out);
+
+    if (!fileS.is_open())
+    {
         return false;
+    }
 
-    fio->SetDrive(XBOXDRIVE_NONE);
-    auto *const fh = fio->_CreateFile(file_name, GENERIC_WRITE | GENERIC_READ, 0, CREATE_ALWAYS);
-    fio->SetDrive();
-
-    if (fh == INVALID_HANDLE_VALUE)
-        return false;
-
-    Compiler->SaveState(fh);
-    fio->_CloseHandle(fh);
+    Compiler->SaveState(fileS);
+    fio->_CloseFile(fileS);
 
     return true;
 }
@@ -556,18 +560,16 @@ bool CORE::SaveState(const char *file_name)
 // force core to load state file at the start of next game loop, return false if no state file
 bool CORE::InitiateStateLoading(const char *file_name)
 {
-    fio->SetDrive(XBOXDRIVE_NONE);
-    const HANDLE fh = fio->_CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING);
-    fio->SetDrive();
-    if (fh == INVALID_HANDLE_VALUE)
+    auto fileS = fio->_CreateFile(file_name, std::ios::binary | std::ios::in);
+    if (!fileS.is_open())
+    {
         return false;
-    fio->_CloseHandle(fh);
+    }
+    fio->_CloseFile(fileS);
     delete State_file_name;
 
     const auto len = strlen(file_name) + 1;
     State_file_name = static_cast<char *>(new char[len]);
-    if (State_file_name == nullptr)
-        throw std::exception();
     strcpy_s(State_file_name, len, file_name);
     return true;
 }
@@ -575,18 +577,20 @@ bool CORE::InitiateStateLoading(const char *file_name)
 void CORE::ProcessStateLoading()
 {
     if (!State_file_name)
+    {
         return;
+    }
 
     State_loading = true;
     EraseEntities();
 
-    fio->SetDrive(XBOXDRIVE_NONE);
-    const HANDLE fh = fio->_CreateFile(State_file_name, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING);
-    fio->SetDrive();
-    if (fh == INVALID_HANDLE_VALUE)
+    auto fileS = fio->_CreateFile(State_file_name, std::ios::binary | std::ios::in);
+    if (!fileS.is_open())
+    {
         return;
-    Compiler->LoadState(fh);
-    fio->_CloseHandle(fh);
+    }
+    Compiler->LoadState(fileS);
+    fio->_CloseFile(fileS);
 
     delete State_file_name;
     State_file_name = nullptr;
@@ -858,9 +862,9 @@ uint32_t CORE::SetScriptFunction(IFUNCINFO *pFuncInfo)
     return Compiler->SetScriptFunction(pFuncInfo);
 }
 
-char *CORE::EngineIniFileName()
+const char *CORE::EngineIniFileName()
 {
-    return ENGINE_INI_FILE_NAME;
+    return fs::ENGINE_INI_FILE_NAME;
 }
 
 void *CORE::GetScriptVariable(const char *pVariableName, uint32_t *pdwVarIndex)
