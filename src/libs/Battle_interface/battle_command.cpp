@@ -57,11 +57,26 @@ CommandConfiguration loadConfigPotc(ATTRIBUTES& attribute, VDX9RENDER *rs) {
     CommandConfiguration config{};
 
     // get icon parameters
-    config.m_nIconSpace = attribute.GetAttributeAsDword("distCom", 0);
-    config.m_LeftTopPoint.x = attribute.GetAttributeAsDword("leftPosCom", 16);
-    config.m_LeftTopPoint.y = attribute.GetAttributeAsDword("topPosCom", 100);
-    config.m_IconSize.x = attribute.GetAttributeAsDword("widthCom", config.m_IconSize.x);
-    config.m_IconSize.y = attribute.GetAttributeAsDword("heightCom", config.m_IconSize.y);
+    config.m_nIconSpace = attribute.GetAttributeAsDword("iconDistance", 4);
+    config.m_LeftTopPoint.x = attribute.GetAttributeAsDword("leftIconsOffset", 16);
+    config.m_LeftTopPoint.y = attribute.GetAttributeAsDword("downIconsOffset", 400);
+    config.m_IconSize.x = attribute.GetAttributeAsDword("iconWidth", config.m_IconSize.x);
+    config.m_IconSize.y = attribute.GetAttributeAsDword("iconHeight", config.m_IconSize.y);
+
+    if (attribute.GetAttribute("commandNoteFont"))
+        config.m_NoteFontID = rs->LoadFont(attribute.GetAttribute("commandNoteFont"));
+    config.m_NoteOffset.x = attribute.GetAttributeAsDword("noteXOffset", 0);
+    config.m_NoteOffset.y = attribute.GetAttributeAsDword("noteYOffset", 0);
+
+    // Fix up some settings to match POTC behaviour
+    // _________________________________________________________________________
+
+    const float aspect_ratio = static_cast<float>(core.getScreenSize().height) / static_cast<float>(core.getScreenSize().width);
+
+    // Notes should be left-aligned and anchored to the topleft
+    config.m_NoteAlignment = PR_ALIGN_LEFT;
+    config.m_NoteOffset.x -= config.m_IconSize.x / 2;
+    config.m_NoteOffset.y -= static_cast<long>(static_cast<float>(config.m_IconSize.y / 2) / aspect_ratio);
 
     return config;
 }
@@ -116,7 +131,7 @@ void BICommandList::Draw()
         m_pImgRender->Render();
 
     if (!m_NoteText.empty())
-        m_pRS->ExtPrint(m_Config.m_NoteFontID, m_Config.m_NoteFontColor, 0, PR_ALIGN_CENTER, true, m_Config.m_NoteFontScale, 0, 0, m_NotePos.x,
+        m_pRS->ExtPrint(m_Config.m_NoteFontID, m_Config.m_NoteFontColor, 0, m_Config.m_NoteAlignment, true, m_Config.m_NoteFontScale, 0, 0, m_NotePos.x,
                         m_NotePos.y, "%s", m_NoteText.c_str());
 }
 
@@ -275,7 +290,7 @@ void BICommandList::Init()
         {
             m_Config = loadConfig(*pAList, m_pRS);
         }
-        else if(pAList = m_pARoot->GetAttributeClass("Parameters"); pAList != nullptr)
+        else if(pAList = m_pARoot->GetAttributeClass("CommandShowParam"); pAList != nullptr)
         {
             m_Config = loadConfigPotc(*pAList, m_pRS);
         }

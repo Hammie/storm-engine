@@ -26,6 +26,7 @@ struct CommandConfiguration {
     uint32_t m_NoteFontColor{ARGB(255, 255, 255, 255)};
     float m_NoteFontScale{1.f};
     POINT m_NoteOffset{};
+    int m_NoteAlignment = PR_ALIGN_CENTER;
 
     std::string m_sUpDownArrowTexture{};
     FRECT m_frUpArrowUV{0, 0, 1, 1};
