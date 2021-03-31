@@ -24,6 +24,9 @@ jobs:
         useVcpkgToolchainFile: false
         buildDirectory: '${{ github.workspace }}/build'
         configurationRegexFilter: '${{ matrix.configuration }}'
+    - name: Run tests
+      run: scripting-test.exe
+      working-directory: '${{ github.workspace }}/build/${{ matrix.configuration }}/bin'
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
