@@ -543,8 +543,25 @@ void BICommandList::UpdateShowIcon()
         }
         else
         {
-            if (m_aUsedCommand[n].nCooldownPictureIndex < 0)
-                i += IconAdd(m_aUsedCommand[n].nNormPictureIndex, m_aUsedCommand[n].nTextureIndex, rPos);
+            if (m_aUsedCommand[n].nCooldownPictureIndex < 0) {
+                if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+                    const long pictureIndex = m_aUsedCommand[n].nNormPictureIndex;
+                    long textureId = m_aUsedCommand[n].nTextureIndex;
+                    if (textureId == -1) {
+                        textureId = 0;
+                    }
+                    if (m_aTexture.size() > textureId) {
+                        const long textureColumns = m_aTexture[textureId].nCols;
+                        const long potcTextureColumns = textureColumns / 2;
+                        const long selectedRow = pictureIndex / (potcTextureColumns);
+                        const long normalPictureIndex = selectedRow * textureColumns + (pictureIndex % potcTextureColumns);
+                        i += IconAdd(normalPictureIndex, textureId, rPos);
+                    }
+                }
+                else {
+                    i += IconAdd(m_aUsedCommand[n].nNormPictureIndex, m_aUsedCommand[n].nTextureIndex, rPos);
+                }
+            }
             else
                 i += ClockIconAdd(m_aUsedCommand[n].nNormPictureIndex, m_aUsedCommand[n].nCooldownPictureIndex,
                                   m_aUsedCommand[n].nTextureIndex, rPos, m_aUsedCommand[n].fCooldownFactor);
