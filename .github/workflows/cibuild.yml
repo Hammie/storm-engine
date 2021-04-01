@@ -24,10 +24,10 @@ jobs:
         useVcpkgToolchainFile: false
         buildDirectory: '${{ github.workspace }}/build'
         configurationRegexFilter: '${{ matrix.configuration }}'
-    - name: Run tests
-      run: '${{ github.workspace }}/build/${{ matrix.configuration }}/bin/scripting-test.exe'
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: storm-engine.${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\bin
+    - name: Run tests
+      run: '${{ github.workspace }}/build/${{ matrix.configuration }}/bin/scripting-test.exe'

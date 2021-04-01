@@ -19,3 +19,12 @@ TEST_CASE("Parse tokens", "[compiler]")
     }
 }
 
+TEST_CASE("Tokens are case insensitive", "[compiler]")
+{
+    KeywordManager keyword_manager;
+
+    CHECK(keyword_manager.getTokenForKeyword("return") == S_TOKEN_TYPE::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("Return") == S_TOKEN_TYPE::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("RETURN") == S_TOKEN_TYPE::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("rEtUrN") == S_TOKEN_TYPE::FUNCTION_RETURN);
+}
