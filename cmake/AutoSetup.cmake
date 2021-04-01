@@ -32,15 +32,24 @@ function(auto_setup_library LIBRARY_NAME)
     file(GLOB_RECURSE TARGET_SOURCES ${GLOBBING_EXPRESSION_SOURCES})
     file(GLOB_RECURSE TARGET_HEADERS ${GLOBBING_EXPRESSION_HEADERS})
 
-    add_library(${LIBRARY_NAME} ${PARAM_TYPE} ${TARGET_SOURCES} ${TARGET_HEADERS})
+    if (NOT TARGET_SOURCES)
+        set(LIBRARY_TYPE INTERFACE)
+        set(LIBRARY_INCLUDE_TYPE INTERFACE)
+    else()
+        set(LIBRARY_TYPE ${PARAM_TYPE})
+        set(LIBRARY_INCLUDE_TYPE PUBLIC)
+    endif()
+
+    add_library(${LIBRARY_NAME} ${LIBRARY_TYPE} ${TARGET_SOURCES} ${TARGET_HEADERS})
+
+    target_include_directories(${LIBRARY_NAME} ${LIBRARY_INCLUDE_TYPE}
+            $<BUILD_INTERFACE:${LIBRARY_INCLUDE_DIRECTORY}>
+            )
 
     set_target_properties(${LIBRARY_NAME} PROPERTIES OUTPUT_NAME ${PARAM_NAMESPACE}${LIBRARY_NAME})
     set_target_properties(${LIBRARY_NAME} PROPERTIES DEBUG_POSTFIX d)
     set_target_properties(${LIBRARY_NAME} PROPERTIES CXX_STANDARD 20)
 
-    target_include_directories(${LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${LIBRARY_INCLUDE_DIRECTORY}>
-                               )
 
     install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
     install(DIRECTORY ${PARAM_INCLUDE_DIRECTORY}/ DESTINATION include/ FILES_MATCHING PATTERN *.h PATTERN *.hpp)
