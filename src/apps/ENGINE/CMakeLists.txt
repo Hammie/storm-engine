@@ -118,6 +118,7 @@ target_link_libraries(${PROJECT_NAME}
     weather
     worldmap
     xinterface
+    scripting
 
     CONAN_PKG::zlib
     comctl32.lib

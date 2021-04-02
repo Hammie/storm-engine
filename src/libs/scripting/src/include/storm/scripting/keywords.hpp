@@ -10,7 +10,7 @@ namespace storm::scripting {
 
 class KeywordManager {
   public:
-    S_TOKEN_TYPE getTokenForKeyword (const std::string_view& keyword);
+    TokenType getTokenForKeyword (const std::string_view& keyword);
 };
 
 } // namespace storm::scripting

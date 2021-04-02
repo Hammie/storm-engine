@@ -304,7 +304,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        if (pV->GetType() == VAR_STRING)
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_STRING)
         {
             pV->Get(pChar);
             if (FuncTab.FindFunc(pChar) == INVALID_FUNC_CODE)
@@ -329,12 +329,12 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        if (pV->GetType() == VAR_FLOAT)
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_FLOAT)
         {
             pV->Get(TempFloat1);
             core.SetTimeScale(TempFloat1);
         }
-        else if (pV->GetType() == VAR_INTEGER)
+        else if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER)
         {
             pV->Get(TempLong1);
             core.SetTimeScale(static_cast<float>(TempLong1));
@@ -358,13 +358,13 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         {
             switch (pV->GetType())
             {
-            case VAR_REFERENCE:
+            case S_TOKEN_TYPE::VAR_REFERENCE:
                 if (pV->pReference)
                     TempLong1 = 1;
                 else
                     TempLong1 = 0;
                 break;
-            case VAR_AREFERENCE:
+            case S_TOKEN_TYPE::VAR_AREFERENCE:
                 if (pV->AttributesClass)
                     TempLong1 = 1;
                 else
@@ -548,14 +548,14 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        pV->Convert(VAR_STRING);
+        pV->Convert(S_TOKEN_TYPE::VAR_STRING);
         pV->Get(pChar);
 
         ent = EntityManager::GetEntityId(pChar);
 
         pV2 = pV2->GetVarPointer();
         pV2->Set(ent);
-        pV2->SetType(VAR_AREFERENCE);
+        pV2->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
         pV2->SetAReference(core.Entity_GetAttributePointer(ent));
 
         if (EntityManager::GetEntityPointer(ent))
@@ -582,7 +582,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        pV->Convert(VAR_STRING);
+        pV->Convert(S_TOKEN_TYPE::VAR_STRING);
         pV->Get(pChar);
 
         delete entVec;
@@ -592,7 +592,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
 
         pV2 = pV2->GetVarPointer();
         pV2->Set(ent);
-        pV2->SetType(VAR_AREFERENCE);
+        pV2->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
         pV2->SetAReference(core.Entity_GetAttributePointer(ent));
 
         if (EntityManager::GetEntityPointer(ent))
@@ -617,7 +617,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
 
         pV2 = pV2->GetVarPointer();
         pV2->Set(ent);
-        pV2->SetType(VAR_AREFERENCE);
+        pV2->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
         pV2->SetAReference(core.Entity_GetAttributePointer(ent));
 
         if (EntityManager::GetEntityPointer(ent))
@@ -886,7 +886,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        if (pV->GetType() != VAR_STRING)
+        if (pV->GetType() != S_TOKEN_TYPE::VAR_STRING)
         {
             SetError("invalid argument type");
             break;
@@ -913,10 +913,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_REFERENCE:
+        case S_TOKEN_TYPE::VAR_REFERENCE:
             pV->SetReference(nullptr);
             break;
-        case VAR_AREFERENCE:
+        case S_TOKEN_TYPE::VAR_AREFERENCE:
             pV->SetAReference(nullptr);
             break;
         }
@@ -1111,7 +1111,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Convert(VAR_FLOAT);
+        pV->Convert(S_TOKEN_TYPE::VAR_FLOAT);
         pV->Get(TempFloat1);
 
         pV2 = SStack.Pop();
@@ -1120,7 +1120,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV2->Convert(VAR_FLOAT);
+        pV2->Convert(S_TOKEN_TYPE::VAR_FLOAT);
         pV2->Get(TempFloat2);
 
         TempFloat1 = static_cast<float>(pow(TempFloat2, TempFloat1));
@@ -1154,22 +1154,22 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         pV = pV->GetVarPointer();
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             strcat_s(sVarName, "int");
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             strcat_s(sVarName, "float");
             break;
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             strcat_s(sVarName, "string");
             break;
-        case VAR_OBJECT:
+        case S_TOKEN_TYPE::VAR_OBJECT:
             strcat_s(sVarName, "object");
             break;
-        case VAR_REFERENCE:
+        case S_TOKEN_TYPE::VAR_REFERENCE:
             strcat_s(sVarName, "ref");
             break;
-        case VAR_AREFERENCE:
+        case S_TOKEN_TYPE::VAR_AREFERENCE:
             strcat_s(sVarName, "aref");
             break;
         }
@@ -1192,7 +1192,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() != VAR_REFERENCE)
+        if (pV->GetType() != S_TOKEN_TYPE::VAR_REFERENCE)
         {
             SetError(INVALID_FA);
             break;
@@ -1228,7 +1228,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        if (pV->GetType() != VAR_REFERENCE)
+        if (pV->GetType() != S_TOKEN_TYPE::VAR_REFERENCE)
         {
             SetError(INVALID_FA);
             break;
@@ -1272,10 +1272,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() == VAR_INTEGER) {
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER) {
             pV->Get(TempLong1);
         }
-        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == S_TOKEN_TYPE::VAR_STRING) {
             const auto layerId = GetLayerIDByOldName(pV->GetString());
             if (!layerId) {
                 SetError(INVALID_FA);
@@ -1310,10 +1310,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() == VAR_INTEGER) {
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER) {
             pV->Get(TempLong1);
         }
-        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == S_TOKEN_TYPE::VAR_STRING) {
             const auto layerId = GetLayerIDByOldName(pV->GetString());
             if (!layerId) {
                 SetError(INVALID_FA);
@@ -1359,10 +1359,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() == VAR_INTEGER) {
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER) {
             pV->Get(TempLong2);
         }
-        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == S_TOKEN_TYPE::VAR_STRING) {
             const auto layerId = GetLayerIDByOldName(pV->GetString());
             if (!layerId) {
                 SetError(INVALID_FA);
@@ -1393,10 +1393,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() == VAR_INTEGER) {
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER) {
             pV->Get(TempLong2);
         }
-        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == S_TOKEN_TYPE::VAR_STRING) {
             const auto layerId = GetLayerIDByOldName(pV->GetString());
             if (!layerId) {
                 SetError(INVALID_FA);
@@ -1426,10 +1426,10 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
 
-        if (pV->GetType() == VAR_INTEGER) {
+        if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER) {
             pV->Get(TempLong2);
         }
-        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == VAR_STRING) {
+        else if (ENABLE_SCRIPT_COMPATIBILITY && pV->GetType() == S_TOKEN_TYPE::VAR_STRING) {
             const auto layerId = GetLayerIDByOldName(pV->GetString());
             if (!layerId) {
                 SetError(INVALID_FA);
@@ -1628,7 +1628,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         {
         case 'a':
             pResult = SStack.Push();
-            pResult->SetType(VAR_AREFERENCE);
+            pResult->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
             pResult->SetAReference(pEventMessage->AttributePointer());
             pVResult = pResult;
             return pResult;
@@ -1650,7 +1650,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             return pResult;
         case 'i':
             pResult = SStack.Push();
-            pResult->SetType(VAR_AREFERENCE);
+            pResult->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
             ent = pEventMessage->EntityID();
             pResult->Set(ent);
             pResult->SetAReference(core.Entity_GetAttributePointer(ent));
@@ -1821,7 +1821,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV->RefConvert();
-        pV->Convert(VAR_STRING);
+        pV->Convert(S_TOKEN_TYPE::VAR_STRING);
         pV->Get(pChar);
 #ifndef _TOFF
         DTrace(pChar);
@@ -1835,7 +1835,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Convert(VAR_INTEGER);
+        pV->Convert(S_TOKEN_TYPE::VAR_INTEGER);
         pV->Get(TempLong1);
         pV = SStack.Push();
         pV->Set(TempLong1);
@@ -1849,7 +1849,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Convert(VAR_FLOAT);
+        pV->Convert(S_TOKEN_TYPE::VAR_FLOAT);
         pV->Get(TempFloat1);
         pV = SStack.Push();
         pV->Set(TempFloat1);
@@ -1868,12 +1868,12 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        if (pV->GetType() != VAR_FLOAT)
+        if (pV->GetType() != S_TOKEN_TYPE::VAR_FLOAT)
         {
             SetError(INVALID_FA);
             break;
         }
-        if (pV2->GetType() != VAR_INTEGER)
+        if (pV2->GetType() != S_TOKEN_TYPE::VAR_INTEGER)
         {
             SetError(INVALID_FA);
             break;
@@ -1895,14 +1895,14 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
 
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempLong1 = abs(TempLong1);
             pV = SStack.Push();
             pV->Set(TempLong1);
             pVResult = pV;
             return pV;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = static_cast<float>(fabs(TempFloat1));
             pV = SStack.Push();
@@ -1924,7 +1924,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             if (TempLong1 < 0)
             {
@@ -1936,7 +1936,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             pV->Set(TempLong1);
             pVResult = pV;
             return pV;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             if (TempFloat1 < 0)
             {
@@ -1962,14 +1962,14 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempLong1 = TempLong1 * TempLong1;
             pV = SStack.Push();
             pV->Set(TempLong1);
             pVResult = pV;
             return pV;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = TempFloat1 * TempFloat1;
             pV = SStack.Push();
@@ -1990,11 +1990,11 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempFloat1 = static_cast<float>(sinf(static_cast<float>(TempLong1)));
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = static_cast<float>(sin(TempFloat1));
             break;
@@ -2016,11 +2016,11 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempFloat1 = static_cast<float>(cosf(static_cast<float>(TempLong1)));
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = static_cast<float>(cos(TempFloat1));
             break;
@@ -2041,11 +2041,11 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempFloat1 = static_cast<float>(tanf(static_cast<float>(TempLong1)));
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = static_cast<float>(tan(TempFloat1));
             break;
@@ -2066,11 +2066,11 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             TempFloat1 = static_cast<float>(atanf(static_cast<float>(TempLong1)));
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             TempFloat1 = static_cast<float>(atan(TempFloat1));
             break;
@@ -2098,14 +2098,14 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         }
         switch (pV->GetType())
         {
-        case VAR_FLOAT:
-        case VAR_INTEGER:
-            pV->Convert(VAR_FLOAT);
+        case S_TOKEN_TYPE::VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_INTEGER:
+            pV->Convert(S_TOKEN_TYPE::VAR_FLOAT);
             switch (pV->GetType())
             {
-            case VAR_FLOAT:
-            case VAR_INTEGER:
-                pV2->Convert(VAR_FLOAT);
+            case S_TOKEN_TYPE::VAR_FLOAT:
+            case S_TOKEN_TYPE::VAR_INTEGER:
+                pV2->Convert(S_TOKEN_TYPE::VAR_FLOAT);
                 break;
             default:
                 SetError("Invalid func 'atan2' argument");
@@ -2132,7 +2132,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         };
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             if (TempLong1 < -1 || TempLong1 > 1)
             {
@@ -2141,7 +2141,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             }
             TempFloat1 = (float)asinf((float)TempLong1);
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             if (TempFloat1 < -1.0f || TempFloat1 > 1.0f)
             {
@@ -2167,7 +2167,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         };
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             pV->Get(TempLong1);
             if (TempLong1 < -1 || TempLong1 > 1)
             {
@@ -2176,7 +2176,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             }
             TempFloat1 = (float)acosf((float)TempLong1);
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             pV->Get(TempFloat1);
             if (TempFloat1 < -1.0f || TempFloat1 > 1.0f)
             {
@@ -2266,7 +2266,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
         {
             switch (pV->GetType())
             {
-            case VAR_AREFERENCE:
+            case S_TOKEN_TYPE::VAR_AREFERENCE:
                 if (!pV->AttributesClass)
                 {
                     TempLong1 = 0;
@@ -2300,7 +2300,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = pV->GetVarPointer();
-        if (!(pV->GetType() == VAR_AREFERENCE || pV->GetType() == VAR_OBJECT))
+        if (!(pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE || pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT))
         {
             SetError(BAD_FA);
             break;
@@ -2330,7 +2330,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = pV->GetVarPointer();
-        if (!(pV->GetType() == VAR_AREFERENCE || pV->GetType() == VAR_OBJECT))
+        if (!(pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE || pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT))
         {
             SetError(BAD_FA);
             break;
@@ -2345,7 +2345,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = SStack.Push();
-        pV->SetType(VAR_AREFERENCE);
+        pV->SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
         pV->SetAReference(pA);
         pVResult = pV;
         return pV;
@@ -2357,7 +2357,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = pV->GetVarPointer();
-        if (!(pV->GetType() == VAR_AREFERENCE || pV->GetType() == VAR_OBJECT))
+        if (!(pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE || pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT))
         {
             SetError(BAD_FA);
             break;
@@ -2379,7 +2379,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = pV->GetVarPointer();
-        if (!(pV->GetType() == VAR_AREFERENCE || pV->GetType() == VAR_OBJECT))
+        if (!(pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE || pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT))
         {
             SetError(BAD_FA);
             break;
@@ -2401,7 +2401,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             break;
         }
         pV = pV->GetVarPointer();
-        if (!(pV->GetType() == VAR_AREFERENCE || pV->GetType() == VAR_OBJECT))
+        if (!(pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE || pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT))
         {
             SetError(BAD_FA);
             break;
@@ -2474,7 +2474,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Convert(VAR_STRING);
+        pV->Convert(S_TOKEN_TYPE::VAR_STRING);
         pV->Get(pChar);
         core.SaveState(pChar);
         break;
@@ -2485,7 +2485,7 @@ DATA *COMPILER::BC_CallIntFunction(uint32_t func_code, DATA *&pVResult, uint32_t
             SetError(INVALID_FA);
             break;
         }
-        pV->Convert(VAR_STRING);
+        pV->Convert(S_TOKEN_TYPE::VAR_STRING);
         pV->Get(pChar);
         core.InitiateStateLoading(pChar);
         break;
@@ -2600,7 +2600,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
         {
         case 'l':
             pV = pV->GetVarPointer();
-            if (pV->GetType() != VAR_INTEGER)
+            if (pV->GetType() != S_TOKEN_TYPE::VAR_INTEGER)
             {
                 SetError("CreateMessage: Invalid Data");
                 return false;
@@ -2610,7 +2610,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
             break;
         case 'p':
             pV = pV->GetVarPointer();
-            if (pV->GetType() != VAR_PTR)
+            if (pV->GetType() != S_TOKEN_TYPE::VAR_PTR)
             {
                 SetError("CreateMessage: Invalid Data");
                 return false;
@@ -2620,11 +2620,11 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
             break;
         case 'f':
             pV = pV->GetVarPointer();
-            if (pV->GetType() != VAR_FLOAT)
+            if (pV->GetType() != S_TOKEN_TYPE::VAR_FLOAT)
             {
-                if (pV->GetType() == VAR_INTEGER)
+                if (pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER)
                 {
-                    pV->Convert(VAR_FLOAT);
+                    pV->Convert(S_TOKEN_TYPE::VAR_FLOAT);
                 }
                 else
                 {
@@ -2637,7 +2637,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
             break;
         case 'i':
             pV = pV->GetVarPointer();
-            if (!(pV->GetType() == VAR_OBJECT || pV->GetType() == VAR_AREFERENCE))
+            if (!(pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT || pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE))
             {
                 SetError("CreateMessage: Invalid Data");
                 return false;
@@ -2650,7 +2650,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
             pMs->Set((char *)&pV);
             break;
         case 's':
-            if (pV->GetType() != VAR_STRING)
+            if (pV->GetType() != S_TOKEN_TYPE::VAR_STRING)
             {
                 SetError("CreateMessage: Invalid Data");
                 return false;
@@ -2660,7 +2660,7 @@ bool COMPILER::CreateMessage(MESSAGE_SCRIPT *pMs, uint32_t s_off, uint32_t var_o
             break;
         case 'a':
             pV = pV->GetVarPointer();
-            if (!(pV->GetType() == VAR_OBJECT || pV->GetType() == VAR_AREFERENCE))
+            if (!(pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT || pV->GetType() == S_TOKEN_TYPE::VAR_AREFERENCE))
             {
                 SetError("CreateMessage: Invalid Data");
                 return false;

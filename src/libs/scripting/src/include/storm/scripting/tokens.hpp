@@ -1,10 +1,8 @@
-#ifndef STORM_ENGINE_TOKENS_HPP
-#define STORM_ENGINE_TOKENS_HPP
 #pragma once
 
 namespace storm::scripting {
 
-enum S_TOKEN_TYPE
+enum TokenType
 {
     END_OF_PROGRAMM,
     INVALID_TOKEN,
@@ -138,5 +136,3 @@ enum S_TOKEN_TYPE
 };
 
 } // namespace storm::scripting
-
-#endif // STORM_ENGINE_TOKENS_HPP

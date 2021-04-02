@@ -11,7 +11,7 @@ namespace
 
 auto getKeywordMap()
 {
-    return std::map<std::string_view, S_TOKEN_TYPE, decltype(&storm::iLess<std::string_view>)>(
+    return std::map<std::string_view, TokenType, decltype(&storm::iLess<std::string_view>)>(
         {
             {"#hold", HOLD_COMPILATION},
             {"#include", INCLIDE_FILE},
@@ -88,7 +88,7 @@ auto getKeywordMap()
 
 } // namespace
 
-S_TOKEN_TYPE KeywordManager::getTokenForKeyword(const std::string_view &keyword)
+TokenType KeywordManager::getTokenForKeyword(const std::string_view &keyword)
 {
     static auto keyword_map = getKeywordMap();
 
@@ -97,7 +97,7 @@ S_TOKEN_TYPE KeywordManager::getTokenForKeyword(const std::string_view &keyword)
         return find->second;
     }
 
-    return S_TOKEN_TYPE::UNKNOWN;
+    return TokenType::UNKNOWN;
 }
 
 } // namespace storm::scripting

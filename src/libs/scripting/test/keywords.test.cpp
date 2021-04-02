@@ -10,12 +10,12 @@ TEST_CASE("Parse tokens", "[compiler]")
 
     SECTION("'#hold'")
     {
-        CHECK(keyword_manager.getTokenForKeyword("#hold") == S_TOKEN_TYPE::HOLD_COMPILATION);
+        CHECK(keyword_manager.getTokenForKeyword("#hold") == TokenType::HOLD_COMPILATION);
     }
 
     SECTION("'#include'")
     {
-        CHECK(keyword_manager.getTokenForKeyword("#include") == S_TOKEN_TYPE::INCLIDE_FILE);
+        CHECK(keyword_manager.getTokenForKeyword("#include") == TokenType::INCLIDE_FILE);
     }
 }
 
@@ -23,8 +23,8 @@ TEST_CASE("Tokens are case insensitive", "[compiler]")
 {
     KeywordManager keyword_manager;
 
-    CHECK(keyword_manager.getTokenForKeyword("return") == S_TOKEN_TYPE::FUNCTION_RETURN);
-    CHECK(keyword_manager.getTokenForKeyword("Return") == S_TOKEN_TYPE::FUNCTION_RETURN);
-    CHECK(keyword_manager.getTokenForKeyword("RETURN") == S_TOKEN_TYPE::FUNCTION_RETURN);
-    CHECK(keyword_manager.getTokenForKeyword("rEtUrN") == S_TOKEN_TYPE::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("return") == TokenType::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("Return") == TokenType::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("RETURN") == TokenType::FUNCTION_RETURN);
+    CHECK(keyword_manager.getTokenForKeyword("rEtUrN") == TokenType::FUNCTION_RETURN);
 }

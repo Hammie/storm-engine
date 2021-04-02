@@ -13,24 +13,24 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
 
     auto check_equal = false;
 
-    while (BC_TokenGet() == DEBUG_LINE_CODE)
+    while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
     {
     }
-    if (TokenType() == SEPARATOR)
+    if (TokenType() == S_TOKEN_TYPE::SEPARATOR)
     {
         SetError("Invalid expression");
         return false;
     }
 
     //--------------------------------------------------------------------------
-    if (TokenIs(AND))
+    if (TokenIs(S_TOKEN_TYPE::AND))
     {
         VARINFO vi;
 
         auto Token_type = BC_TokenGet();
-        if (TokenType() != VARIABLE)
+        if (TokenType() != S_TOKEN_TYPE::VARIABLE)
         {
-            if (TokenType() != LOCAL_VARIABLE)
+            if (TokenType() != S_TOKEN_TYPE::LOCAL_VARIABLE)
             {
                 SetError("invalid '&'");
                 return false;
@@ -38,7 +38,7 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
         }
 
         const auto var_code = *((uint32_t *)&pRunCodeBase[TLR_DataOffset]);
-        if (TokenType() == VARIABLE)
+        if (TokenType() == S_TOKEN_TYPE::VARIABLE)
         {
             if (!VarTab.GetVar(vi, var_code))
             {
@@ -64,7 +64,7 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
         }
 
         Token_type = BC_TokenGet();
-        if (Token_type == SQUARE_OPEN_BRACKET)
+        if (Token_type == S_TOKEN_TYPE::SQUARE_OPEN_BRACKET)
         {
             DATA array_index;
             long index;
@@ -78,20 +78,20 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
             BC_TokenGet(); // beginning of subexpression
             BC_ProcessExpression_L2(&array_index);
             array_index.Get(index);
-            if (!TokenIs(SQUARE_CLOSE_BRACKET))
+            if (!TokenIs(S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET))
                 SetError("missed ']' in expression");
 
-            value->SetType(VAR_REFERENCE);
+            value->SetType(S_TOKEN_TYPE::VAR_REFERENCE);
             // pV = pV->GetVarPointer();
             pV = pV->GetArrayElement(index);
             value->SetReference(pV); //->GetVarPointer());
             // BC_TokenGet();
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             return true;
         }
-        value->SetType(VAR_REFERENCE);
+        value->SetType(S_TOKEN_TYPE::VAR_REFERENCE);
         value->SetReference(pV); //->GetVarPointer());
         return true;
     }
@@ -103,7 +103,7 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
       op = TokenType();
       switch(op)
       {
-        case SQUARE_CLOSE_BRACKET: break;
+        case S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET: break;
         case CLOSE_BRACKET: break;
         case OP_EQUAL: break;
 
@@ -116,7 +116,7 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
         case OP_GREATER:
         case OP_BOOL_EQUAL:
           //BC_TokenGet();
-          while(BC_TokenGet() == DEBUG_LINE_CODE){};
+          while(BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE){};
           BC_ProcessExpression_L2(&value2);
           value->CompareAndSetResult(&value2,op);
         break;
@@ -125,9 +125,9 @@ bool COMPILER::BC_ProcessExpression(DATA *value)
         case DOT: break;
         case ACCESS_WORD: break;
         case ACCESS_VAR: break;
-        case DEBUG_LINE_CODE: break;
+        case S_TOKEN_TYPE::DEBUG_LINE_CODE: break;
 
-        case SEPARATOR: break;//return value;
+        case S_TOKEN_TYPE::SEPARATOR: break;//return value;
         default:
           SetError("Invalid expression break");
         return false;
@@ -143,35 +143,35 @@ void COMPILER::BC_ProcessExpression_L0(DATA *value)
     value2.SetVCompiler(this);
 
     BC_ProcessExpression_L1(value);
-    while (TokenIs(OP_BOOL_AND) || TokenIs(OP_BOOL_OR))
+    while (TokenIs(S_TOKEN_TYPE::OP_BOOL_AND) || TokenIs(S_TOKEN_TYPE::OP_BOOL_OR))
     {
         const auto op = TokenType();
         switch (op)
         {
-        case SQUARE_CLOSE_BRACKET:
+        case S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET:
             break;
-        case CLOSE_BRACKET:
+        case S_TOKEN_TYPE::CLOSE_BRACKET:
             break;
-        case OP_EQUAL:
+        case S_TOKEN_TYPE::OP_EQUAL:
             break;
-        case COMMA:
+        case S_TOKEN_TYPE::COMMA:
             break;
-        case DOT:
+        case S_TOKEN_TYPE::DOT:
             break;
-        case ACCESS_WORD:
+        case S_TOKEN_TYPE::ACCESS_WORD:
             break;
-        case ACCESS_WORD_CODE:
+        case S_TOKEN_TYPE::ACCESS_WORD_CODE:
             break;
-        case ACCESS_VAR:
+        case S_TOKEN_TYPE::ACCESS_VAR:
             break;
-        case DEBUG_LINE_CODE:
+        case S_TOKEN_TYPE::DEBUG_LINE_CODE:
             break;
-        case SEPARATOR:
+        case S_TOKEN_TYPE::SEPARATOR:
             break;
 
-        case OP_BOOL_AND:
+        case S_TOKEN_TYPE::OP_BOOL_AND:
             value->BoolConvert();
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             value->Get(lRes);
@@ -184,9 +184,9 @@ void COMPILER::BC_ProcessExpression_L0(DATA *value)
                 value->CompareAndSetResult(&value2, op);
             }
             break;
-        case OP_BOOL_OR:
+        case S_TOKEN_TYPE::OP_BOOL_OR:
             value->BoolConvert();
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             value->Get(lRes);
@@ -214,39 +214,39 @@ void COMPILER::BC_ProcessExpression_L1(DATA *value, bool bSkip)
     value2.SetVCompiler(this);
 
     BC_ProcessExpression_L2(value, bSkip);
-    while (TokenIs(OP_NOT_EQUAL) || TokenIs(OP_LESSER_OR_EQUAL) || TokenIs(OP_LESSER) || TokenIs(OP_GREATER_OR_EQUAL) ||
-           TokenIs(OP_GREATER) || TokenIs(OP_BOOL_EQUAL))
+    while (TokenIs(S_TOKEN_TYPE::OP_NOT_EQUAL) || TokenIs(S_TOKEN_TYPE::OP_LESSER_OR_EQUAL) || TokenIs(S_TOKEN_TYPE::OP_LESSER) || TokenIs(S_TOKEN_TYPE::OP_GREATER_OR_EQUAL) ||
+           TokenIs(S_TOKEN_TYPE::OP_GREATER) || TokenIs(S_TOKEN_TYPE::OP_BOOL_EQUAL))
     {
         const auto op = TokenType();
         switch (op)
         {
-        case SQUARE_CLOSE_BRACKET:
+        case S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET:
             break;
-        case CLOSE_BRACKET:
+        case S_TOKEN_TYPE::CLOSE_BRACKET:
             break;
-        case OP_EQUAL:
+        case S_TOKEN_TYPE::OP_EQUAL:
             break;
-        case COMMA:
+        case S_TOKEN_TYPE::COMMA:
             break;
-        case DOT:
+        case S_TOKEN_TYPE::DOT:
             break;
-        case ACCESS_WORD:
+        case S_TOKEN_TYPE::ACCESS_WORD:
             break;
-        case ACCESS_WORD_CODE:
+        case S_TOKEN_TYPE::ACCESS_WORD_CODE:
             break;
-        case ACCESS_VAR:
+        case S_TOKEN_TYPE::ACCESS_VAR:
             break;
-        case DEBUG_LINE_CODE:
+        case S_TOKEN_TYPE::DEBUG_LINE_CODE:
             break;
-        case SEPARATOR:
+        case S_TOKEN_TYPE::SEPARATOR:
             break;
-        case OP_NOT_EQUAL:
-        case OP_LESSER_OR_EQUAL:
-        case OP_LESSER:
-        case OP_GREATER_OR_EQUAL:
-        case OP_GREATER:
-        case OP_BOOL_EQUAL:
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+        case S_TOKEN_TYPE::OP_NOT_EQUAL:
+        case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
+        case S_TOKEN_TYPE::OP_LESSER:
+        case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
+        case S_TOKEN_TYPE::OP_GREATER:
+        case S_TOKEN_TYPE::OP_BOOL_EQUAL:
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             BC_ProcessExpression_L2(&value2, bSkip);
@@ -269,10 +269,10 @@ void COMPILER::BC_ProcessExpression_L2(DATA *value, bool bSkip)
     DATA TempVal;
     TempVal.SetVCompiler(this);
     BC_ProcessExpression_L3(value, bSkip);
-    while (TokenIs(OP_PLUS) || TokenIs(OP_MINUS))
+    while (TokenIs(S_TOKEN_TYPE::OP_PLUS) || TokenIs(S_TOKEN_TYPE::OP_MINUS))
     {
         const auto op = TokenType();
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         TempVal.ClearType();
@@ -281,10 +281,10 @@ void COMPILER::BC_ProcessExpression_L2(DATA *value, bool bSkip)
         {
             switch (op)
             {
-            case OP_PLUS:
+            case S_TOKEN_TYPE::OP_PLUS:
                 value->Plus(&TempVal);
                 break;
-            case OP_MINUS:
+            case S_TOKEN_TYPE::OP_MINUS:
                 value->Minus(&TempVal);
                 break;
             }
@@ -299,10 +299,10 @@ void COMPILER::BC_ProcessExpression_L3(DATA *value, bool bSkip)
     TempVal.SetVCompiler(this);
 
     BC_ProcessExpression_L4(value, bSkip);
-    while (TokenIs(OP_MULTIPLY) || TokenIs(OP_DIVIDE) || TokenIs(OP_MODUL))
+    while (TokenIs(S_TOKEN_TYPE::OP_MULTIPLY) || TokenIs(S_TOKEN_TYPE::OP_DIVIDE) || TokenIs(S_TOKEN_TYPE::OP_MODUL))
     {
         const S_TOKEN_TYPE op = TokenType();
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         BC_ProcessExpression_L4(&TempVal, bSkip);
@@ -310,13 +310,13 @@ void COMPILER::BC_ProcessExpression_L3(DATA *value, bool bSkip)
         {
             switch (op)
             {
-            case OP_MULTIPLY:
+            case S_TOKEN_TYPE::OP_MULTIPLY:
                 value->Multiply(&TempVal);
                 break;
-            case OP_DIVIDE:
+            case S_TOKEN_TYPE::OP_DIVIDE:
                 value->Divide(&TempVal);
                 break;
-            case OP_MODUL:
+            case S_TOKEN_TYPE::OP_MODUL:
                 value->Modul(&TempVal);
                 break;
             }
@@ -332,15 +332,15 @@ void COMPILER::BC_ProcessExpression_L4(DATA *value, bool bSkip)
     long Deg;
 
     BC_ProcessExpression_L5(value, bSkip);
-    if (TokenIs(OP_POWER))
+    if (TokenIs(S_TOKEN_TYPE::OP_POWER))
     {
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         BC_ProcessExpression_L5(&TempVal, bSkip);
         if (!bSkip)
         {
-            if (TempVal.GetType() == VAR_INTEGER)
+            if (TempVal.GetType() == S_TOKEN_TYPE::VAR_INTEGER)
             {
                 TempVal.Get(Deg);
                 value->Power(Deg);
@@ -353,9 +353,9 @@ void COMPILER::BC_ProcessExpression_L4(DATA *value, bool bSkip)
 void COMPILER::BC_ProcessExpression_L5(DATA *value, bool bSkip)
 {
     const S_TOKEN_TYPE op = TokenType();
-    if (TokenIs(OP_PLUS) || TokenIs(OP_MINUS) || TokenIs(OP_BOOL_NEG))
+    if (TokenIs(S_TOKEN_TYPE::OP_PLUS) || TokenIs(S_TOKEN_TYPE::OP_MINUS) || TokenIs(S_TOKEN_TYPE::OP_BOOL_NEG))
     {
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
     }
@@ -363,18 +363,18 @@ void COMPILER::BC_ProcessExpression_L5(DATA *value, bool bSkip)
 
     if (!bSkip)
     {
-        if (op == OP_MINUS)
+        if (op == S_TOKEN_TYPE::OP_MINUS)
             value->Inverse();
-        else if (op == OP_BOOL_NEG)
+        else if (op == S_TOKEN_TYPE::OP_BOOL_NEG)
         {
             long iVal;
             const char *sVal;
 
             switch (value->GetType())
             {
-            case VAR_FLOAT:
-                value->Convert(VAR_INTEGER);
-            case VAR_INTEGER:
+            case S_TOKEN_TYPE::VAR_FLOAT:
+                value->Convert(S_TOKEN_TYPE::VAR_INTEGER);
+            case S_TOKEN_TYPE::VAR_INTEGER:
                 value->Get(iVal);
                 if (iVal != 0)
                     iVal = 0;
@@ -382,7 +382,7 @@ void COMPILER::BC_ProcessExpression_L5(DATA *value, bool bSkip)
                     iVal = 1;
                 value->Set(iVal);
                 break;
-            case VAR_STRING:
+            case S_TOKEN_TYPE::VAR_STRING:
                 value->Get(sVal);
                 if (sVal == nullptr)
                     iVal = 1;
@@ -390,7 +390,7 @@ void COMPILER::BC_ProcessExpression_L5(DATA *value, bool bSkip)
                     iVal = 1;
                 else
                     iVal = 0;
-                value->Convert(VAR_INTEGER);
+                value->Convert(S_TOKEN_TYPE::VAR_INTEGER);
                 value->Set(iVal);
                 break;
             default:
@@ -404,15 +404,15 @@ void COMPILER::BC_ProcessExpression_L5(DATA *value, bool bSkip)
 // '(' and ')'
 void COMPILER::BC_ProcessExpression_L6(DATA *value, bool bSkip)
 {
-    if (TokenIs(OPEN_BRACKET))
+    if (TokenIs(S_TOKEN_TYPE::OPEN_BRACKET))
     {
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         BC_ProcessExpression_L1(value, bSkip);
-        if (!TokenIs(CLOSE_BRACKET))
+        if (!TokenIs(S_TOKEN_TYPE::CLOSE_BRACKET))
             SetError("No matching ')' in expression");
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
     }
@@ -441,51 +441,51 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
 
     switch (TokenType())
     {
-    case NUMBER:
+    case S_TOKEN_TYPE::NUMBER:
         if (bSkip)
         {
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             return;
         }
         value->Set(*((long *)&pRunCodeBase[TLR_DataOffset]));
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         return;
-    case FLOAT_NUMBER:
+    case S_TOKEN_TYPE::FLOAT_NUMBER:
         if (bSkip)
         {
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             return;
         }
         value->Set(*((float *)&pRunCodeBase[TLR_DataOffset]));
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         break;
-    case STRING:
+    case S_TOKEN_TYPE::STRING:
         if (bSkip)
         {
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             return;
         }
         value->Set((char *)&pRunCodeBase[TLR_DataOffset + 4]); // 4 - string length
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         break;
-    case CALL:
+    case S_TOKEN_TYPE::CALL:
         if (bSkip)
         {
             long local_in;
             BC_TokenGet(); // string var
-            if (BC_TokenGet() != OPEN_BRACKET)
+            if (BC_TokenGet() != S_TOKEN_TYPE::OPEN_BRACKET)
             {
                 SetError("missing '('");
                 return;
@@ -495,10 +495,10 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             {
                 switch (BC_TokenGet())
                 {
-                case OPEN_BRACKET:
+                case S_TOKEN_TYPE::OPEN_BRACKET:
                     local_in++;
                     break;
-                case CLOSE_BRACKET:
+                case S_TOKEN_TYPE::CLOSE_BRACKET:
                     local_in--;
                     break;
                 }
@@ -508,7 +508,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
         }
         vtype = BC_TokenGet();                               // read variable
         var_code = *((long *)&pRunCodeBase[TLR_DataOffset]); // var code
-        if (vtype == VARIABLE)
+        if (vtype == S_TOKEN_TYPE::VARIABLE)
         {
             if (!VarTab.GetVar(vi, var_code))
             {
@@ -527,7 +527,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             }
         }
         pVV = pVV->GetVarPointer();
-        if (pVV->GetType() != VAR_STRING)
+        if (pVV->GetType() != S_TOKEN_TYPE::VAR_STRING)
         {
             SetError("string call argument isnt string var");
             return;
@@ -550,16 +550,16 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
         }
         else
             SetError("void function result in expression");
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
 
         break;
-    case CALL_FUNCTION:
+    case S_TOKEN_TYPE::CALL_FUNCTION:
         if (bSkip)
         {
             long local_in;
-            if (BC_TokenGet() != OPEN_BRACKET)
+            if (BC_TokenGet() != S_TOKEN_TYPE::OPEN_BRACKET)
             {
                 SetError("missing '('");
                 return;
@@ -569,16 +569,16 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             {
                 switch (BC_TokenGet())
                 {
-                case OPEN_BRACKET:
+                case S_TOKEN_TYPE::OPEN_BRACKET:
                     local_in++;
                     break;
-                case CLOSE_BRACKET:
+                case S_TOKEN_TYPE::CLOSE_BRACKET:
                     local_in--;
                     break;
                 }
             } while (local_in > 0);
             BC_TokenGet();
-            // while(BC_TokenGet() == DEBUG_LINE_CODE){};
+            // while(BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE){};
             return;
         }
         // DWORD func_code,ip;
@@ -593,14 +593,14 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
         }
         else
             SetError("void function result in expression");
-        while (BC_TokenGet() == DEBUG_LINE_CODE)
+        while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
         }
         break;
-    case LOCAL_VARIABLE:
-    case VARIABLE:
+    case S_TOKEN_TYPE::LOCAL_VARIABLE:
+    case S_TOKEN_TYPE::VARIABLE:
         var_code = *((long *)&pRunCodeBase[TLR_DataOffset]);
-        if (TokenType() == VARIABLE)
+        if (TokenType() == S_TOKEN_TYPE::VARIABLE)
         {
             if (!VarTab.GetVar(vi, var_code))
             {
@@ -641,7 +641,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 bref2a = true;
         }
 
-        if (BC_TokenGet() == SQUARE_OPEN_BRACKET)
+        if (BC_TokenGet() == S_TOKEN_TYPE::SQUARE_OPEN_BRACKET)
         {
             if (!(pV->IsArray() || bref2a))
             {
@@ -649,12 +649,12 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 return;
             }
             // beginning of subexpression
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
             BC_ProcessExpression_L2(&array_index, bSkip);
             array_index.Get(index);
-            if (!TokenIs(SQUARE_CLOSE_BRACKET))
+            if (!TokenIs(S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET))
                 SetError("missed ']' in expression");
             if (!bSkip)
             {
@@ -665,7 +665,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 if (pV == nullptr)
                 {
                     SetError("invalid array index");
-                    while (BC_TokenGet() == DEBUG_LINE_CODE)
+                    while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
                     {
                     }
                     break;
@@ -680,12 +680,12 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
         if(pV->IsArray() || bref2a)
         {
           // compute array index
-          if(BC_TokenGet() != SQUARE_OPEN_BRACKET) { SetError("missed '[' in expression"); return; }
+          if(BC_TokenGet() != S_TOKEN_TYPE::SQUARE_OPEN_BRACKET) { SetError("missed '[' in expression"); return; }
           // beginning of subexpression
-          while(BC_TokenGet() == DEBUG_LINE_CODE){};
+          while(BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE){};
           BC_ProcessExpression_L2(&array_index,bSkip);
           array_index.Get(index);
-          if(!TokenIs(SQUARE_CLOSE_BRACKET)) SetError("missed ']' in expression");
+          if(!TokenIs(S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET)) SetError("missed ']' in expression");
           if(!bSkip)
           {
             if(bref2a) pV = pVV->GetArrayElement(index);
@@ -693,18 +693,18 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             if(pV == 0)
             {
               SetError("invalid array index");
-              while(BC_TokenGet() == DEBUG_LINE_CODE){};
+              while(BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE){};
               break;
             }
           }
         }//*/
 
-        while (TokenType() == DEBUG_LINE_CODE)
+        while (TokenType() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
         {
             BC_TokenGet();
         }
-        // while(BC_TokenGet() == DEBUG_LINE_CODE){};
-        if (TokenType() != ACCESS_WORD_CODE && TokenType() != ACCESS_WORD && TokenType() != ACCESS_VAR)
+        // while(BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE){};
+        if (TokenType() != S_TOKEN_TYPE::ACCESS_WORD_CODE && TokenType() != S_TOKEN_TYPE::ACCESS_WORD && TokenType() != S_TOKEN_TYPE::ACCESS_VAR)
         {
             // pV = pV->GetVarPointer();
             // if(!pV) {SetError("invalid ref in process expression"); return;}
@@ -722,10 +722,10 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
 
         if (bSkip)
         {
-            while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+            while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
             {
                 BC_TokenGet();
-                while (TokenType() == DEBUG_LINE_CODE)
+                while (TokenType() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
                 {
                     BC_TokenGet();
                 }
@@ -738,22 +738,22 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
         {
             SetError("zero AClass root");
             value->Set("ERROR: zero AClass root");
-            while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+            while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
             {
                 BC_TokenGet();
             }
             return;
             // throw "zero AClass root";
         }
-        while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+        while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
         {
-            if (TokenType() == ACCESS_WORD_CODE)
+            if (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE)
             {
                 if (pRoot == nullptr)
                 {
                     value->Set("");
                     SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
-                    while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+                    while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
                     {
                         BC_TokenGet();
                     }
@@ -764,20 +764,20 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 {
                     value->Set("");
                     SetError("missed attribute: %s", SCodec->Convert(*((long *)&pRunCodeBase[TLR_DataOffset])));
-                    while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+                    while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
                     {
                         BC_TokenGet();
                     }
                     return;
                 }
             }
-            else if (TokenType() == ACCESS_WORD)
+            else if (TokenType() == S_TOKEN_TYPE::ACCESS_WORD)
             {
                 if (pRoot == nullptr)
                 {
                     value->Set("");
                     SetError("missed attribute: %s", (char *)&pRunCodeBase[TLR_DataOffset]);
-                    while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+                    while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
                     {
                         BC_TokenGet();
                     }
@@ -788,7 +788,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 {
                     value->Set("");
                     SetError("missed attribute: %s", (char *)&pRunCodeBase[TLR_DataOffset]);
-                    while (TokenType() == ACCESS_WORD_CODE || TokenType() == ACCESS_WORD || TokenType() == ACCESS_VAR)
+                    while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
                     {
                         BC_TokenGet();
                     }
@@ -798,11 +798,11 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
             else
             {
                 // BC_TokenGet();
-                while (BC_TokenGet() == DEBUG_LINE_CODE)
+                while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
                 {
                 }
                 var_code = *((long *)&pRunCodeBase[TLR_DataOffset]);
-                if (TokenType() == VARIABLE)
+                if (TokenType() == S_TOKEN_TYPE::VARIABLE)
                 {
                     if (!VarTab.GetVar(vi, var_code))
                     {
@@ -828,7 +828,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 }
 
                 TempData.Copy(pV);
-                TempData.Convert(VAR_STRING);
+                TempData.Convert(S_TOKEN_TYPE::VAR_STRING);
                 TempData.Get(pString);
 
                 pRoot = pRoot->FindAClass(pRoot, pString);
@@ -836,7 +836,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 {
                     value->Set("");
                     SetError("missed attribute %s", pString);
-                    while (BC_TokenGet() == DEBUG_LINE_CODE)
+                    while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
                     {
                     }
                     return;
@@ -844,7 +844,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 // pRoot = pRoot->GetAttributeClass((char *)&pRunCodeBase[TLR_DataOffset]);
             }
             // BC_TokenGet();
-            while (BC_TokenGet() == DEBUG_LINE_CODE)
+            while (BC_TokenGet() == S_TOKEN_TYPE::DEBUG_LINE_CODE)
             {
             }
         }
@@ -864,26 +864,26 @@ bool COMPILER::CompileExpression(SEGMENT_DESC &Segment)
     LVARINFO lvi;
 
     const S_TOKEN_TYPE Token_type = CompileAuxiliaryTokens(Segment);
-    if (Token_type == SEPARATOR)
+    if (Token_type == S_TOKEN_TYPE::SEPARATOR)
     {
         SetError(ERR_INVALID_EXPRESSION);
         return false;
     }
 
-    if (Token_type == AND)
+    if (Token_type == S_TOKEN_TYPE::AND)
     {
         // make reference operation
 
         S_TOKEN_TYPE sttVariableType = Token.Get();
 
-        if (sttVariableType != UNKNOWN)
+        if (sttVariableType != S_TOKEN_TYPE::UNKNOWN)
         {
             SetError("invalid '&' usage");
             return false;
         }
 
         sttVariableType = DetectUnknown(dwVarCode);
-        if (!(sttVariableType == VARIABLE || sttVariableType == LOCAL_VARIABLE))
+        if (!(sttVariableType == S_TOKEN_TYPE::VARIABLE || sttVariableType == S_TOKEN_TYPE::LOCAL_VARIABLE))
         {
             SetError("variable not found");
             return false;
@@ -892,17 +892,17 @@ bool COMPILER::CompileExpression(SEGMENT_DESC &Segment)
         const S_TOKEN_TYPE sttTokenType = Token.Get();
 
         // alloc for result
-        CompileToken(Segment, STACK_ALLOC);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_ALLOC);
 
-        if (sttTokenType == SQUARE_OPEN_BRACKET)
+        if (sttTokenType == S_TOKEN_TYPE::SQUARE_OPEN_BRACKET)
         {
-            if (sttVariableType == VARIABLE)
+            if (sttVariableType == S_TOKEN_TYPE::VARIABLE)
             {
                 VarTab.GetVarX(vi, dwVarCode);
                 // check for possibilities of '[' operator
                 if (!vi.bArray)
                 {
-                    if (vi.type != VAR_REFERENCE)
+                    if (vi.type != S_TOKEN_TYPE::VAR_REFERENCE)
                     {
                         SetError("EN: %d", vi.elements);
                         SetError(" A Invalid '[' operator, %s - isnt array", vi.name);
@@ -916,7 +916,7 @@ bool COMPILER::CompileExpression(SEGMENT_DESC &Segment)
                 // check for possibilities of '[' operator
                 if (!lvi.bArray)
                 {
-                    if (lvi.type != VAR_REFERENCE)
+                    if (lvi.type != S_TOKEN_TYPE::VAR_REFERENCE)
                     {
                         SetError(" B Invalid '[' operator, %s - isnt array", lvi.name);
                         return false;
@@ -934,18 +934,18 @@ bool COMPILER::CompileExpression(SEGMENT_DESC &Segment)
                 return false;
             }
             // test for ']'
-            if (Token.GetType() != SQUARE_CLOSE_BRACKET)
+            if (Token.GetType() != S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET)
             {
                 SetError("missing ']'");
                 return false;
             }
 
             // copy array index to BX
-            CompileToken(Segment, STACK_POP);
-            CompileToken(Segment, BX);
+            CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+            CompileToken(Segment, S_TOKEN_TYPE::BX);
 
-            CompileToken(Segment, SETREF_BXINDEX);
-            CompileToken(Segment, STACK_TOP);
+            CompileToken(Segment, S_TOKEN_TYPE::SETREF_BXINDEX);
+            CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
             CompileToken(Segment, sttVariableType, 1, &dwVarCode, sizeof(uint32_t));
 
             // next after ']'
@@ -953,8 +953,8 @@ bool COMPILER::CompileExpression(SEGMENT_DESC &Segment)
         }
         else
         {
-            CompileToken(Segment, SETREF);
-            CompileToken(Segment, STACK_TOP);
+            CompileToken(Segment, S_TOKEN_TYPE::SETREF);
+            CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
             CompileToken(Segment, sttVariableType, 1, &dwVarCode, sizeof(uint32_t));
         }
 
@@ -980,7 +980,7 @@ bool COMPILER::CompileExpression_L0(SEGMENT_DESC &Segment)
 
     S_TOKEN_TYPE sttOpType = Token.GetType();
 
-    while (sttOpType == OP_BOOL_AND || sttOpType == OP_BOOL_OR)
+    while (sttOpType == S_TOKEN_TYPE::OP_BOOL_AND || sttOpType == S_TOKEN_TYPE::OP_BOOL_OR)
     {
         sttOpType = Token.GetType();
 
@@ -991,23 +991,23 @@ bool COMPILER::CompileExpression_L0(SEGMENT_DESC &Segment)
         CompileToken(Segment,EX);
         CompileToken(Segment,STACK_TOP);*/
 
-        CompileToken(Segment, STACK_READ);
-        CompileToken(Segment, EX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_READ);
+        CompileToken(Segment, S_TOKEN_TYPE::EX);
 
         // save jump update position
         const uint32_t dwUpdateOffset1 = Segment.BCode_Program_size + 2;
         // point of jump not determined yet
         dwJumpOffset1 = 0;
         // compile jump command
-        if (sttOpType == OP_BOOL_AND)
+        if (sttOpType == S_TOKEN_TYPE::OP_BOOL_AND)
         {
             // AND : if 1st operand is zero - doesnt need to calculate second - jump to jump1
-            CompileToken(Segment, JUMP_Z, 1, (char *)&dwJumpOffset1, sizeof(uint32_t));
+            CompileToken(Segment, S_TOKEN_TYPE::JUMP_Z, 1, (char *)&dwJumpOffset1, sizeof(uint32_t));
         }
         else
         {
             // OR : if 1st operand is non zero - doesnt need to calculate second - jump to jump1
-            CompileToken(Segment, JUMP_NZ, 1, (char *)&dwJumpOffset1, sizeof(uint32_t));
+            CompileToken(Segment, S_TOKEN_TYPE::JUMP_NZ, 1, (char *)&dwJumpOffset1, sizeof(uint32_t));
         }
 
         if (!CompileExpression_L1(Segment))
@@ -1016,23 +1016,23 @@ bool COMPILER::CompileExpression_L0(SEGMENT_DESC &Segment)
             return false;
         }
 
-        CompileToken(Segment, STACK_POP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
 
         CompileToken(Segment, sttOpType);
-        CompileToken(Segment, STACK_TOP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
 
         // skip next section - proceed to jump2
         const uint32_t dwUpdateOffset2 = Segment.BCode_Program_size + 2;
         dwJumpOffset2 = 0;
-        CompileToken(Segment, JUMP, 1, (char *)&dwJumpOffset2, sizeof(uint32_t));
+        CompileToken(Segment, S_TOKEN_TYPE::JUMP, 1, (char *)&dwJumpOffset2, sizeof(uint32_t));
 
         // jump1
         // just convert stack top to bool
         memcpy(Segment.pCode.data() + dwUpdateOffset1, &Segment.BCode_Program_size, sizeof(uint32_t));
-        CompileToken(Segment, OP_BOOL_CONVERT);
-        CompileToken(Segment, STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::OP_BOOL_CONVERT);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
 
         // jump2
         // end of operation
@@ -1054,8 +1054,8 @@ bool COMPILER::CompileExpression_L1(SEGMENT_DESC &Segment)
 
     S_TOKEN_TYPE sttOpType = Token.GetType();
 
-    while (sttOpType == OP_NOT_EQUAL || sttOpType == OP_LESSER_OR_EQUAL || sttOpType == OP_LESSER ||
-           sttOpType == OP_GREATER_OR_EQUAL || sttOpType == OP_GREATER || sttOpType == OP_BOOL_EQUAL)
+    while (sttOpType == S_TOKEN_TYPE::OP_NOT_EQUAL || sttOpType == S_TOKEN_TYPE::OP_LESSER_OR_EQUAL || sttOpType == S_TOKEN_TYPE::OP_LESSER ||
+           sttOpType == S_TOKEN_TYPE::OP_GREATER_OR_EQUAL || sttOpType == S_TOKEN_TYPE::OP_GREATER || sttOpType == S_TOKEN_TYPE::OP_BOOL_EQUAL)
     {
         sttOpType = Token.GetType();
 
@@ -1067,11 +1067,11 @@ bool COMPILER::CompileExpression_L1(SEGMENT_DESC &Segment)
             return false;
         }
 
-        CompileToken(Segment, STACK_POP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
         CompileToken(Segment, sttOpType);
-        CompileToken(Segment, STACK_TOP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
 
         sttOpType = Token.GetType();
     }
@@ -1090,7 +1090,7 @@ bool COMPILER::CompileExpression_L2(SEGMENT_DESC &Segment)
 
     S_TOKEN_TYPE sttOpType = Token.GetType();
 
-    while (sttOpType == OP_PLUS || sttOpType == OP_MINUS)
+    while (sttOpType == S_TOKEN_TYPE::OP_PLUS || sttOpType == S_TOKEN_TYPE::OP_MINUS)
     {
         sttOpType = Token.GetType();
 
@@ -1102,11 +1102,11 @@ bool COMPILER::CompileExpression_L2(SEGMENT_DESC &Segment)
             return false;
         }
 
-        CompileToken(Segment, STACK_POP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
         CompileToken(Segment, sttOpType);
-        CompileToken(Segment, STACK_TOP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
 
         sttOpType = Token.GetType();
     }
@@ -1124,7 +1124,7 @@ bool COMPILER::CompileExpression_L3(SEGMENT_DESC &Segment)
 
     S_TOKEN_TYPE sttOpType = Token.GetType();
 
-    while (sttOpType == OP_MULTIPLY || sttOpType == OP_DIVIDE || sttOpType == OP_MODUL)
+    while (sttOpType == S_TOKEN_TYPE::OP_MULTIPLY || sttOpType == S_TOKEN_TYPE::OP_DIVIDE || sttOpType == S_TOKEN_TYPE::OP_MODUL)
     {
         sttOpType = Token.GetType();
         CompileAuxiliaryTokens(Segment);
@@ -1135,11 +1135,11 @@ bool COMPILER::CompileExpression_L3(SEGMENT_DESC &Segment)
             return false;
         }
 
-        CompileToken(Segment, STACK_POP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
         CompileToken(Segment, sttOpType);
-        CompileToken(Segment, STACK_TOP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
 
         sttOpType = Token.GetType();
     }
@@ -1155,7 +1155,7 @@ bool COMPILER::CompileExpression_L4(SEGMENT_DESC &Segment)
         return false;
     }
 
-    if (Token.GetType() == OP_POWER)
+    if (Token.GetType() == S_TOKEN_TYPE::OP_POWER)
     {
         CompileAuxiliaryTokens(Segment);
 
@@ -1165,11 +1165,11 @@ bool COMPILER::CompileExpression_L4(SEGMENT_DESC &Segment)
             return false;
         }
 
-        CompileToken(Segment, STACK_POP);
-        CompileToken(Segment, AX);
-        CompileToken(Segment, OP_POWER);
-        CompileToken(Segment, STACK_TOP);
-        CompileToken(Segment, AX);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
+        CompileToken(Segment, S_TOKEN_TYPE::OP_POWER);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
+        CompileToken(Segment, S_TOKEN_TYPE::AX);
     }
     return true;
 }
@@ -1178,7 +1178,7 @@ bool COMPILER::CompileExpression_L4(SEGMENT_DESC &Segment)
 bool COMPILER::CompileExpression_L5(SEGMENT_DESC &Segment)
 {
     const S_TOKEN_TYPE sttOpType = Token.GetType();
-    if (sttOpType == OP_PLUS || sttOpType == OP_MINUS || sttOpType == OP_BOOL_NEG)
+    if (sttOpType == S_TOKEN_TYPE::OP_PLUS || sttOpType == S_TOKEN_TYPE::OP_MINUS || sttOpType == S_TOKEN_TYPE::OP_BOOL_NEG)
         CompileAuxiliaryTokens(Segment);
 
     if (!CompileExpression_L6(Segment))
@@ -1189,13 +1189,13 @@ bool COMPILER::CompileExpression_L5(SEGMENT_DESC &Segment)
 
     switch (sttOpType)
     {
-    case OP_MINUS:
-        CompileToken(Segment, OP_SMINUS);
-        CompileToken(Segment, STACK_TOP);
+    case S_TOKEN_TYPE::OP_MINUS:
+        CompileToken(Segment, S_TOKEN_TYPE::OP_SMINUS);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
         break;
-    case OP_BOOL_NEG:
-        CompileToken(Segment, OP_BOOL_NEG);
-        CompileToken(Segment, STACK_TOP);
+    case S_TOKEN_TYPE::OP_BOOL_NEG:
+        CompileToken(Segment, S_TOKEN_TYPE::OP_BOOL_NEG);
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_TOP);
         break;
     }
     return true;
@@ -1204,7 +1204,7 @@ bool COMPILER::CompileExpression_L5(SEGMENT_DESC &Segment)
 // '(' and ')'
 bool COMPILER::CompileExpression_L6(SEGMENT_DESC &Segment)
 {
-    if (Token.GetType() == OPEN_BRACKET)
+    if (Token.GetType() == S_TOKEN_TYPE::OPEN_BRACKET)
     {
         CompileAuxiliaryTokens(Segment);
         if (!CompileExpression_L1(Segment))
@@ -1212,7 +1212,7 @@ bool COMPILER::CompileExpression_L6(SEGMENT_DESC &Segment)
             SetError(ERR_INVALID_EXPRESSION);
             return false;
         }
-        if (Token.GetType() != CLOSE_BRACKET)
+        if (Token.GetType() != S_TOKEN_TYPE::CLOSE_BRACKET)
         {
             SetError("No matching ')' in expression");
             return false;
@@ -1239,86 +1239,86 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
     bool bDynamicCall = false;
     switch (Token.GetType())
     {
-    case SEPARATOR:
+    case S_TOKEN_TYPE::SEPARATOR:
 
         return true;
-    case NUMBER:
-        CompileToken(Segment, STACK_PUSH);
+    case S_TOKEN_TYPE::NUMBER:
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
         CompileNumber(Segment);
         CompileAuxiliaryTokens(Segment);
         return true;
-    case FLOAT_NUMBER:
-        CompileToken(Segment, STACK_PUSH);
+    case S_TOKEN_TYPE::FLOAT_NUMBER:
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
         CompileFloatNumber(Segment);
         CompileAuxiliaryTokens(Segment);
         return true;
-    case STRING:
-        CompileToken(Segment, STACK_PUSH);
+    case S_TOKEN_TYPE::STRING:
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
         CompileString(Segment);
         CompileAuxiliaryTokens(Segment);
         return true;
-    case TRUE_CONST:
-        CompileToken(Segment, STACK_PUSH);
+    case S_TOKEN_TYPE::TRUE_CONST:
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
         dwRCode = 1;
-        CompileToken(Segment, NUMBER, 1, (char *)&dwRCode, sizeof(uint32_t));
+        CompileToken(Segment, S_TOKEN_TYPE::NUMBER, 1, (char *)&dwRCode, sizeof(uint32_t));
         CompileAuxiliaryTokens(Segment);
         return true;
-    case FALSE_CONST:
-        CompileToken(Segment, STACK_PUSH);
+    case S_TOKEN_TYPE::FALSE_CONST:
+        CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
         dwRCode = 0;
-        CompileToken(Segment, NUMBER, 1, (char *)&dwRCode, sizeof(uint32_t));
+        CompileToken(Segment, S_TOKEN_TYPE::NUMBER, 1, (char *)&dwRCode, sizeof(uint32_t));
         CompileAuxiliaryTokens(Segment);
         return true;
 
-    case CALL:
+    case S_TOKEN_TYPE::CALL:
         bDynamicCall = true;
-    case UNKNOWN:
+    case S_TOKEN_TYPE::UNKNOWN:
         if (!bDynamicCall)
         {
             sttResult = DetectUnknown(dwRCode);
             // set func call method to standart
-            sttFuncCallType = CALL_FUNCTION;
+            sttFuncCallType = S_TOKEN_TYPE::CALL_FUNCTION;
         }
         else
         {
-            sttResult = CALL;
-            sttFuncCallType = CALL_FUNCTION;
+            sttResult = S_TOKEN_TYPE::CALL;
+            sttFuncCallType = S_TOKEN_TYPE::CALL_FUNCTION;
         }
 
         switch (sttResult)
         {
-        case DEFINE_VAL:
+        case S_TOKEN_TYPE::DEFINE_VAL:
             DEFINFO di;
             DefTab.GetDef(di, dwRCode);
             switch (di.deftype)
             {
-            case NUMBER:
-                CompileToken(Segment, STACK_PUSH);
-                CompileToken(Segment, NUMBER, 1, (char *)&di.data4b, sizeof(uint32_t));
+            case S_TOKEN_TYPE::NUMBER:
+                CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
+                CompileToken(Segment, S_TOKEN_TYPE::NUMBER, 1, (char *)&di.data4b, sizeof(uint32_t));
                 CompileAuxiliaryTokens(Segment);
                 break;
-            case FLOAT_NUMBER:
-                CompileToken(Segment, STACK_PUSH);
-                CompileToken(Segment, FLOAT_NUMBER, 1, (char *)&di.data4b, sizeof(uint32_t));
+            case S_TOKEN_TYPE::FLOAT_NUMBER:
+                CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
+                CompileToken(Segment, S_TOKEN_TYPE::FLOAT_NUMBER, 1, (char *)&di.data4b, sizeof(uint32_t));
                 CompileAuxiliaryTokens(Segment);
                 break;
-            case STRING:
-                CompileToken(Segment, STACK_PUSH);
+            case S_TOKEN_TYPE::STRING:
+                CompileToken(Segment, S_TOKEN_TYPE::STACK_PUSH);
                 uint32_t string_size;
                 string_size = strlen((char *)di.data4b) + 1;
-                CompileToken(Segment, STRING, 2, (char *)&string_size, sizeof(uint32_t), (char *)di.data4b,
+                CompileToken(Segment, S_TOKEN_TYPE::STRING, 2, (char *)&string_size, sizeof(uint32_t), (char *)di.data4b,
                              string_size);
                 CompileAuxiliaryTokens(Segment);
                 break;
             }
             return true;
-        case CALL:
+        case S_TOKEN_TYPE::CALL:
             // this is dynamic function call
 
             // call type - dynamic
-            sttFuncCallType = CALL;
+            sttFuncCallType = S_TOKEN_TYPE::CALL;
 
-            if (Token.Get() != UNKNOWN)
+            if (Token.Get() != S_TOKEN_TYPE::UNKNOWN)
             {
                 SetError("invalid dynamic call syntax");
                 return false;
@@ -1327,19 +1327,19 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             // check for string variable
             sttVariableField = DetectUnknown(dwVarCode);
 
-            if (sttVariableField == VARIABLE)
+            if (sttVariableField == S_TOKEN_TYPE::VARIABLE)
             {
                 VarTab.GetVarX(vi, dwVarCode);
-                if (vi.type != VAR_STRING)
+                if (vi.type != S_TOKEN_TYPE::VAR_STRING)
                 {
                     SetError("'%s' must be string variable", Token.GetData());
                     return false;
                 }
             }
-            else if (sttVariableField == LOCAL_VARIABLE)
+            else if (sttVariableField == S_TOKEN_TYPE::LOCAL_VARIABLE)
             {
                 FuncTab.GetVar(lvi, CurrentFuncCode, dwVarCode);
-                if (lvi.type != VAR_STRING)
+                if (lvi.type != S_TOKEN_TYPE::VAR_STRING)
                 {
                     SetError("'%s' must be string variable", Token.GetData());
                     return false;
@@ -1353,12 +1353,12 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
 
             // proceed to standart func call routine
 
-        case CALL_FUNCTION:
+        case S_TOKEN_TYPE::CALL_FUNCTION:
             // this is function call
 
             // first prepare stack for calling function
 
-            if (Token.Get() != OPEN_BRACKET)
+            if (Token.Get() != S_TOKEN_TYPE::OPEN_BRACKET)
             {
                 SetError("missing '('");
                 return false;
@@ -1372,10 +1372,10 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             uint32_t func_args;
             func_args = 0;
 
-            if (fi.arguments == 0 && !IsIntFuncVarArgsNum(dwRCode) && sttFuncCallType != CALL)
+            if (fi.arguments == 0 && !IsIntFuncVarArgsNum(dwRCode) && sttFuncCallType != S_TOKEN_TYPE::CALL)
             {
                 // function without parameters
-                if (Token.Get() != CLOSE_BRACKET)
+                if (Token.Get() != S_TOKEN_TYPE::CLOSE_BRACKET)
                 {
                     SetError("missing ')'");
                     return false;
@@ -1392,16 +1392,16 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                         SetError("invalid function argument");
                         return false;
                     }
-                    if (Token.GetType() != COMMA)
+                    if (Token.GetType() != S_TOKEN_TYPE::COMMA)
                     {
-                        if (Token.GetType() != CLOSE_BRACKET)
+                        if (Token.GetType() != S_TOKEN_TYPE::CLOSE_BRACKET)
                         {
                             SetError("invalid function argument");
                             return false;
                         }
                     }
                     func_args++;
-                } while (Token.GetType() == COMMA);
+                } while (Token.GetType() == S_TOKEN_TYPE::COMMA);
             }
 
             /*
@@ -1429,23 +1429,23 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             }//*/
 
             // call function
-            if (sttFuncCallType == CALL_FUNCTION)
-                CompileToken(Segment, CALL_FUNCTION, 1, (char *)&dwRCode, sizeof(uint32_t));
+            if (sttFuncCallType == S_TOKEN_TYPE::CALL_FUNCTION)
+                CompileToken(Segment, S_TOKEN_TYPE::CALL_FUNCTION, 1, (char *)&dwRCode, sizeof(uint32_t));
             else
             {
                 // code of function must be find out on the fly from variable
-                CompileToken(Segment, CALL);
+                CompileToken(Segment, S_TOKEN_TYPE::CALL);
                 CompileToken(Segment, sttVariableField, 1, (char *)&dwVarCode, sizeof(uint32_t));
             }
-            CompileToken(Segment, ARGS_NUM, 1, (char *)&func_args, sizeof(uint32_t));
+            CompileToken(Segment, S_TOKEN_TYPE::ARGS_NUM, 1, (char *)&func_args, sizeof(uint32_t));
 
             // ...
             // proceed to next token
             CompileAuxiliaryTokens(Segment);
 
             return true;
-        case LOCAL_VARIABLE:
-        case VARIABLE:
+        case S_TOKEN_TYPE::LOCAL_VARIABLE:
+        case S_TOKEN_TYPE::VARIABLE:
 
             // set local or global type
             sttVariableField = sttResult;
@@ -1454,22 +1454,22 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             dwVarCode = dwRCode;
 
             // we going to place into stack variable value or attribute string - alloc stack data
-            CompileToken(Segment, STACK_ALLOC);
+            CompileToken(Segment, S_TOKEN_TYPE::STACK_ALLOC);
 
             sttResult = Token.Get();
-            if (sttResult == SQUARE_OPEN_BRACKET)
+            if (sttResult == S_TOKEN_TYPE::SQUARE_OPEN_BRACKET)
             {
                 // way for array element
 
                 // doesnt need to check, becose already pass DetectUnknown function
 
-                if (sttVariableField == VARIABLE)
+                if (sttVariableField == S_TOKEN_TYPE::VARIABLE)
                 {
                     VarTab.GetVarX(vi, dwVarCode);
                     // check for possibilities of '[' operator
                     if (!vi.bArray)
                     {
-                        if (vi.type != VAR_REFERENCE)
+                        if (vi.type != S_TOKEN_TYPE::VAR_REFERENCE)
                         {
                             SetError(" C Invalid '[' operator, %s - isnt array", vi.name);
                             return false;
@@ -1482,7 +1482,7 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                     // check for possibilities of '[' operator
                     if (!lvi.bArray)
                     {
-                        if (lvi.type != VAR_REFERENCE)
+                        if (lvi.type != S_TOKEN_TYPE::VAR_REFERENCE)
                         {
                             SetError(" D Invalid '[' operator, %s - isnt array", lvi.name);
                             return false;
@@ -1496,7 +1496,7 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                 if (!CompileExpression_L2(Segment))
                     return false;
                 // test for ']'
-                if (Token.GetType() != SQUARE_CLOSE_BRACKET)
+                if (Token.GetType() != S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET)
                 {
                     SetError("missing ']'");
                     return false;
@@ -1505,16 +1505,16 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                 sttResult = CompileAuxiliaryTokens(Segment);
 
                 // if not accessing attribute - copy value and return
-                if (sttResult != DOT)
+                if (sttResult != S_TOKEN_TYPE::DOT)
                 {
                     // optimiztion possible: MOVE [STACK-1],[STACK]
 
                     // copy array index to BX
-                    CompileToken(Segment, STACK_POP);
-                    CompileToken(Segment, BX);
+                    CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+                    CompileToken(Segment, S_TOKEN_TYPE::BX);
 
                     // write to stack element value (index in X)
-                    CompileToken(Segment, STACK_WRITE_BXINDEX);
+                    CompileToken(Segment, S_TOKEN_TYPE::STACK_WRITE_BXINDEX);
                     CompileToken(Segment, sttVariableField, 1, (char *)&dwVarCode, sizeof(uint32_t));
 
                     // proceed to next token
@@ -1526,12 +1526,12 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                 // in other case want to access attribute string value
 
                 // copy array index to BX
-                CompileToken(Segment, STACK_POP);
-                CompileToken(Segment, BX);
+                CompileToken(Segment, S_TOKEN_TYPE::STACK_POP);
+                CompileToken(Segment, S_TOKEN_TYPE::BX);
 
                 // move ap to AP register
-                CompileToken(Segment, MOVEAP_BXINDEX);
-                CompileToken(Segment, AP);
+                CompileToken(Segment, S_TOKEN_TYPE::MOVEAP_BXINDEX);
+                CompileToken(Segment, S_TOKEN_TYPE::AP);
                 CompileToken(Segment, sttVariableField, 1, (char *)&dwVarCode, sizeof(uint32_t));
 
                 // proceed to ADVANCE AP
@@ -1540,10 +1540,10 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             {
                 // way for non array var
 
-                if (sttResult != DOT)
+                if (sttResult != S_TOKEN_TYPE::DOT)
                 {
                     // copy variavle to stack
-                    CompileToken(Segment, STACK_WRITE);
+                    CompileToken(Segment, S_TOKEN_TYPE::STACK_WRITE);
                     CompileToken(Segment, sttVariableField, 1, (char *)&dwVarCode, sizeof(uint32_t));
                     return true;
                 }
@@ -1551,8 +1551,8 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                 // in other case want to access attribute string value
 
                 // move ap to AP register
-                CompileToken(Segment, MOVEAP);
-                CompileToken(Segment, AP);
+                CompileToken(Segment, S_TOKEN_TYPE::MOVEAP);
+                CompileToken(Segment, S_TOKEN_TYPE::AP);
                 CompileToken(Segment, sttVariableField, 1, (char *)&dwVarCode, sizeof(uint32_t));
             }
 
@@ -1562,24 +1562,24 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
             do
             {
                 // if(sttResult == OPEN_BRACKET)
-                if (Token.GetType() == OPEN_BRACKET)
+                if (Token.GetType() == S_TOKEN_TYPE::OPEN_BRACKET)
                 {
                     // access var
                     sttResult = Token.Get();
-                    if (sttResult != UNKNOWN)
+                    if (sttResult != S_TOKEN_TYPE::UNKNOWN)
                     {
                         SetError("Invalid access var syntax");
                         return false;
                     }
                     sttResult = DetectUnknown(dwVarCode);
-                    if (!(sttResult == VARIABLE || sttResult == LOCAL_VARIABLE))
+                    if (!(sttResult == S_TOKEN_TYPE::VARIABLE || sttResult == S_TOKEN_TYPE::LOCAL_VARIABLE))
                     {
                         SetError("not variable: %s", Token.GetData());
                         return false;
                     }
-                    CompileToken(Segment, ADVANCE_AP);
+                    CompileToken(Segment, S_TOKEN_TYPE::ADVANCE_AP);
                     CompileToken(Segment, sttResult, 1, &dwVarCode, sizeof(uint32_t));
-                    if (Token.Get() != CLOSE_BRACKET)
+                    if (Token.Get() != S_TOKEN_TYPE::CLOSE_BRACKET)
                     {
                         SetError("missing ')'");
                         return false;
@@ -1595,17 +1595,17 @@ bool COMPILER::CompileExpression_L7(SEGMENT_DESC &Segment)
                     }
                     Token.LowCase();
                     dwAWCode = SCodec->Convert(Token.GetData());
-                    CompileToken(Segment, ADVANCE_AP);
-                    CompileToken(Segment, ACCESS_WORD_CODE, 1, &dwAWCode, sizeof(uint32_t));
+                    CompileToken(Segment, S_TOKEN_TYPE::ADVANCE_AP);
+                    CompileToken(Segment, S_TOKEN_TYPE::ACCESS_WORD_CODE, 1, &dwAWCode, sizeof(uint32_t));
                 }
                 sttResult = Token.Get();
-                if (sttResult == DOT)
+                if (sttResult == S_TOKEN_TYPE::DOT)
                     Token.Get(); // get next token (after dot)
-            } while (sttResult == DOT);
+            } while (sttResult == S_TOKEN_TYPE::DOT);
 
             // write attribute string to stack top
-            CompileToken(Segment, STACK_WRITE);
-            CompileToken(Segment, AP_VALUE);
+            CompileToken(Segment, S_TOKEN_TYPE::STACK_WRITE);
+            CompileToken(Segment, S_TOKEN_TYPE::AP_VALUE);
 
             return true;
         default:

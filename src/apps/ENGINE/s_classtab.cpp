@@ -202,18 +202,18 @@ void S_CLASSTAB::InitSystemClasses()
     ci.nComponentsNum = 1;
 
     ci.name = "int";
-    cc.nID = VAR_INTEGER;
+    cc.nID = S_TOKEN_TYPE::VAR_INTEGER;
     AddClass(ci);
 
     ci.name = "float";
-    cc.nID = VAR_FLOAT;
+    cc.nID = S_TOKEN_TYPE::VAR_FLOAT;
     AddClass(ci);
 
     ci.name = "string";
-    cc.nID = VAR_STRING;
+    cc.nID = S_TOKEN_TYPE::VAR_STRING;
     AddClass(ci);
 
     ci.name = "object";
-    cc.nID = VAR_OBJECT;
+    cc.nID = S_TOKEN_TYPE::VAR_OBJECT;
     AddClass(ci);
 }

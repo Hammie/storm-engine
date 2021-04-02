@@ -17,7 +17,7 @@ struct VARINFO
     {
         pDClass = nullptr;
         name = nullptr;
-        type = UNKNOWN;
+        type = S_TOKEN_TYPE::UNKNOWN;
         bArray = false;
         elements = 0;
         segment_id = INVALID_SEGMENT_ID;

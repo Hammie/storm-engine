@@ -15,7 +15,7 @@ extern void DumpError(const char *data_PTR, ...);
 
 DATA::DATA()
 {
-    Data_type = UNKNOWN;
+    Data_type = S_TOKEN_TYPE::UNKNOWN;
     Number_of_elements = 0;
     lValue = 0;
     fValue = 0;
@@ -95,9 +95,9 @@ DATA::DATA(uint32_t _num_of_elements, S_TOKEN_TYPE _element_type)
     /*    switch(Data_type)
       {
         case VAR_INTEGER:
-        case VAR_FLOAT:
-        case VAR_STRING:
-        case VAR_OBJECT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_STRING:
+        case S_TOKEN_TYPE::VAR_OBJECT:
         break;
         default:
           Error(INVALID_TYPE);
@@ -108,14 +108,14 @@ DATA::DATA(uint32_t _num_of_elements, S_TOKEN_TYPE _element_type)
 
 bool DATA::IsReference()
 {
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
         return true;
     return false;
 }
 
 bool DATA::IsAReference()
 {
-    if (Data_type == VAR_AREFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_AREFERENCE)
         return true;
     return false;
 }
@@ -134,7 +134,7 @@ void DATA::Release()
         }*/
         ArrayPTR.clear();
     }
-    if (!(Data_type == VAR_REFERENCE || Data_type == VAR_AREFERENCE))
+    if (!(Data_type == S_TOKEN_TYPE::VAR_REFERENCE || Data_type == S_TOKEN_TYPE::VAR_AREFERENCE))
     {
         if (AttributesClass)
         {
@@ -161,7 +161,7 @@ DATA::~DATA()
       ArrayPTR = 0;
 
     }
-    if(!(Data_type == VAR_REFERENCE || Data_type == VAR_AREFERENCE))
+    if(!(Data_type == S_TOKEN_TYPE::VAR_REFERENCE || Data_type == S_TOKEN_TYPE::VAR_AREFERENCE))
     {
       if(AttributesClass)
       {
@@ -179,7 +179,7 @@ void DATA::Error(const char *text)
 void DATA::SetReference(DATA *pRef)
 {
     // if(!bRef)
-    if (Data_type != VAR_REFERENCE)
+    if (Data_type != S_TOKEN_TYPE::VAR_REFERENCE)
     {
         Error("Isnt reference object");
         return;
@@ -190,7 +190,7 @@ void DATA::SetReference(DATA *pRef)
 
 void DATA::SetAReference(ATTRIBUTES *pARef)
 {
-    if (Data_type != VAR_AREFERENCE)
+    if (Data_type != S_TOKEN_TYPE::VAR_AREFERENCE)
     {
         Error("Isnt A reference object");
         return;
@@ -213,7 +213,7 @@ void DATA::SetAReference(ATTRIBUTES *pARef)
 void DATA::SetPtr(uintptr_t value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -229,14 +229,14 @@ void DATA::SetPtr(uintptr_t value)
         Error(NO_INDEX);
         return;
     }
-    Data_type = VAR_PTR;
+    Data_type = S_TOKEN_TYPE::VAR_PTR;
     pValue = value;
 }
 
 void DATA::Set(long value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -252,14 +252,14 @@ void DATA::Set(long value)
         Error(NO_INDEX);
         return;
     }
-    Data_type = VAR_INTEGER;
+    Data_type = S_TOKEN_TYPE::VAR_INTEGER;
     lValue = value;
 }
 
 void DATA::Set(float value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -274,7 +274,7 @@ void DATA::Set(float value)
         Error(NO_INDEX);
         return;
     }
-    Data_type = VAR_FLOAT;
+    Data_type = S_TOKEN_TYPE::VAR_FLOAT;
     fValue = value;
     if (_isnan(fValue))
         Error("NAN ERROR");
@@ -283,7 +283,7 @@ void DATA::Set(float value)
 void DATA::Set(const char *value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -298,7 +298,7 @@ void DATA::Set(const char *value)
         Error(NO_INDEX);
         return;
     }
-    Data_type = VAR_STRING;
+    Data_type = S_TOKEN_TYPE::VAR_STRING;
     delete sValue;
     sValue = nullptr;
     if (value == nullptr)
@@ -312,7 +312,7 @@ void DATA::Set(const char *value)
 void DATA::Set(const char *attribute_name, const char *attribute_value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -330,7 +330,7 @@ void DATA::Set(const char *attribute_name, const char *attribute_value)
     }
     if (AttributesClass == nullptr)
     {
-        if (Data_type == VAR_AREFERENCE)
+        if (Data_type == S_TOKEN_TYPE::VAR_AREFERENCE)
         {
             Error("uninitialized AReference");
             return;
@@ -345,7 +345,7 @@ void DATA::Set(const char *attribute_name, const char *attribute_value)
 void DATA::Set(entid_t eid)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -360,12 +360,12 @@ void DATA::Set(entid_t eid)
         Error(NO_INDEX);
         return;
     }
-    if (Data_type == VAR_AREFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_AREFERENCE)
     {
         memcpy(&object_id, &eid, sizeof(entid_t));
         return;
     }
-    Data_type = VAR_OBJECT;
+    Data_type = S_TOKEN_TYPE::VAR_OBJECT;
     memcpy(&object_id, &eid, sizeof(entid_t));
     bEntity = true;
 }
@@ -373,7 +373,7 @@ void DATA::Set(entid_t eid)
 void DATA::Get(entid_t &eid)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -388,7 +388,7 @@ void DATA::Get(entid_t &eid)
         Error(NO_INDEX);
         return;
     }
-    if (!(Data_type == VAR_OBJECT || Data_type == VAR_AREFERENCE))
+    if (!(Data_type == S_TOKEN_TYPE::VAR_OBJECT || Data_type == S_TOKEN_TYPE::VAR_AREFERENCE))
     {
         Error("Not object");
         return;
@@ -399,7 +399,7 @@ void DATA::Get(entid_t &eid)
 bool DATA::GetPtr(uintptr_t &value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -413,7 +413,7 @@ bool DATA::GetPtr(uintptr_t &value)
         Error(NO_INDEX);
         return false;
     }
-    if (Data_type == VAR_PTR)
+    if (Data_type == S_TOKEN_TYPE::VAR_PTR)
     {
         value = pValue;
         return true;
@@ -424,7 +424,7 @@ bool DATA::GetPtr(uintptr_t &value)
 bool DATA::Get(long &value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -438,7 +438,7 @@ bool DATA::Get(long &value)
         Error(NO_INDEX);
         return false;
     }
-    if (Data_type == VAR_INTEGER)
+    if (Data_type == S_TOKEN_TYPE::VAR_INTEGER)
     {
         value = lValue;
         return true;
@@ -449,7 +449,7 @@ bool DATA::Get(long &value)
 bool DATA::Get(float &value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -463,7 +463,7 @@ bool DATA::Get(float &value)
         Error(NO_INDEX);
         return false;
     }
-    if (Data_type == VAR_FLOAT)
+    if (Data_type == S_TOKEN_TYPE::VAR_FLOAT)
     {
         value = fValue;
         return true;
@@ -474,7 +474,7 @@ bool DATA::Get(float &value)
 bool DATA::Get(const char *&value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -489,7 +489,7 @@ bool DATA::Get(const char *&value)
         Error(NO_INDEX);
         return false;
     }
-    if (Data_type == VAR_STRING)
+    if (Data_type == S_TOKEN_TYPE::VAR_STRING)
     {
         value = sValue;
         return true;
@@ -500,7 +500,7 @@ bool DATA::Get(const char *&value)
 bool DATA::Get(const char *attribute_name, const char *&value)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -527,7 +527,7 @@ bool DATA::Get(const char *attribute_name, const char *&value)
 bool DATA::Get(long &value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -541,7 +541,7 @@ bool DATA::Get(long &value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_INTEGER)
+    if (Data_type != S_TOKEN_TYPE::VAR_INTEGER)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -563,7 +563,7 @@ bool DATA::Get(long &value, uint32_t index)
 bool DATA::Get(float &value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -577,7 +577,7 @@ bool DATA::Get(float &value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_FLOAT)
+    if (Data_type != S_TOKEN_TYPE::VAR_FLOAT)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -599,7 +599,7 @@ bool DATA::Get(float &value, uint32_t index)
 bool DATA::Get(const char *&value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -613,7 +613,7 @@ bool DATA::Get(const char *&value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_STRING)
+    if (Data_type != S_TOKEN_TYPE::VAR_STRING)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -637,7 +637,7 @@ bool DATA::Get(const char *&value, uint32_t index)
 bool DATA::Set(long value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -651,7 +651,7 @@ bool DATA::Set(long value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_INTEGER)
+    if (Data_type != S_TOKEN_TYPE::VAR_INTEGER)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -673,7 +673,7 @@ bool DATA::Set(long value, uint32_t index)
 bool DATA::Set(float value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -687,7 +687,7 @@ bool DATA::Set(float value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_FLOAT)
+    if (Data_type != S_TOKEN_TYPE::VAR_FLOAT)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -710,7 +710,7 @@ bool DATA::Set(float value, uint32_t index)
 bool DATA::Set(const char *value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -724,7 +724,7 @@ bool DATA::Set(const char *value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_STRING)
+    if (Data_type != S_TOKEN_TYPE::VAR_STRING)
     {
         Error(INCORRECT_TYPE_ASSIGMENT);
         return false;
@@ -755,7 +755,7 @@ bool DATA::Set(const char *value, uint32_t index)
 bool DATA::Set(const char *attribute_name, const char *attribute_value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -769,7 +769,7 @@ bool DATA::Set(const char *attribute_name, const char *attribute_value, uint32_t
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_OBJECT)
+    if (Data_type != S_TOKEN_TYPE::VAR_OBJECT)
     {
         Error("Access to attributes of non object array");
         return false;
@@ -793,7 +793,7 @@ bool DATA::Set(const char *attribute_name, const char *attribute_value, uint32_t
 bool DATA::Get(const char *attribute_name, const char *&value, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -807,7 +807,7 @@ bool DATA::Get(const char *attribute_name, const char *&value, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_OBJECT)
+    if (Data_type != S_TOKEN_TYPE::VAR_OBJECT)
     {
         Error("Access to attributes of non object array");
         return false;
@@ -831,7 +831,7 @@ bool DATA::Get(const char *attribute_name, const char *&value, uint32_t index)
 bool DATA::Set(entid_t eid, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -845,7 +845,7 @@ bool DATA::Set(entid_t eid, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (Data_type != VAR_OBJECT)
+    if (Data_type != S_TOKEN_TYPE::VAR_OBJECT)
     {
         Error("Access to attributes of non object array");
         return false;
@@ -869,7 +869,7 @@ bool DATA::Set(entid_t eid, uint32_t index)
 bool DATA::Get(entid_t &eid, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -883,7 +883,7 @@ bool DATA::Get(entid_t &eid, uint32_t index)
         Error(INDEX_ON_SINGLE);
         return false;
     }
-    if (!(Data_type == VAR_OBJECT || Data_type == VAR_AREFERENCE))
+    if (!(Data_type == S_TOKEN_TYPE::VAR_OBJECT || Data_type == S_TOKEN_TYPE::VAR_AREFERENCE))
     {
         Error("Access to attributes of non object array");
         return false;
@@ -906,14 +906,14 @@ bool DATA::Get(entid_t &eid, uint32_t index)
 
 void DATA::ClearType()
 {
-    if (Data_type != VAR_AREFERENCE)
+    if (Data_type != S_TOKEN_TYPE::VAR_AREFERENCE)
     {
         delete AttributesClass;
     }
     delete sValue;
     sValue = nullptr;
     AttributesClass = nullptr;
-    Data_type = UNKNOWN;
+    Data_type = S_TOKEN_TYPE::UNKNOWN;
     pReference = nullptr;
 }
 
@@ -957,7 +957,7 @@ void DATA::SetType(S_TOKEN_TYPE _element_type, uint32_t array_size)
 bool DATA::Convert(S_TOKEN_TYPE type)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -975,20 +975,20 @@ bool DATA::Convert(S_TOKEN_TYPE type)
     char buffer[128];
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (type)
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             return true;
-        case VAR_PTR:
+        case S_TOKEN_TYPE::VAR_PTR:
             Data_type = type;
             pValue = lValue;
             return true;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             Data_type = type;
             fValue = static_cast<float>(lValue);
             return true;
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             Data_type = type;
             _ltoa_s(lValue, buffer, 10);
             Set(buffer);
@@ -998,16 +998,16 @@ bool DATA::Convert(S_TOKEN_TYPE type)
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (type)
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             Data_type = type;
             lValue = static_cast<long>(fValue);
             return true;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             return true;
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             Data_type = type;
             _gcvt(fValue, 10, buffer);
             Set(buffer);
@@ -1017,7 +1017,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
             return false;
         }
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         if (sValue == nullptr)
         {
             sValue = new char[1];
@@ -1026,39 +1026,39 @@ bool DATA::Convert(S_TOKEN_TYPE type)
         }
         switch (type)
         {
-        case NUMBER:
-        case VAR_INTEGER:
-            Data_type = VAR_INTEGER;
+        case S_TOKEN_TYPE::NUMBER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
+            Data_type = S_TOKEN_TYPE::VAR_INTEGER;
             lValue = static_cast<long>(atoll(sValue));
             return true;
-        case FLOAT_NUMBER:
-        case VAR_FLOAT:
-            Data_type = VAR_FLOAT;
+        case S_TOKEN_TYPE::FLOAT_NUMBER:
+        case S_TOKEN_TYPE::VAR_FLOAT:
+            Data_type = S_TOKEN_TYPE::VAR_FLOAT;
             fValue = static_cast<float>(atof(sValue));
             return true;
-        case STRING:
-        case VAR_STRING:
+        case S_TOKEN_TYPE::STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             return true;
         default:
             Error(INVALID_CONVERSATION);
             return false;
         }
         break;
-    case VAR_OBJECT:
+    case S_TOKEN_TYPE::VAR_OBJECT:
         switch (type)
         {
-        case VAR_OBJECT:
+        case S_TOKEN_TYPE::VAR_OBJECT:
             return true;
         }
 
         break;
-    case VAR_AREFERENCE:
+    case S_TOKEN_TYPE::VAR_AREFERENCE:
         switch (type)
         {
-        case VAR_AREFERENCE:
+        case S_TOKEN_TYPE::VAR_AREFERENCE:
             return true;
-        case STRING:
-        case VAR_STRING:
+        case S_TOKEN_TYPE::STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             if (!AttributesClass)
                 break;
             if (!AttributesClass->GetThisAttr())
@@ -1066,36 +1066,36 @@ bool DATA::Convert(S_TOKEN_TYPE type)
             Set(AttributesClass->GetThisAttr());
             AttributesClass = nullptr;
             return true;
-        case NUMBER:
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::NUMBER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             if (!AttributesClass)
                 break;
             if (!AttributesClass->GetThisAttr())
                 break;
             Set(AttributesClass->GetThisAttr());
             AttributesClass = nullptr;
-            Data_type = VAR_INTEGER;
+            Data_type = S_TOKEN_TYPE::VAR_INTEGER;
             lValue = static_cast<long>(atoll(sValue));
             return true;
-        case FLOAT_NUMBER:
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::FLOAT_NUMBER:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             if (!AttributesClass)
                 break;
             if (!AttributesClass->GetThisAttr())
                 break;
             Set(AttributesClass->GetThisAttr());
             AttributesClass = nullptr;
-            Data_type = VAR_FLOAT;
+            Data_type = S_TOKEN_TYPE::VAR_FLOAT;
             fValue = static_cast<float>(atof(sValue));
             return true;
         }
         break;
-    case VAR_PTR:
+    case S_TOKEN_TYPE::VAR_PTR:
         switch (type)
         {
-        case VAR_PTR:
+        case S_TOKEN_TYPE::VAR_PTR:
             return true;
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             Data_type = type;
             lValue = static_cast<long>(pValue);
             return true;
@@ -1109,7 +1109,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
 
 void DATA::SetElementsNum(uint32_t _asize)
 {
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1158,7 +1158,7 @@ void DATA::SetElementsNum(uint32_t _asize)
 uint32_t DATA::GetElementsNum()
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1175,7 +1175,7 @@ uint32_t DATA::GetElementsNum()
 bool DATA::Inc()
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1184,7 +1184,7 @@ bool DATA::Inc()
         Error(UNINIT_REF);
         return false;
     }
-    if (Data_type != VAR_INTEGER)
+    if (Data_type != S_TOKEN_TYPE::VAR_INTEGER)
     {
         Error("Invalid data type for INC operation");
         return false;
@@ -1196,7 +1196,7 @@ bool DATA::Inc()
 bool DATA::Dec()
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1205,7 +1205,7 @@ bool DATA::Dec()
         Error(UNINIT_REF);
         return false;
     }
-    if (Data_type != VAR_INTEGER)
+    if (Data_type != S_TOKEN_TYPE::VAR_INTEGER)
     {
         Error("Invalid data type for DEC operation");
         return false;
@@ -1218,25 +1218,25 @@ bool DATA::Neg()
 {
     switch (GetType())
     {
-    case VAR_FLOAT:
-        Convert(VAR_INTEGER);
-    case VAR_PTR:
-        Convert(VAR_INTEGER);
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_FLOAT:
+        Convert(S_TOKEN_TYPE::VAR_INTEGER);
+    case S_TOKEN_TYPE::VAR_PTR:
+        Convert(S_TOKEN_TYPE::VAR_INTEGER);
+    case S_TOKEN_TYPE::VAR_INTEGER:
         if (lValue != 0)
             lValue = 0;
         else
             lValue = 1;
         Set(lValue);
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         if (sValue == nullptr)
             lValue = 1;
         else if (sValue[0] == 0)
             lValue = 1;
         else
             lValue = 0;
-        Convert(VAR_INTEGER);
+        Convert(S_TOKEN_TYPE::VAR_INTEGER);
         Set(lValue);
         break;
     default:
@@ -1249,7 +1249,7 @@ bool DATA::Neg()
 bool DATA::Inverse()
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1262,10 +1262,10 @@ bool DATA::Inverse()
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         lValue = -lValue;
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         fValue = -fValue;
         break;
     }
@@ -1275,7 +1275,7 @@ bool DATA::Inverse()
 bool DATA::Power(DATA *pV)
 {
     long lV;
-    if (pV->GetType() != VAR_INTEGER)
+    if (pV->GetType() != S_TOKEN_TYPE::VAR_INTEGER)
     {
         Error("bad power argument");
         return false;
@@ -1287,7 +1287,7 @@ bool DATA::Power(DATA *pV)
 bool DATA::Power(long Deg)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1307,7 +1307,7 @@ bool DATA::Power(long Deg)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         if (Deg == 0)
         {
             lValue = 1;
@@ -1326,7 +1326,7 @@ bool DATA::Power(long Deg)
                 lValue = 1 / lBase;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         if (Deg == 0)
         {
             fValue = 1;
@@ -1353,7 +1353,7 @@ bool DATA::Power(long Deg)
 bool DATA::Multiply(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1372,27 +1372,27 @@ bool DATA::Multiply(DATA *pV)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             lValue = lValue * pV->lValue;
             break;
-        case VAR_FLOAT:
-            Convert(VAR_FLOAT);
+        case S_TOKEN_TYPE::VAR_FLOAT:
+            Convert(S_TOKEN_TYPE::VAR_FLOAT);
             fValue = fValue * pV->fValue;
             break;
         default:
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             fValue = fValue * pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             fValue = fValue * pV->fValue;
             break;
         default:
@@ -1408,7 +1408,7 @@ bool DATA::Multiply(DATA *pV)
 bool DATA::Divide(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1426,10 +1426,10 @@ bool DATA::Divide(DATA *pV)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             if (pV->lValue == 0)
             {
                 Error("Divide by zero");
@@ -1437,23 +1437,23 @@ bool DATA::Divide(DATA *pV)
             }
             lValue = lValue / pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             if (pV->fValue == 0)
             {
                 Error("Divide by zero");
                 return false;
             }
-            Convert(VAR_FLOAT);
+            Convert(S_TOKEN_TYPE::VAR_FLOAT);
             fValue = fValue / pV->fValue;
             break;
         default:
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             if (pV->lValue == 0)
             {
                 Error("Divide by zero");
@@ -1461,7 +1461,7 @@ bool DATA::Divide(DATA *pV)
             }
             fValue = fValue / pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             if (pV->fValue == 0)
             {
                 Error("Divide by zero");
@@ -1482,7 +1482,7 @@ bool DATA::Divide(DATA *pV)
 bool DATA::Modul(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1500,10 +1500,10 @@ bool DATA::Modul(DATA *pV)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             if (pV->lValue == 0)
             {
                 Error("Divide by zero");
@@ -1511,7 +1511,7 @@ bool DATA::Modul(DATA *pV)
             }
             lValue = lValue % pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             if (pV->fValue == 0)
             {
                 Error("Divide by zero");
@@ -1523,10 +1523,10 @@ bool DATA::Modul(DATA *pV)
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             if (pV->lValue == 0)
             {
                 Error("Divide by zero");
@@ -1535,7 +1535,7 @@ bool DATA::Modul(DATA *pV)
             fValue = fValue / pV->lValue;
             fValue = static_cast<float>(floor(fValue));
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             if (pV->fValue == 0)
             {
                 Error("Divide by zero");
@@ -1557,7 +1557,7 @@ bool DATA::Modul(DATA *pV)
 bool DATA::Plus(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1578,18 +1578,18 @@ bool DATA::Plus(DATA *pV)
     char buffer[128];
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             lValue = lValue + pV->lValue;
             break;
-        case VAR_FLOAT:
-            Convert(VAR_FLOAT);
+        case S_TOKEN_TYPE::VAR_FLOAT:
+            Convert(S_TOKEN_TYPE::VAR_FLOAT);
             fValue = fValue + pV->fValue;
             break;
-        case VAR_STRING:
-            Convert(VAR_STRING);
+        case S_TOKEN_TYPE::VAR_STRING:
+            Convert(S_TOKEN_TYPE::VAR_STRING);
             size = strlen(sValue) + strlen(pV->sValue) + 1;
 
             sTemp = new char[size];
@@ -1602,17 +1602,17 @@ bool DATA::Plus(DATA *pV)
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             fValue = fValue + pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             fValue = fValue + pV->fValue;
             break;
-        case VAR_STRING:
-            Convert(VAR_STRING);
+        case S_TOKEN_TYPE::VAR_STRING:
+            Convert(S_TOKEN_TYPE::VAR_STRING);
             size = strlen(sValue) + strlen(pV->sValue) + 1;
 
             sTemp = new char[size];
@@ -1625,10 +1625,10 @@ bool DATA::Plus(DATA *pV)
             return false;
         }
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         switch (pV->GetType())
         {
-        case VAR_AREFERENCE:
+        case S_TOKEN_TYPE::VAR_AREFERENCE:
             if (!pV->AttributesClass)
                 break;
             if (!pV->AttributesClass->GetThisAttr())
@@ -1651,7 +1651,7 @@ bool DATA::Plus(DATA *pV)
             Set(sTemp);
             delete[] sTemp;
             break;
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             _ltoa_s(pV->lValue, buffer, 10);
             if (sValue != nullptr)
             {
@@ -1671,7 +1671,7 @@ bool DATA::Plus(DATA *pV)
             Set(sTemp);
             delete[] sTemp;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             _gcvt(pV->fValue, 5, buffer);
             if (sValue != nullptr)
             {
@@ -1691,7 +1691,7 @@ bool DATA::Plus(DATA *pV)
             Set(sTemp);
             delete[] sTemp;
             break;
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             if (sValue == nullptr)
             {
                 if (pV->sValue == nullptr)
@@ -1714,7 +1714,7 @@ bool DATA::Plus(DATA *pV)
             Set(sTemp);
             delete[] sTemp;
             break;
-        case VAR_PTR:
+        case S_TOKEN_TYPE::VAR_PTR:
             _ui64toa_s(pV->pValue, buffer, sizeof(buffer), 16);
             if (sValue != nullptr)
             {
@@ -1747,7 +1747,7 @@ bool DATA::Plus(DATA *pV)
 bool DATA::Minus(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1765,27 +1765,27 @@ bool DATA::Minus(DATA *pV)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             lValue = lValue - pV->lValue;
             break;
-        case VAR_FLOAT:
-            Convert(VAR_FLOAT);
+        case S_TOKEN_TYPE::VAR_FLOAT:
+            Convert(S_TOKEN_TYPE::VAR_FLOAT);
             fValue = fValue - pV->fValue;
             break;
         default:
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             fValue = fValue - pV->lValue;
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             fValue = fValue - pV->fValue;
             break;
         default:
@@ -1801,7 +1801,7 @@ bool DATA::Minus(DATA *pV)
 bool DATA::Compare(DATA *pV, char opA, char opB)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -1819,10 +1819,10 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             switch (opA)
             {
             case '=':
@@ -1860,7 +1860,7 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
             }
             break;
 
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             switch (opA)
             {
             case '=':
@@ -1901,10 +1901,10 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             switch (opA)
             {
             case '=':
@@ -1941,7 +1941,7 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
                 return false;
             }
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             switch (opA)
             {
             case '=':
@@ -1982,10 +1982,10 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
             return false;
         }
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         switch (pV->GetType())
         {
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             switch (opA)
             {
             case '=':
@@ -2057,7 +2057,7 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
 bool DATA::Copy(DATA *pV)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2065,12 +2065,12 @@ bool DATA::Copy(DATA *pV)
         }
         if (pV != nullptr)
         {
-            if (pV->GetType() == VAR_REFERENCE)
+            if (pV->GetType() == S_TOKEN_TYPE::VAR_REFERENCE)
             {
                 SetReference(pV->GetVarPointer());
                 return true;
             }
-            if (pV->GetType() == VAR_OBJECT)
+            if (pV->GetType() == S_TOKEN_TYPE::VAR_OBJECT)
             {
                 SetReference(pV->GetVarPointer());
                 return true;
@@ -2090,14 +2090,14 @@ bool DATA::Copy(DATA *pV)
     }
     if (pV->IsReference())
     {
-        if (Data_type == VAR_REFERENCE)
+        if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
         {
             SetReference(pV->GetReference());
             return true;
         }
-        if (Data_type == UNKNOWN) // stack
+        if (Data_type == S_TOKEN_TYPE::UNKNOWN) // stack
         {
-            SetType(VAR_REFERENCE);
+            SetType(S_TOKEN_TYPE::VAR_REFERENCE);
             SetReference(pV->GetReference());
             return true;
         }
@@ -2139,7 +2139,7 @@ bool DATA::Copy(DATA *pV)
         return true;
     }
 
-    if (Data_type == VAR_STRING)
+    if (Data_type == S_TOKEN_TYPE::VAR_STRING)
     {
         delete sValue;
         sValue = nullptr;
@@ -2147,23 +2147,23 @@ bool DATA::Copy(DATA *pV)
 
     switch (pV->Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         Set(pV->lValue);
         break;
-    case VAR_PTR:
+    case S_TOKEN_TYPE::VAR_PTR:
         SetPtr(pV->pValue);
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         Set(pV->fValue);
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         Set(pV->sValue);
         break;
-    case VAR_OBJECT:
+    case S_TOKEN_TYPE::VAR_OBJECT:
         Set(pV->object_id);
         // Attributes.Copy(&pV->Attributes);
 
-        if (Data_type == VAR_REFERENCE)
+        if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
         {
             auto *pVV = GetVarPointer();
             if (pVV == nullptr)
@@ -2177,7 +2177,7 @@ bool DATA::Copy(DATA *pV)
         }
         else
         {
-            if (Data_type == VAR_AREFERENCE)
+            if (Data_type == S_TOKEN_TYPE::VAR_AREFERENCE)
             {
                 AttributesClass = pV->AttributesClass;
             }
@@ -2189,15 +2189,15 @@ bool DATA::Copy(DATA *pV)
             }
         }
         break;
-    case VAR_AREFERENCE:
-        if (Data_type == UNKNOWN)
+    case S_TOKEN_TYPE::VAR_AREFERENCE:
+        if (Data_type == S_TOKEN_TYPE::UNKNOWN)
         {
-            SetType(VAR_AREFERENCE);
+            SetType(S_TOKEN_TYPE::VAR_AREFERENCE);
             AttributesClass = pV->AttributesClass;
             object_id = pV->object_id;
             break;
         }
-        if (Data_type != VAR_AREFERENCE)
+        if (Data_type != S_TOKEN_TYPE::VAR_AREFERENCE)
         {
             Error("invalid aref usage");
             return false;
@@ -2206,14 +2206,14 @@ bool DATA::Copy(DATA *pV)
         object_id = pV->object_id;
         break;
 
-    case VAR_REFERENCE:
-        if (Data_type == UNKNOWN)
+    case S_TOKEN_TYPE::VAR_REFERENCE:
+        if (Data_type == S_TOKEN_TYPE::UNKNOWN)
         {
-            SetType(VAR_REFERENCE);
+            SetType(S_TOKEN_TYPE::VAR_REFERENCE);
             SetReference(pV->GetVarPointer());
             break;
         }
-        if (Data_type != VAR_REFERENCE)
+        if (Data_type != S_TOKEN_TYPE::VAR_REFERENCE)
         {
             Error("invalid ref usage");
             return false;
@@ -2231,7 +2231,7 @@ bool DATA::Copy(DATA *pV)
 bool DATA::Copy(DATA *pV, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2278,7 +2278,7 @@ bool DATA::Copy(DATA *pV, uint32_t index)
         return false;
     }
 
-    /*    if(Data_type == VAR_STRING)
+    /*    if(Data_type == S_TOKEN_TYPE::VAR_STRING)
       {
         if(sValue) delete sValue; sValue = 0;
       }
@@ -2287,19 +2287,19 @@ bool DATA::Copy(DATA *pV, uint32_t index)
 
     /*switch(pV->GetType())
     {
-      case VAR_INTEGER:
+      case S_TOKEN_TYPE::VAR_INTEGER:
         pLong = (long *)pV->ArrayPointer;
         Set(pLong[index]);
       break;
-      case VAR_FLOAT:
+      case S_TOKEN_TYPE::VAR_FLOAT:
         pFloat = (float *)pV->ArrayPointer;
         Set(pFloat[index]);
       break;
-      case VAR_STRING:
+      case S_TOKEN_TYPE::VAR_STRING:
         ppChar = (char **)pV->ArrayPointer;
         Set(ppChar[index]);
       break;
-      case VAR_OBJECT:
+      case S_TOKEN_TYPE::VAR_OBJECT:
         pOD = (OBJECT_DESC *)pV->ArrayPointer;
         Set(pOD[index].object_id);
         //Attributes.Copy(pOD[index].pAttributes);
@@ -2314,7 +2314,7 @@ bool DATA::Copy(DATA *pV, uint32_t index)
 bool DATA::CopyOnElement(DATA *pV, uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2367,16 +2367,16 @@ bool DATA::CopyOnElement(DATA *pV, uint32_t index)
     /*
       switch(Data_type)
       {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
           Set(pV->lValue,index);
         break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
           Set(pV->fValue,index);
         break;
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
           Set(pV->sValue,index);
         break;
-        case VAR_OBJECT:
+        case S_TOKEN_TYPE::VAR_OBJECT:
           OBJECT_DESC * pOD;
           pOD = (OBJECT_DESC *)ArrayPointer;
           Set(pV->object_id,index);
@@ -2397,7 +2397,7 @@ bool DATA::CopyOnElement(DATA *pV, uint32_t index)
 ATTRIBUTES *DATA::GetAClass()
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2408,7 +2408,7 @@ ATTRIBUTES *DATA::GetAClass()
     }
     if (AttributesClass == nullptr)
     {
-        if (Data_type == VAR_AREFERENCE)
+        if (Data_type == S_TOKEN_TYPE::VAR_AREFERENCE)
         {
             Error("uninitialized aref");
             // throw "uninitialized aref";
@@ -2423,7 +2423,7 @@ ATTRIBUTES *DATA::GetAClass()
 ATTRIBUTES *DATA::GetAClass(uint32_t index)
 {
     // if(bRef)
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2487,7 +2487,7 @@ void DATA::SetVCompiler(VIRTUAL_COMPILER *pVC)
 DATA *DATA::GetVarPointer()
 {
     // if(!bRef) return this;
-    if (Data_type != VAR_REFERENCE)
+    if (Data_type != S_TOKEN_TYPE::VAR_REFERENCE)
         return this;
     if (pReference)
     {
@@ -2499,7 +2499,7 @@ DATA *DATA::GetVarPointer()
 
 bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
 {
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2519,18 +2519,18 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
         return false;
     }
 
-    if (Data_type == VAR_STRING && pV->GetType() == VAR_INTEGER)
+    if (Data_type == S_TOKEN_TYPE::VAR_STRING && pV->GetType() == S_TOKEN_TYPE::VAR_INTEGER)
     {
-        if (!Convert(VAR_INTEGER))
+        if (!Convert(S_TOKEN_TYPE::VAR_INTEGER))
         {
             Set(static_cast<long>(0));
             return false;
         }
     }
 
-    if (Data_type == VAR_STRING && pV->GetType() == VAR_FLOAT)
+    if (Data_type == S_TOKEN_TYPE::VAR_STRING && pV->GetType() == S_TOKEN_TYPE::VAR_FLOAT)
     {
-        if (!Convert(VAR_FLOAT))
+        if (!Convert(S_TOKEN_TYPE::VAR_FLOAT))
         {
             Set(static_cast<long>(0));
             return false;
@@ -2539,59 +2539,59 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
 
     switch (Data_type)
     {
-    case VAR_PTR:
-        Convert(VAR_INTEGER);
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_PTR:
+        Convert(S_TOKEN_TYPE::VAR_INTEGER);
+    case S_TOKEN_TYPE::VAR_INTEGER:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             switch (op)
             {
-            case VAR_PTR:
-                pV->Convert(VAR_INTEGER);
-            case OP_BOOL_EQUAL:
+            case S_TOKEN_TYPE::VAR_PTR:
+                pV->Convert(S_TOKEN_TYPE::VAR_INTEGER);
+            case S_TOKEN_TYPE::OP_BOOL_EQUAL:
                 if (lValue == pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER:
+            case S_TOKEN_TYPE::OP_GREATER:
                 if (lValue > pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
                 if (lValue >= pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER:
+            case S_TOKEN_TYPE::OP_LESSER:
                 if (lValue < pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
                 if (lValue <= pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_NOT_EQUAL:
+            case S_TOKEN_TYPE::OP_NOT_EQUAL:
                 if (lValue != pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_AND:
+            case S_TOKEN_TYPE::OP_BOOL_AND:
                 if (lValue != 0 && pV->lValue != 0)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_OR:
+            case S_TOKEN_TYPE::OP_BOOL_OR:
                 if (lValue != 0 || pV->lValue != 0)
                     Set(static_cast<long>(1));
                 else
@@ -2600,52 +2600,52 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
             }
             break;
 
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             switch (op)
             {
-            case OP_BOOL_EQUAL:
+            case S_TOKEN_TYPE::OP_BOOL_EQUAL:
                 if (lValue == pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER:
+            case S_TOKEN_TYPE::OP_GREATER:
                 if (lValue > pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
                 if (lValue >= pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER:
+            case S_TOKEN_TYPE::OP_LESSER:
                 if (lValue < pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
                 if (lValue <= pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_NOT_EQUAL:
+            case S_TOKEN_TYPE::OP_NOT_EQUAL:
                 if (lValue != pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_AND:
+            case S_TOKEN_TYPE::OP_BOOL_AND:
                 if (lValue != 0 && pV->fValue != 0)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_OR:
+            case S_TOKEN_TYPE::OP_BOOL_OR:
                 if (lValue != 0 || pV->fValue != 0)
                     Set(static_cast<long>(1));
                 else
@@ -2658,55 +2658,55 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
             return false;
         }
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         switch (pV->GetType())
         {
-        case VAR_INTEGER:
+        case S_TOKEN_TYPE::VAR_INTEGER:
             switch (op)
             {
-            case OP_BOOL_EQUAL:
+            case S_TOKEN_TYPE::OP_BOOL_EQUAL:
                 if (fValue == pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER:
+            case S_TOKEN_TYPE::OP_GREATER:
                 if (fValue > pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
                 if (fValue >= pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER:
+            case S_TOKEN_TYPE::OP_LESSER:
                 if (fValue < pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
                 if (fValue <= pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_NOT_EQUAL:
+            case S_TOKEN_TYPE::OP_NOT_EQUAL:
                 if (fValue != pV->lValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_AND:
+            case S_TOKEN_TYPE::OP_BOOL_AND:
                 if (fValue != 0 && pV->lValue != 0)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_OR:
+            case S_TOKEN_TYPE::OP_BOOL_OR:
                 if (fValue != 0 || pV->lValue != 0)
                     Set(static_cast<long>(1));
                 else
@@ -2714,52 +2714,52 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 break;
             }
             break;
-        case VAR_FLOAT:
+        case S_TOKEN_TYPE::VAR_FLOAT:
             switch (op)
             {
-            case OP_BOOL_EQUAL:
+            case S_TOKEN_TYPE::OP_BOOL_EQUAL:
                 if (fValue == pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER:
+            case S_TOKEN_TYPE::OP_GREATER:
                 if (fValue > pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
                 if (fValue >= pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER:
+            case S_TOKEN_TYPE::OP_LESSER:
                 if (fValue < pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
                 if (fValue <= pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_NOT_EQUAL:
+            case S_TOKEN_TYPE::OP_NOT_EQUAL:
                 if (fValue != pV->fValue)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_AND:
+            case S_TOKEN_TYPE::OP_BOOL_AND:
                 if (fValue != 0 && pV->fValue != 0)
                     Set(static_cast<long>(1));
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_BOOL_OR:
+            case S_TOKEN_TYPE::OP_BOOL_OR:
                 if (fValue != 0 || pV->fValue != 0)
                     Set(static_cast<long>(1));
                 else
@@ -2772,13 +2772,13 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
             return false;
         }
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         switch (pV->GetType())
         {
-        case VAR_STRING:
+        case S_TOKEN_TYPE::VAR_STRING:
             switch (op)
             {
-            case OP_BOOL_EQUAL:
+            case S_TOKEN_TYPE::OP_BOOL_EQUAL:
                 if (sValue == pV->sValue)
                 {
                     Set(static_cast<long>(1));
@@ -2794,7 +2794,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER:
+            case S_TOKEN_TYPE::OP_GREATER:
                 if (sValue == nullptr || pV->sValue == nullptr)
                 {
                     Set(static_cast<long>(0));
@@ -2805,7 +2805,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_GREATER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
                 if (sValue == nullptr || pV->sValue == nullptr)
                 {
                     Set(static_cast<long>(0));
@@ -2816,7 +2816,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER:
+            case S_TOKEN_TYPE::OP_LESSER:
                 if (sValue == nullptr || pV->sValue == nullptr)
                 {
                     Set(static_cast<long>(0));
@@ -2827,7 +2827,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_LESSER_OR_EQUAL:
+            case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
                 if (sValue == nullptr || pV->sValue == nullptr)
                 {
                     Set(static_cast<long>(0));
@@ -2838,7 +2838,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                 else
                     Set(static_cast<long>(0));
                 break;
-            case OP_NOT_EQUAL:
+            case S_TOKEN_TYPE::OP_NOT_EQUAL:
                 if (sValue == pV->sValue)
                 {
                     Set(static_cast<long>(0));
@@ -2855,8 +2855,8 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
                     Set(static_cast<long>(0));
 
                 break;
-            case OP_BOOL_AND:
-            case OP_BOOL_OR:
+            case S_TOKEN_TYPE::OP_BOOL_AND:
+            case S_TOKEN_TYPE::OP_BOOL_OR:
                 Error("boll operation on sting");
                 return false;
             }
@@ -2876,7 +2876,7 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
 
 bool DATA::BoolConvert()
 {
-    if (Data_type == VAR_REFERENCE)
+    if (Data_type == S_TOKEN_TYPE::VAR_REFERENCE)
     {
         if (pReference)
         {
@@ -2889,19 +2889,19 @@ bool DATA::BoolConvert()
         return false;
     switch (Data_type)
     {
-    case VAR_INTEGER:
+    case S_TOKEN_TYPE::VAR_INTEGER:
         if (lValue != 0)
             Set(static_cast<long>(1));
         else
             Set(static_cast<long>(0));
         break;
-    case VAR_FLOAT:
+    case S_TOKEN_TYPE::VAR_FLOAT:
         if (fValue != 0)
             Set(static_cast<long>(1));
         else
             Set(static_cast<long>(0));
         break;
-    case VAR_STRING:
+    case S_TOKEN_TYPE::VAR_STRING:
         if (sValue == nullptr)
         {
             Set(static_cast<long>(0));
@@ -2914,7 +2914,7 @@ bool DATA::BoolConvert()
         }
         Set(static_cast<long>(1));
         break;
-    case VAR_PTR:
+    case S_TOKEN_TYPE::VAR_PTR:
         if (pValue != 0)
             Set(static_cast<long>(1));
         else
@@ -2929,7 +2929,7 @@ bool DATA::BoolConvert()
 
 bool DATA::RefConvert()
 {
-    if (Data_type != VAR_REFERENCE)
+    if (Data_type != S_TOKEN_TYPE::VAR_REFERENCE)
         return false;
     if (IsArray())
         return false;

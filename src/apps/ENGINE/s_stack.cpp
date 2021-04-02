@@ -50,7 +50,7 @@ DATA *S_STACK::Push(DATA *pdataclass)
         }
     }
     pStackData[Data_num]->ClearType();
-    pStackData[Data_num]->SetType(UNKNOWN);
+    pStackData[Data_num]->SetType(S_TOKEN_TYPE::UNKNOWN);
     if (pdataclass)
     {
         pStackData[Data_num]->Copy(pdataclass);

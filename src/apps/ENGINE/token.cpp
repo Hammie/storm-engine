@@ -148,144 +148,144 @@ struct S_KEYWORD
 };
 
 S_KEYWORD Keywords[] = {
-    HOLD_COMPILATION,
+    S_TOKEN_TYPE::HOLD_COMPILATION,
     "#hold",
-    INCLIDE_FILE,
+    S_TOKEN_TYPE::INCLIDE_FILE,
     "#include",
-    EVENT_HANDLER,
+    S_TOKEN_TYPE::EVENT_HANDLER,
     "#event_handler",
-    INCLUDE_LIBRIARY,
+    S_TOKEN_TYPE::INCLUDE_LIBRIARY,
     "#libriary",
-    VAR_INTEGER,
+    S_TOKEN_TYPE::VAR_INTEGER,
     "int",
-    VAR_PTR,
+    S_TOKEN_TYPE::VAR_PTR,
     "ptr",
-    VAR_FLOAT,
+    S_TOKEN_TYPE::VAR_FLOAT,
     "float",
-    VAR_STRING,
+    S_TOKEN_TYPE::VAR_STRING,
     "string",
-    VAR_OBJECT,
+    S_TOKEN_TYPE::VAR_OBJECT,
     "object",
-    VAR_REFERENCE,
+    S_TOKEN_TYPE::VAR_REFERENCE,
     "ref",
-    VAR_AREFERENCE,
+    S_TOKEN_TYPE::VAR_AREFERENCE,
     "aref",
-    BLOCK_IN,
+    S_TOKEN_TYPE::BLOCK_IN,
     "{",
-    BLOCK_OUT,
+    S_TOKEN_TYPE::BLOCK_OUT,
     "}",
-    SEPARATOR,
+    S_TOKEN_TYPE::SEPARATOR,
     ";",
-    FUNCTION_RETURN,
+    S_TOKEN_TYPE::FUNCTION_RETURN,
     "return",
     //    FUNCTION_RETURN_VOID,"return",
-    FOR_BLOCK,
+    S_TOKEN_TYPE::FOR_BLOCK,
     "for",
-    IF_BLOCK,
+    S_TOKEN_TYPE::IF_BLOCK,
     "if",
-    WHILE_BLOCK,
+    S_TOKEN_TYPE::WHILE_BLOCK,
     "while",
-    CONTINUE_COMMAND,
+    S_TOKEN_TYPE::CONTINUE_COMMAND,
     "continue",
-    BREAK_COMMAND,
+    S_TOKEN_TYPE::BREAK_COMMAND,
     "break",
-    GOTO_COMMAND,
+    S_TOKEN_TYPE::GOTO_COMMAND,
     "goto",
-    LABEL,
+    S_TOKEN_TYPE::LABEL,
     ":",
-    TVOID,
+    S_TOKEN_TYPE::TVOID,
     "void",
-    SWITCH_COMMAND,
+    S_TOKEN_TYPE::SWITCH_COMMAND,
     "switch",
-    CASE_COMMAND,
+    S_TOKEN_TYPE::CASE_COMMAND,
     "case",
-    DEFINE_COMMAND,
+    S_TOKEN_TYPE::DEFINE_COMMAND,
     "#define",
-    MAKEREF_COMMAND,
+    S_TOKEN_TYPE::MAKEREF_COMMAND,
     "makeref",
-    MAKEAREF_COMMAND,
+    S_TOKEN_TYPE::MAKEAREF_COMMAND,
     "makearef",
-    OPEN_BRACKET,
+    S_TOKEN_TYPE::OPEN_BRACKET,
     "(",
-    CLOSE_BRACKET,
+    S_TOKEN_TYPE::CLOSE_BRACKET,
     ")",
-    SQUARE_OPEN_BRACKET,
+    S_TOKEN_TYPE::SQUARE_OPEN_BRACKET,
     "[",
-    SQUARE_CLOSE_BRACKET,
+    S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET,
     "]",
-    OP_EQUAL,
+    S_TOKEN_TYPE::OP_EQUAL,
     "=",
-    OP_BOOL_EQUAL,
+    S_TOKEN_TYPE::OP_BOOL_EQUAL,
     "==",
-    OP_GREATER,
+    S_TOKEN_TYPE::OP_GREATER,
     ">",
-    OP_GREATER_OR_EQUAL,
+    S_TOKEN_TYPE::OP_GREATER_OR_EQUAL,
     ">=",
-    OP_LESSER,
+    S_TOKEN_TYPE::OP_LESSER,
     "<",
-    OP_LESSER_OR_EQUAL,
+    S_TOKEN_TYPE::OP_LESSER_OR_EQUAL,
     "<=",
-    OP_NOT_EQUAL,
+    S_TOKEN_TYPE::OP_NOT_EQUAL,
     "!=",
-    OP_INCADD,
+    S_TOKEN_TYPE::OP_INCADD,
     "+=",
-    OP_DECADD,
+    S_TOKEN_TYPE::OP_DECADD,
     "-=",
-    OP_MULTIPLYEQ,
+    S_TOKEN_TYPE::OP_MULTIPLYEQ,
     "*=",
-    OP_DIVIDEEQ,
+    S_TOKEN_TYPE::OP_DIVIDEEQ,
     "/=",
-    OP_MINUS,
+    S_TOKEN_TYPE::OP_MINUS,
     "-",
-    OP_PLUS,
+    S_TOKEN_TYPE::OP_PLUS,
     "+",
-    OP_MULTIPLY,
+    S_TOKEN_TYPE::OP_MULTIPLY,
     "*",
-    OP_DIVIDE,
+    S_TOKEN_TYPE::OP_DIVIDE,
     "/",
-    OP_POWER,
+    S_TOKEN_TYPE::OP_POWER,
     "^",
-    OP_MODUL,
+    S_TOKEN_TYPE::OP_MODUL,
     "%",
-    OP_INC,
+    S_TOKEN_TYPE::OP_INC,
     "++",
-    OP_DEC,
+    S_TOKEN_TYPE::OP_DEC,
     "--",
-    LINE_COMMENT,
+    S_TOKEN_TYPE::LINE_COMMENT,
     "//",
-    LINE_COMMENT,
+    S_TOKEN_TYPE::LINE_COMMENT,
     "#ifndef",
-    LINE_COMMENT,
+    S_TOKEN_TYPE::LINE_COMMENT,
     "#endif",
-    COMMA,
+    S_TOKEN_TYPE::COMMA,
     ",",
-    DOT,
+    S_TOKEN_TYPE::DOT,
     ".",
-    OP_BOOL_AND,
+    S_TOKEN_TYPE::OP_BOOL_AND,
     "&&",
-    OP_BOOL_OR,
+    S_TOKEN_TYPE::OP_BOOL_OR,
     "||",
-    AND,
+    S_TOKEN_TYPE::AND,
     "&",
-    DEBUG_FILE_NAME,
+    S_TOKEN_TYPE::DEBUG_FILE_NAME,
     "#file",
-    EXTERN,
+    S_TOKEN_TYPE::EXTERN,
     "extern",
-    ELSE_BLOCK,
+    S_TOKEN_TYPE::ELSE_BLOCK,
     "else",
-    VAR_INTEGER,
+    S_TOKEN_TYPE::VAR_INTEGER,
     "bool",
-    TRUE_CONST,
+    S_TOKEN_TYPE::TRUE_CONST,
     "true",
-    FALSE_CONST,
+    S_TOKEN_TYPE::FALSE_CONST,
     "false",
-    OP_BOOL_NEG,
+    S_TOKEN_TYPE::OP_BOOL_NEG,
     "!",
-    CLASS_DECL,
+    S_TOKEN_TYPE::CLASS_DECL,
     "class",
-    IMPORT,
+    S_TOKEN_TYPE::IMPORT,
     "native",
-    CALL,
+    S_TOKEN_TYPE::CALL,
     "call",
 
 };
@@ -293,7 +293,7 @@ S_KEYWORD Keywords[] = {
 TOKEN::TOKEN()
 {
     pTokenData = nullptr;
-    eTokenType = UNKNOWN;
+    eTokenType = S_TOKEN_TYPE::UNKNOWN;
     TokenDataBufferSize = 0;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
@@ -346,7 +346,7 @@ void TOKEN::Reset()
 {
     delete pTokenData;
     pTokenData = nullptr;
-    eTokenType = UNKNOWN;
+    eTokenType = S_TOKEN_TYPE::UNKNOWN;
     TokenDataBufferSize = 0;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
@@ -394,7 +394,7 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
     char *pBase;
     ptrdiff_t counter;
 
-    eTokenType = UNKNOWN;
+    eTokenType = S_TOKEN_TYPE::UNKNOWN;
 
     StartArgument(Program);
     CacheToken(Program);
@@ -406,23 +406,23 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
         // end of program
     case 0:
         DISCARD_DATABUFFER
-        eTokenType = END_OF_PROGRAMM;
+        eTokenType = S_TOKEN_TYPE::END_OF_PROGRAMM;
         return eTokenType;
     case ';':
         DISCARD_DATABUFFER
-        eTokenType = SEPARATOR;
+        eTokenType = S_TOKEN_TYPE::SEPARATOR;
         Program++;
         return eTokenType;
     case 0xd:
         DISCARD_DATABUFFER
-        eTokenType = DEBUG_LINEFEED;
+        eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
         Program++;
         if (Program[0] == 0xa)
             Program++;
         return eTokenType;
     case 0xa:
         DISCARD_DATABUFFER
-        eTokenType = DEBUG_LINEFEED;
+        eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
         Program++;
         if (Program[0] == 0xd)
             Program++;
@@ -447,7 +447,7 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
                 if (sym == '/')
                 {
                     SetNTokenData(pBase, Program - pBase);
-                    eTokenType = COMMENT;
+                    eTokenType = S_TOKEN_TYPE::COMMENT;
                     Program++;
                     Program++;
                     return eTokenType;
@@ -475,7 +475,7 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
         SetNTokenData(pBase, counter);
-        eTokenType = INVALID_TOKEN;
+        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     case '"':
         Program++;
@@ -486,7 +486,7 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
             if (sym == '"')
             {
                 SetNTokenData(pBase, Program - pBase);
-                eTokenType = STRING;
+                eTokenType = S_TOKEN_TYPE::STRING;
                 Program++;
                 return eTokenType;
             }
@@ -496,11 +496,11 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
         SetNTokenData(pBase, counter);
-        eTokenType = INVALID_TOKEN;
+        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     }
     const auto stt = ProcessToken(Program, bKeepData);
-    if (stt == HOLD_COMPILATION)
+    if (stt == S_TOKEN_TYPE::HOLD_COMPILATION)
     {
         __debugbreak();
         // stt == HOLD_COMPILATION;
@@ -514,7 +514,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
     char *pBase;
     ptrdiff_t counter;
 
-    eTokenType = UNKNOWN;
+    eTokenType = S_TOKEN_TYPE::UNKNOWN;
 
     StartArgument(Program, true);
     CacheToken(Program);
@@ -526,19 +526,19 @@ S_TOKEN_TYPE TOKEN::FormatGet()
         // end of program
     case 0:
         DISCARD_DATABUFFER
-        eTokenType = END_OF_PROGRAMM;
+        eTokenType = S_TOKEN_TYPE::END_OF_PROGRAMM;
         return eTokenType;
     case ';':
         // DISCARD_DATABUFFER
         SetNTokenData(";", 1);
 
-        eTokenType = SEPARATOR;
+        eTokenType = S_TOKEN_TYPE::SEPARATOR;
         Program++;
         return eTokenType;
     case 0xd:
         // DISCARD_DATABUFFER
 
-        eTokenType = DEBUG_LINEFEED;
+        eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
         Program++;
         if (Program[0] == 0xa)
         {
@@ -551,7 +551,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
     case 0xa:
         // DISCARD_DATABUFFER
 
-        eTokenType = DEBUG_LINEFEED;
+        eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
         Program++;
         if (Program[0] == 0xd)
         {
@@ -582,7 +582,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
                 if (sym == '/')
                 {
                     // SetNTokenData(pBase,(DWORD)Program - (DWORD)pBase);
-                    eTokenType = COMMENT;
+                    eTokenType = S_TOKEN_TYPE::COMMENT;
                     Program++;
                     Program++;
                     SetNTokenData(pBase, Program - pBase);
@@ -611,7 +611,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
         SetNTokenData(pBase, counter);
-        eTokenType = INVALID_TOKEN;
+        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     case '"':
         // Program++;
@@ -624,7 +624,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
             {
                 Program++;
                 SetNTokenData(pBase, Program - pBase);
-                eTokenType = STRING;
+                eTokenType = S_TOKEN_TYPE::STRING;
                 // Program++;
                 return eTokenType;
             }
@@ -634,7 +634,7 @@ S_TOKEN_TYPE TOKEN::FormatGet()
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
         SetNTokenData(pBase, counter);
-        eTokenType = INVALID_TOKEN;
+        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     }
 
@@ -1052,7 +1052,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
 
     pointer += SetTokenData(pointer, bKeepData);
 
-    eTokenType = UNKNOWN;
+    eTokenType = S_TOKEN_TYPE::UNKNOWN;
     if (GetData() == nullptr)
     {
         pointer++;
@@ -1075,42 +1075,42 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
     // if(IsOperator(GetData())) eTokenType = OPERATOR;
     // else
     if (IsNumber(GetData()))
-        eTokenType = NUMBER;
+        eTokenType = S_TOKEN_TYPE::NUMBER;
     else if (IsFloatNumber(GetData()))
-        eTokenType = FLOAT_NUMBER;
+        eTokenType = S_TOKEN_TYPE::FLOAT_NUMBER;
 
     switch (eTokenType)
     {
-    case INCLUDE_LIBRIARY:
+    case S_TOKEN_TYPE::INCLUDE_LIBRIARY:
         Get(); //    file name (string)
-        eTokenType = INCLUDE_LIBRIARY;
+        eTokenType = S_TOKEN_TYPE::INCLUDE_LIBRIARY;
         break;
-    case INCLIDE_FILE:
+    case S_TOKEN_TYPE::INCLIDE_FILE:
         Get(); //    file name (string)
-        eTokenType = INCLIDE_FILE;
+        eTokenType = S_TOKEN_TYPE::INCLIDE_FILE;
         break;
-    case DEBUG_FILE_NAME:
+    case S_TOKEN_TYPE::DEBUG_FILE_NAME:
         Get(); //    file name (string)
-        eTokenType = DEBUG_FILE_NAME;
+        eTokenType = S_TOKEN_TYPE::DEBUG_FILE_NAME;
         break;
-    case BLOCK_IN:
+    case S_TOKEN_TYPE::BLOCK_IN:
         if (bKeepData)
             break;
         DISCARD_DATABUFFER
         // pointer++;
         break;
-    case BLOCK_OUT:
+    case S_TOKEN_TYPE::BLOCK_OUT:
         if (bKeepData)
             break;
         DISCARD_DATABUFFER
         // pointer++;
         break;
-    case LINE_COMMENT:
+    case S_TOKEN_TYPE::LINE_COMMENT:
         if (bKeepData)
             pBase = Program - 2;
         else
             pBase = Program;
-        eTokenType = COMMENT;
+        eTokenType = S_TOKEN_TYPE::COMMENT;
         do
         {
             sym = *Program;
@@ -1120,69 +1120,69 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
         } while (sym != 0);
         SetNTokenData(pBase, Program - pBase);
         break;
-    case CALL:
-    case IMPORT:
-    case EXTERN:
-    case COMMA:
-    case DOT:
-    case AND:
-    case OP_MODUL:
-    case OP_MINUS:
-    case OP_PLUS:
-    case OP_MULTIPLY:
-    case OP_DIVIDE:
-    case OP_POWER:
-    case OP_NOT_EQUAL:
-    case OP_GREATER:
-    case OP_GREATER_OR_EQUAL:
-    case OP_LESSER:
-    case OP_LESSER_OR_EQUAL:
-    case OP_EQUAL:
-    case OP_BOOL_EQUAL:
-    case OP_BOOL_AND:
-    case OP_BOOL_OR:
-    case OP_INC:
-    case OP_DEC:
-    case OP_INCADD:
-    case OP_DECADD:
-    case OP_MULTIPLYEQ:
-    case OP_DIVIDEEQ:
-    case SQUARE_OPEN_BRACKET:
-    case SQUARE_CLOSE_BRACKET:
-    case OPEN_BRACKET:
-    case CLOSE_BRACKET:
-    case MAKEREF_COMMAND:
-    case MAKEAREF_COMMAND:
-    case LABEL:
-    case SWITCH_COMMAND:
-    case CASE_COMMAND:
-    case WHILE_BLOCK:
-    case IF_BLOCK:
-    case ELSE_BLOCK:
-    case FOR_BLOCK:
-    case STRING:
-    case NUMBER:
-    case FLOAT_NUMBER:
-    case UNKNOWN:
-    case CLASS_DECL:
-    case CONTINUE_COMMAND:
-    case BREAK_COMMAND:
-    case FUNCTION_RETURN:
-    case FUNCTION_RETURN_VOID:
-    case TRUE_CONST:
-    case FALSE_CONST:
-    case OP_BOOL_NEG:
-    case GOTO_COMMAND:
-    case EVENT_HANDLER:
-    case STACK_ALLOC:
-    case STACK_PUSH:
-    case STACK_POP:
-    case STACK_READ:
-    case STACK_WRITE:
-    case STACK_WRITE_BXINDEX:
-    case STACK_COMPARE:
-    case STACK_POP_VOID:
-    case LEFT_OPERAND:
+    case S_TOKEN_TYPE::CALL:
+    case S_TOKEN_TYPE::IMPORT:
+    case S_TOKEN_TYPE::EXTERN:
+    case S_TOKEN_TYPE::COMMA:
+    case S_TOKEN_TYPE::DOT:
+    case S_TOKEN_TYPE::AND:
+    case S_TOKEN_TYPE::OP_MODUL:
+    case S_TOKEN_TYPE::OP_MINUS:
+    case S_TOKEN_TYPE::OP_PLUS:
+    case S_TOKEN_TYPE::OP_MULTIPLY:
+    case S_TOKEN_TYPE::OP_DIVIDE:
+    case S_TOKEN_TYPE::OP_POWER:
+    case S_TOKEN_TYPE::OP_NOT_EQUAL:
+    case S_TOKEN_TYPE::OP_GREATER:
+    case S_TOKEN_TYPE::OP_GREATER_OR_EQUAL:
+    case S_TOKEN_TYPE::OP_LESSER:
+    case S_TOKEN_TYPE::OP_LESSER_OR_EQUAL:
+    case S_TOKEN_TYPE::OP_EQUAL:
+    case S_TOKEN_TYPE::OP_BOOL_EQUAL:
+    case S_TOKEN_TYPE::OP_BOOL_AND:
+    case S_TOKEN_TYPE::OP_BOOL_OR:
+    case S_TOKEN_TYPE::OP_INC:
+    case S_TOKEN_TYPE::OP_DEC:
+    case S_TOKEN_TYPE::OP_INCADD:
+    case S_TOKEN_TYPE::OP_DECADD:
+    case S_TOKEN_TYPE::OP_MULTIPLYEQ:
+    case S_TOKEN_TYPE::OP_DIVIDEEQ:
+    case S_TOKEN_TYPE::SQUARE_OPEN_BRACKET:
+    case S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET:
+    case S_TOKEN_TYPE::OPEN_BRACKET:
+    case S_TOKEN_TYPE::CLOSE_BRACKET:
+    case S_TOKEN_TYPE::MAKEREF_COMMAND:
+    case S_TOKEN_TYPE::MAKEAREF_COMMAND:
+    case S_TOKEN_TYPE::LABEL:
+    case S_TOKEN_TYPE::SWITCH_COMMAND:
+    case S_TOKEN_TYPE::CASE_COMMAND:
+    case S_TOKEN_TYPE::WHILE_BLOCK:
+    case S_TOKEN_TYPE::IF_BLOCK:
+    case S_TOKEN_TYPE::ELSE_BLOCK:
+    case S_TOKEN_TYPE::FOR_BLOCK:
+    case S_TOKEN_TYPE::STRING:
+    case S_TOKEN_TYPE::NUMBER:
+    case S_TOKEN_TYPE::FLOAT_NUMBER:
+    case S_TOKEN_TYPE::UNKNOWN:
+    case S_TOKEN_TYPE::CLASS_DECL:
+    case S_TOKEN_TYPE::CONTINUE_COMMAND:
+    case S_TOKEN_TYPE::BREAK_COMMAND:
+    case S_TOKEN_TYPE::FUNCTION_RETURN:
+    case S_TOKEN_TYPE::FUNCTION_RETURN_VOID:
+    case S_TOKEN_TYPE::TRUE_CONST:
+    case S_TOKEN_TYPE::FALSE_CONST:
+    case S_TOKEN_TYPE::OP_BOOL_NEG:
+    case S_TOKEN_TYPE::GOTO_COMMAND:
+    case S_TOKEN_TYPE::EVENT_HANDLER:
+    case S_TOKEN_TYPE::STACK_ALLOC:
+    case S_TOKEN_TYPE::STACK_PUSH:
+    case S_TOKEN_TYPE::STACK_POP:
+    case S_TOKEN_TYPE::STACK_READ:
+    case S_TOKEN_TYPE::STACK_WRITE:
+    case S_TOKEN_TYPE::STACK_WRITE_BXINDEX:
+    case S_TOKEN_TYPE::STACK_COMPARE:
+    case S_TOKEN_TYPE::STACK_POP_VOID:
+    case S_TOKEN_TYPE::LEFT_OPERAND:
 
         break;
     default:
@@ -1222,7 +1222,7 @@ S_TOKEN_TYPE TOKEN::Keyword2TokenType(const char *pString)
             return Keywords[index].type;
         }
     }
-    return UNKNOWN; //*/
+    return S_TOKEN_TYPE::UNKNOWN; //*/
 }
 
 uint32_t TOKEN::MakeHashValue(const char *string, uint32_t max_syms)

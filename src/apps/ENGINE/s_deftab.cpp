@@ -23,7 +23,7 @@ void S_DEFTAB::Release()
     for (n = 0; n < Def_num; n++)
     {
         delete pTable[n].name;
-        if (pTable[n].deftype == STRING)
+        if (pTable[n].deftype == S_TOKEN_TYPE::STRING)
         {
             if (pTable[n].data4b != 0)
                 delete ((char *)pTable[n].data4b);
@@ -140,7 +140,7 @@ void S_DEFTAB::InvalidateBySegmentID(uint32_t segment_id)
             continue;
         UpdateHashTable(n, pTable[n].hash, false);
         pTable[n].segment_id = INVALID_SEGMENT_ID;
-        if (pTable[n].deftype == STRING)
+        if (pTable[n].deftype == S_TOKEN_TYPE::STRING)
         {
             if (pTable[n].data4b)
             {

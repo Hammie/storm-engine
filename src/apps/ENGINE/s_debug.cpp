@@ -527,7 +527,7 @@ const char *S_DEBUG::ProcessExpression(const char *pExpression)
     Result.SetVCompiler(core.Compiler);
     if (core.Compiler->ProcessDebugExpression(pExpression, Result))
     {
-        Result.Convert(VAR_STRING);
+        Result.Convert(S_TOKEN_TYPE::VAR_STRING);
         if (Result.Get(pC))
         {
             const auto len = strlen(pC) + 1;
