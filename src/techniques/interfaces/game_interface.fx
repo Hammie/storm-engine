@@ -22,6 +22,31 @@ technique InterfaceFont
     }
 }
 
+// POTC: Copy of InterfaceFont
+technique DialogFont
+{
+    pass p0
+    {
+        CullMode = none;
+        FogEnable = false;
+        AlphaTestEnable = false;
+        ZEnable = false;
+        AlphaBlendEnable = true;
+        SrcBlend = srcalpha;
+        DestBlend = invsrcalpha;
+
+        ColorOp[0] = Modulate;
+        ColorArg1[0] = texture;
+        ColorArg2[0] = diffuse;
+
+        AlphaOp[0] = Modulate;
+        AlphaArg1[0] = texture;
+        AlphaArg2[0] = diffuse;
+
+        ColorOp[1] = disable;
+    }
+}
+
 technique iStartTechnique
 {
     pass p0
