@@ -202,9 +202,9 @@ class MESSAGE_SCRIPT : public MESSAGE
     void ValidateFormat(char c)
     {
         if (!format)
-            throw "Read from empty MESSAGE_SCRIPT";
+            throw std::runtime_error("Read from empty MESSAGE_SCRIPT");
         if (format[index] != c)
-            throw "Incorrect MESSAGE_SCRIPT data";
+            throw std::runtime_error("Incorrect MESSAGE_SCRIPT data");
         index++;
     }
     void ResetIndex()
@@ -215,7 +215,7 @@ class MESSAGE_SCRIPT : public MESSAGE
     void Reset(const char *_format)
     {
         if (!_format)
-            throw "MESSAGE_SCRIPT: cant reset with empty format string";
+            throw std::runtime_error("MESSAGE_SCRIPT: cant reset with empty format string");
         if (format)
             delete format;
 

@@ -498,7 +498,7 @@ Character::Character()
     char buf[64];
     for (long i = 0; i < 4; i++)
     {
-        sprintf_s(buf, sizeof(buf) - 1, "attack_fast_%i", i + 1);
+        sprintf_s(buf, sizeof(buf) - 1, "attack_%i", i + 1);
         attackFast[i].SetName(buf);
         sprintf_s(buf, sizeof(buf) - 1, "attack_force_%i", i + 1);
         attackForce[i].SetName(buf);
@@ -1497,6 +1497,7 @@ void Character::Attack(Character *enemy, FightAction type)
         fgtSetIndex = -1;
         return;
     }
+
     if (aname) //~!~
     {
         res = core.Event("ChrAttackAction", "is", GetId(), aname);
@@ -1517,6 +1518,10 @@ void Character::Attack(Character *enemy, FightAction type)
         }
     }
     if (res)
+    {
+        fgtSetType = type;
+    }
+    else if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) 
     {
         fgtSetType = type;
     }

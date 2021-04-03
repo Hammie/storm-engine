@@ -571,6 +571,13 @@ bool Player::IsDoAttackFast()
     core.Controls->GetControlState("ChrAttackFast2", cs);
     if (cs.state == CST_ACTIVATED)
         bPressed = true;
+
+    if (core.getTargetVersion() == ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+        core.Controls->GetControlState("ChrAttack", cs);
+        if (cs.state == CST_ACTIVATED)
+            bPressed = true;
+    }
+
     return bPressed;
 }
 
