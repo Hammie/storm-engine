@@ -1052,10 +1052,12 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
         if (pvdat)
             pvdat->Set(param2);
 
-        sprintf_s(param2, "%2.2d.%2.2d.%d", systTime.wDay, systTime.wMonth, systTime.wYear);
-        pvdat = message.ScriptVariablePointer();
-        if (pvdat)
-            pvdat->Set(param2);
+        if (message.GetCurrentFormatType() == 'e') {
+            sprintf_s(param2, "%2.2d.%2.2d.%d", systTime.wDay, systTime.wMonth, systTime.wYear);
+            pvdat = message.ScriptVariablePointer();
+            if (pvdat)
+                pvdat->Set(param2);
+        }
     }
     break;
 
