@@ -4137,7 +4137,7 @@ void Character::UpdateAnimation()
                           }
                         }
                  */
-                char *pWeaponID;
+                const char *pWeaponID = "blade";
                 VDATA *pdat = core.Event("eGetWeaponID", "s", characterID);
                 if (pdat)
                 {
