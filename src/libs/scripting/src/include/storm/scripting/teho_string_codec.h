@@ -1,5 +1,3 @@
-#ifndef TEHO_STRING_CODEC_H
-#define TEHO_STRING_CODEC_H
 #pragma once
 
 #include "string_codec.h"
@@ -167,4 +165,3 @@ class TEHO_STRING_CODEC final : public AbstractStringCodec
     //*/
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef _XI_SCROLLIMAGE_H
-#define _XI_SCROLLIMAGE_H
+#pragma once
 
 #include "..//inode.h"
 
@@ -145,4 +144,3 @@ class CXI_SCROLLIMAGE final : public CINODE
     std::vector<SlotProperties> m_SlotProperties;
 };
 
-#endif

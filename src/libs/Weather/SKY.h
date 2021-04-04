@@ -1,5 +1,4 @@
-#ifndef _SKY_H_
-#define _SKY_H_
+#pragma once
 
 #include "typedef.h"
 #include <string>
@@ -99,4 +98,3 @@ class SKY : public Entity
     uint32_t GetPixelColor(IDirect3DTexture9 *pTex, float fu, float fv) const;
 };
 
-#endif
