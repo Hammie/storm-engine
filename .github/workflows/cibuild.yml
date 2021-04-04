@@ -30,4 +30,6 @@ jobs:
         name: storm-engine.${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\bin
     - name: Run tests
+      run: '${{ github.workspace }}/build/${{ matrix.configuration }}/bin/test-all.exe'
+    - name: Run scripting tests
       run: '${{ github.workspace }}/build/${{ matrix.configuration }}/bin/scripting-test.exe'
