@@ -1,9 +1,9 @@
 #include "core.h"
+#include "SteamApi.hpp"
 #include "VmaInit.h"
 #include "compiler.h"
 #include "controls.h"
 #include "fs.h"
-#include "SteamApi.hpp"
 #include <fstream>
 
 namespace {
@@ -28,7 +28,6 @@ typedef struct
     uint32_t code;
     void *pointer;
 } CODE_AND_POINTER;
-
 
 void CORE::ResetCore()
 {
@@ -211,8 +210,8 @@ void CORE::ProcessEngineIniFile()
 
     bEngineIniProcessed = true;
 
-    auto *engine_ini = fio->OpenIniFile(fs::ENGINE_INI_FILE_NAME);
-    if (engine_ini == nullptr)
+    auto engine_ini = fio->OpenIniFile(fs::ENGINE_INI_FILE_NAME);
+    if (!engine_ini)
         throw std::exception("no 'engine.ini' file");
 
     loadCompatibilitySettings(*engine_ini);
@@ -271,8 +270,6 @@ void CORE::ProcessEngineIniFile()
             }
         }
     }
-
-    delete engine_ini;
 }
 
 bool CORE::LoadClassesTable()
