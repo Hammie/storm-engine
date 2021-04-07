@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <cstdint>
+#include <string_view>
 
 #include <storm/scripting/tokens.hpp>
 
@@ -26,9 +27,8 @@ class TOKEN
 {
     THLINE KeywordsHash[TOKENHASHTABLE_SIZE];
     S_TOKEN_TYPE eTokenType;
-    ptrdiff_t TokenDataBufferSize;
     long Lines_in_token;
-    char *pTokenData;
+    std::string pTokenData;
     ptrdiff_t ProgramSteps[PROGRAM_STEPS_CACHE];
     long ProgramStepsNum;
     char *Program;
@@ -54,7 +54,7 @@ class TOKEN
     S_TOKEN_TYPE GetType();
     void CacheToken(const char *pointer);
     bool StepBack();
-    long SetTokenData(const char *pointer, bool bKeepControlSymbols = false);
+    long SetTokenData(const std::string_view &input, bool bKeepControlSymbols = false);
     ptrdiff_t SetNTokenData(const char *pointer, ptrdiff_t Data_size);
     long StopArgument(const char *pointer, bool bKeepControlSymbols = false);
     void StartArgument(char *&pointer, bool bKeepControlSymbols = false);

@@ -1,12 +1,13 @@
 #include "token.h"
 #include <cstdio>
 
+#include <storm/scripting/compiler.hpp>
+
 #include "defines.h"
 
 #define DISCARD_DATABUFFER                                                                                             \
     {                                                                                                                  \
-        if (pTokenData)                                                                                                \
-            pTokenData[0] = 0;                                                                                         \
+        pTokenData.clear();                                                                                            \
     }
 #define INVALID_ARG_DCHARS 32
 const char *TokenTypeName[] = {
@@ -292,9 +293,7 @@ S_KEYWORD Keywords[] = {
 
 TOKEN::TOKEN()
 {
-    pTokenData = nullptr;
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
-    TokenDataBufferSize = 0;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
     Program = nullptr;
@@ -344,10 +343,8 @@ ptrdiff_t TOKEN::GetProgramOffset()
 
 void TOKEN::Reset()
 {
-    delete pTokenData;
-    pTokenData = nullptr;
+    pTokenData.clear();
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
-    TokenDataBufferSize = 0;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
     Program = nullptr;
@@ -363,15 +360,13 @@ bool TOKEN::Is(S_TOKEN_TYPE ttype)
 
 void TOKEN::LowCase()
 {
-    if (pTokenData[0] == 0)
-        return;
-    _strlwr(pTokenData);
+    _strlwr(pTokenData.data());
 }
 
 const char *TOKEN::GetData()
 {
     // if(pTokenData[0] == 0) return 0;
-    return pTokenData;
+    return pTokenData.c_str();
 }
 
 S_TOKEN_TYPE TOKEN::GetType()
@@ -642,45 +637,18 @@ S_TOKEN_TYPE TOKEN::FormatGet()
 }
 
 // copy argument data to buffer and close the termination 0
-long TOKEN::SetTokenData(const char *pointer, bool bKeepControlSymbols)
+long TOKEN::SetTokenData(const std::string_view &input, bool bKeepControlSymbols)
 {
     // if(!IsOperator(pointer,Data_size))
-    const auto Data_size = StopArgument(pointer, bKeepControlSymbols);
-    if (Data_size == 0)
-    {
-        if (pTokenData)
-            pTokenData[0] = 0;
-        return 0;
-    }
-    if (Data_size >= TokenDataBufferSize)
-    {
-        delete pTokenData;
-
-        pTokenData = new char[Data_size + 1];
-        TokenDataBufferSize = Data_size + 1;
-    }
-    memcpy(pTokenData, pointer, Data_size);
-    pTokenData[Data_size] = 0;
+    const auto Data_size = storm::scripting::Compiler::getNextTokenLength(input, bKeepControlSymbols);
+    pTokenData = input.substr(0, Data_size);
     return Data_size;
 }
 
 // copy exact nymber of argument data to buffer and close the termination 0
 ptrdiff_t TOKEN::SetNTokenData(const char *pointer, ptrdiff_t Data_size)
 {
-    if (Data_size == 0)
-    {
-        pTokenData[0] = 0;
-        return 0;
-    }
-    if (Data_size >= TokenDataBufferSize)
-    {
-        delete pTokenData;
-
-        pTokenData = new char[Data_size + 1];
-        TokenDataBufferSize = Data_size + 1;
-    }
-    memcpy(pTokenData, pointer, Data_size);
-    pTokenData[Data_size] = 0;
+    pTokenData = std::string_view(pointer, Data_size);
     return Data_size;
 }
 
@@ -1050,7 +1018,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
     // long n;
     char *pBase;
 
-    pointer += SetTokenData(pointer, bKeepData);
+    pointer += SetTokenData(std::string_view(pointer, 100), bKeepData);
 
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
     if (GetData() == nullptr)
@@ -1070,7 +1038,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
       }
     }*/
 
-    eTokenType = Keyword2TokenType(pTokenData);
+    eTokenType = Keyword2TokenType(pTokenData.c_str());
 
     // if(IsOperator(GetData())) eTokenType = OPERATOR;
     // else
@@ -1190,7 +1158,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
             break;
 
         StartArgument(pointer);
-        pointer += SetTokenData(pointer);
+        pointer += SetTokenData(std::string_view(pointer, 100));
         break;
     }
     return eTokenType;
