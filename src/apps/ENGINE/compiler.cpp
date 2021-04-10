@@ -1393,7 +1393,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
             if (Segment.Files_list->AddUnicalString(Token.GetData()))
             {
                 file_code = Segment.Files_list->GetStringCode(Token.GetData());
-                Control_offset = Token.GetProgramControl() - Token.GetProgramBase(); // store program scan point
+                Control_offset = Token.GetProgramOffset(); // store program scan point
                 pApend_file = LoadFile(Token.GetData(), Append_file_size);
                 if (pApend_file == nullptr)
                 {

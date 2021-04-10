@@ -10,54 +10,32 @@ using S_TOKEN_TYPE = storm::scripting::TokenType;
 
 #define PROGRAM_STEPS_CACHE 16
 
-#define TOKENHASHTABLE_SIZE 256
-
-struct THLINE
-{
-    THLINE()
-    {
-        dwNum = 0;
-        pIndex = nullptr;
-    };
-    uint32_t dwNum;
-    uint8_t *pIndex;
-};
-
 class TOKEN
 {
-    THLINE KeywordsHash[TOKENHASHTABLE_SIZE];
     S_TOKEN_TYPE eTokenType;
     long Lines_in_token;
-    std::string pTokenData;
     ptrdiff_t ProgramSteps[PROGRAM_STEPS_CACHE];
     long ProgramStepsNum;
-    char *Program;
-    char *ProgramBase;
-    uint32_t dwKeywordsNum;
+    std::string_view ProgramPointer{};
 
   public:
     TOKEN();
     ~TOKEN();
-    void Release();
     void Reset();
-    void SetProgram(char *pProgramBase, char *pProgramControl);
-    void SetProgramControl(char *pProgramControl);
-    char *GetProgramControl();
-    char *GetProgramBase()
-    {
-        return ProgramBase;
-    };
-    ptrdiff_t GetProgramOffset();
+    void SetProgram(const std::string_view &pProgramBase, const std::string_view &pProgramControl);
+
+    [[nodiscard]] ptrdiff_t GetProgramOffset() const noexcept {
+        return std::distance(m_ProgramBase.data(), ProgramPointer.data());
+    }
 
     S_TOKEN_TYPE Get(bool bKeepData = false);
-    S_TOKEN_TYPE ProcessToken(char *&pointer, bool bKeepData = false);
+    S_TOKEN_TYPE ProcessToken(std::string_view &pointer, bool bKeepData = false);
     S_TOKEN_TYPE GetType();
-    void CacheToken(const char *pointer);
+    void CacheToken(const std::string_view &pointer);
     bool StepBack();
     long SetTokenData(const std::string_view &input, bool bKeepControlSymbols = false);
-    ptrdiff_t SetNTokenData(const char *pointer, ptrdiff_t Data_size);
     long StopArgument(const char *pointer, bool bKeepControlSymbols = false);
-    void StartArgument(char *&pointer, bool bKeepControlSymbols = false);
+    void StartArgument(std::string_view &pointer, bool bKeepControlSymbols = false);
     const char *GetTypeName(S_TOKEN_TYPE code);
     const char *GetTypeName();
     const char *GetData();
@@ -70,5 +48,9 @@ class TOKEN
     S_TOKEN_TYPE FormatGet();
 
     uint32_t MakeHashValue(const char *string, uint32_t max_syms = 0);
+
+  private:
+    std::string m_TokenData{};
+    std::string_view m_ProgramBase{};
 };
 

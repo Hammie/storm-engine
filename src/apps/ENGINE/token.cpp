@@ -5,11 +5,8 @@
 #include <storm/scripting/keywords.hpp>
 
 #include "defines.h"
+#include "storm_assert.h"
 
-#define DISCARD_DATABUFFER                                                                                             \
-    {                                                                                                                  \
-        pTokenData.clear();                                                                                            \
-    }
 #define INVALID_ARG_DCHARS 32
 const char *TokenTypeName[] = {
     "END_OF_PROGRAMM",
@@ -148,19 +145,7 @@ TOKEN::TOKEN()
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
-    Program = nullptr;
-    ProgramBase = nullptr;
     Lines_in_token = 0;
-}
-
-void TOKEN::Release()
-{
-    for (uint32_t n = 0; n < TOKENHASHTABLE_SIZE; n++)
-    {
-        if (KeywordsHash[n].pIndex)
-            free(KeywordsHash[n].pIndex);
-        KeywordsHash[n].pIndex = nullptr;
-    }
 }
 
 TOKEN::~TOKEN()
@@ -168,37 +153,22 @@ TOKEN::~TOKEN()
     Reset();
 }
 
-void TOKEN::SetProgram(char *pProgramBase, char *pProgramControl)
+void TOKEN::SetProgram(const std::string_view &pProgramBase, const std::string_view &pProgramControl)
 {
-    Program = pProgramControl;
-    ProgramBase = pProgramBase;
+    ProgramPointer = pProgramControl;
+    m_ProgramBase = pProgramBase;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
-}
-
-void TOKEN::SetProgramControl(char *pProgramControl)
-{
-    Program = pProgramControl;
-}
-
-char *TOKEN::GetProgramControl()
-{
-    return Program;
-}
-
-ptrdiff_t TOKEN::GetProgramOffset()
-{
-    return Program - ProgramBase;
 }
 
 void TOKEN::Reset()
 {
-    pTokenData.clear();
+    m_TokenData.clear();
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
     PZERO(ProgramSteps, sizeof(ProgramSteps));
     ProgramStepsNum = 0;
-    Program = nullptr;
-    ProgramBase = nullptr;
+    ProgramPointer = "";
+    m_ProgramBase = "";
 }
 
 bool TOKEN::Is(S_TOKEN_TYPE ttype)
@@ -210,13 +180,13 @@ bool TOKEN::Is(S_TOKEN_TYPE ttype)
 
 void TOKEN::LowCase()
 {
-    _strlwr(pTokenData.data());
+    _strlwr(m_TokenData.data());
 }
 
 const char *TOKEN::GetData()
 {
     // if(pTokenData[0] == 0) return 0;
-    return pTokenData.c_str();
+    return m_TokenData.c_str();
 }
 
 S_TOKEN_TYPE TOKEN::GetType()
@@ -236,65 +206,67 @@ const char *TOKEN::GetTypeName(S_TOKEN_TYPE code)
 
 S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
 {
-    char *pBase;
     ptrdiff_t counter;
 
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
 
-    StartArgument(Program);
-    CacheToken(Program);
+    StartArgument(ProgramPointer);
+    CacheToken(ProgramPointer);
 
     Lines_in_token = 0;
-    auto sym = *Program;
-    switch (sym)
-    {
+
+    if (ProgramPointer.empty()) {
         // end of program
-    case 0:
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         eTokenType = S_TOKEN_TYPE::END_OF_PROGRAMM;
         return eTokenType;
+    }
+
+    auto sym = ProgramPointer.front();
+    switch (sym)
+    {
     case ';':
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         eTokenType = S_TOKEN_TYPE::SEPARATOR;
-        Program++;
+        ProgramPointer.remove_prefix(1);
         return eTokenType;
     case 0xd:
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
-        Program++;
-        if (Program[0] == 0xa)
-            Program++;
+        ProgramPointer.remove_prefix(1);
+        if (ProgramPointer[0] == 0xa)
+            ProgramPointer.remove_prefix(1);
         return eTokenType;
     case 0xa:
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
-        Program++;
-        if (Program[0] == 0xd)
-            Program++;
+        ProgramPointer.remove_prefix(1);
+        if (ProgramPointer[0] == 0xd)
+            ProgramPointer.remove_prefix(1);
         return eTokenType;
 
         // commented text
-    case '/':
-        sym = Program[1];
+    case '/': {
+        sym = ProgramPointer[1];
         if (sym != '*')
             break;
-        Program++;
-        Program++;
+        ProgramPointer.remove_prefix(1);
+        ProgramPointer.remove_prefix(1);
 
-        pBase = Program;
+        const std::string_view base = ProgramPointer;
 
         do
         {
-            sym = *Program;
+            sym = ProgramPointer.front();
             if (sym == '*')
             {
-                sym = Program[1];
+                sym = ProgramPointer[1];
                 if (sym == '/')
                 {
-                    SetNTokenData(pBase, Program - pBase);
+                    m_TokenData = base.substr(0, std::distance(base.data(), ProgramPointer.data()));
                     eTokenType = S_TOKEN_TYPE::COMMENT;
-                    Program++;
-                    Program++;
+                    ProgramPointer.remove_prefix(1);
+                    ProgramPointer.remove_prefix(1);
                     return eTokenType;
                 }
             }
@@ -303,48 +275,49 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
                 switch (sym)
                 {
                 case 0xd:
-                    if (Program[1] == 0xa)
-                        Program++;
+                    if (ProgramPointer[1] == 0xa)
+                        ProgramPointer.remove_prefix(1);
                     Lines_in_token++;
                     break;
                 case 0xa:
-                    if (Program[1] == 0xd)
-                        Program++;
+                    if (ProgramPointer[1] == 0xd)
+                        ProgramPointer.remove_prefix(1);
                     Lines_in_token++;
                     break;
                 }
             }
-            Program++;
+            ProgramPointer.remove_prefix(1);
         } while (sym != 0);
-        counter = Program - pBase;
+        counter = std::distance(base.data(), ProgramPointer.data());
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
-        SetNTokenData(pBase, counter);
-        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
-        return eTokenType;
-    case '"':
-        Program++;
-        pBase = Program;
-        do
-        {
-            sym = *Program;
-            if (sym == '"')
-            {
-                SetNTokenData(pBase, Program - pBase);
-                eTokenType = S_TOKEN_TYPE::STRING;
-                Program++;
-                return eTokenType;
-            }
-            Program++;
-        } while (sym != 0);
-        counter = Program - pBase;
-        if (counter > INVALID_ARG_DCHARS)
-            counter = INVALID_ARG_DCHARS;
-        SetNTokenData(pBase, counter);
+        m_TokenData = base.substr(0, counter);
         eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     }
-    const auto stt = ProcessToken(Program, bKeepData);
+    case '"':
+        ProgramPointer.remove_prefix(1);
+        const std::string_view base = ProgramPointer;
+        do
+        {
+            sym = ProgramPointer.front();
+            if (sym == '"')
+            {
+                m_TokenData = base.substr(0, std::distance(base.data(), ProgramPointer.data()));
+                eTokenType = S_TOKEN_TYPE::STRING;
+                ProgramPointer.remove_prefix(1);
+                return eTokenType;
+            }
+            ProgramPointer.remove_prefix(1);
+        } while (sym != 0);
+        counter = std::distance(base.data(), ProgramPointer.data());
+        if (counter > INVALID_ARG_DCHARS)
+            counter = INVALID_ARG_DCHARS;
+        m_TokenData = base.substr(0, counter);
+        eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
+        return eTokenType;
+    }
+    const auto stt = ProcessToken(ProgramPointer, bKeepData);
     if (stt == S_TOKEN_TYPE::HOLD_COMPILATION)
     {
         __debugbreak();
@@ -356,81 +329,83 @@ S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
 S_TOKEN_TYPE TOKEN::FormatGet()
 {
     char sym;
-    char *pBase;
+    const char *pBase;
     ptrdiff_t counter;
 
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
 
-    StartArgument(Program, true);
-    CacheToken(Program);
+    StartArgument(ProgramPointer, true);
+    CacheToken(ProgramPointer);
 
-    Lines_in_token = 0;
-    sym = *Program;
-    switch (sym)
-    {
+    if (ProgramPointer.empty()) {
         // end of program
-    case 0:
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         eTokenType = S_TOKEN_TYPE::END_OF_PROGRAMM;
         return eTokenType;
+    }
+
+    Lines_in_token = 0;
+    sym = ProgramPointer.front();
+    switch (sym)
+    {
     case ';':
         // DISCARD_DATABUFFER
-        SetNTokenData(";", 1);
+        m_TokenData = ";";
 
         eTokenType = S_TOKEN_TYPE::SEPARATOR;
-        Program++;
+        ProgramPointer.remove_prefix(1);
         return eTokenType;
     case 0xd:
         // DISCARD_DATABUFFER
 
         eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
-        Program++;
-        if (Program[0] == 0xa)
+        ProgramPointer.remove_prefix(1);
+        if (ProgramPointer[0] == 0xa)
         {
-            SetNTokenData(static_cast<char *>(Program - 1), 2);
-            Program++;
+            m_TokenData = std::string(ProgramPointer.data() - 1, 2);
+            ProgramPointer.remove_prefix(1);
         }
         else
-            SetNTokenData(&sym, 1);
+            m_TokenData = sym;
         return eTokenType;
     case 0xa:
         // DISCARD_DATABUFFER
 
         eTokenType = S_TOKEN_TYPE::DEBUG_LINEFEED;
-        Program++;
-        if (Program[0] == 0xd)
+        ProgramPointer.remove_prefix(1);
+        if (ProgramPointer[0] == 0xd)
         {
-            SetNTokenData(static_cast<char *>(Program - 1), 2);
-            Program++;
+            m_TokenData = std::string(ProgramPointer.data() - 1, 2);
+            ProgramPointer.remove_prefix(1);
         }
         else
-            SetNTokenData(&sym, 1);
+            m_TokenData = sym;
         return eTokenType;
 
         // commented text
     case '/':
-        pBase = Program;
-        sym = Program[1];
+        pBase = ProgramPointer.data();
+        sym = ProgramPointer[1];
         if (sym != '*')
             break;
-        Program++;
-        Program++;
+        ProgramPointer.remove_prefix(1);
+        ProgramPointer.remove_prefix(1);
 
         // pBase = Program;
 
         do
         {
-            sym = *Program;
+            sym = ProgramPointer.front();
             if (sym == '*')
             {
-                sym = Program[1];
+                sym = ProgramPointer[1];
                 if (sym == '/')
                 {
                     // SetNTokenData(pBase,(DWORD)Program - (DWORD)pBase);
                     eTokenType = S_TOKEN_TYPE::COMMENT;
-                    Program++;
-                    Program++;
-                    SetNTokenData(pBase, Program - pBase);
+                    ProgramPointer.remove_prefix(1);
+                    ProgramPointer.remove_prefix(1);
+                    m_TokenData = std::string(pBase, std::distance(pBase, ProgramPointer.data()));
                     return eTokenType;
                 }
             }
@@ -439,51 +414,51 @@ S_TOKEN_TYPE TOKEN::FormatGet()
                 switch (sym)
                 {
                 case 0xd:
-                    if (Program[1] == 0xa)
-                        Program++;
+                    if (ProgramPointer[1] == 0xa)
+                        ProgramPointer.remove_prefix(1);
                     Lines_in_token++;
                     break;
                 case 0xa:
-                    if (Program[1] == 0xd)
-                        Program++;
+                    if (ProgramPointer[1] == 0xd)
+                        ProgramPointer.remove_prefix(1);
                     Lines_in_token++;
                     break;
                 }
             }
-            Program++;
+            ProgramPointer.remove_prefix(1);
         } while (sym != 0);
-        counter = Program - pBase;
+        counter = std::distance(pBase, ProgramPointer.data());
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
-        SetNTokenData(pBase, counter);
+        m_TokenData = std::string(pBase, counter);
         eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     case '"':
         // Program++;
-        pBase = Program;
-        Program++;
+        pBase = ProgramPointer.data();
+        ProgramPointer.remove_prefix(1);
         do
         {
-            sym = *Program;
+            sym = ProgramPointer.front();
             if (sym == '"')
             {
-                Program++;
-                SetNTokenData(pBase, Program - pBase);
+                ProgramPointer.remove_prefix(1);
+                m_TokenData = std::string(pBase, std::distance(pBase, ProgramPointer.data()));
                 eTokenType = S_TOKEN_TYPE::STRING;
                 // Program++;
                 return eTokenType;
             }
-            Program++;
+            ProgramPointer.remove_prefix(1);
         } while (sym != 0);
-        counter = Program - pBase;
+        counter = std::distance(ProgramPointer.data(), pBase);
         if (counter > INVALID_ARG_DCHARS)
             counter = INVALID_ARG_DCHARS;
-        SetNTokenData(pBase, counter);
+        m_TokenData = std::string(pBase, counter);
         eTokenType = S_TOKEN_TYPE::INVALID_TOKEN;
         return eTokenType;
     }
 
-    return ProcessToken(Program, true);
+    return ProcessToken(ProgramPointer, true);
 }
 
 // copy argument data to buffer and close the termination 0
@@ -491,14 +466,7 @@ long TOKEN::SetTokenData(const std::string_view &input, bool bKeepControlSymbols
 {
     // if(!IsOperator(pointer,Data_size))
     const auto Data_size = storm::scripting::Compiler::getNextTokenLength(input, bKeepControlSymbols);
-    pTokenData = input.substr(0, Data_size);
-    return Data_size;
-}
-
-// copy exact nymber of argument data to buffer and close the termination 0
-ptrdiff_t TOKEN::SetNTokenData(const char *pointer, ptrdiff_t Data_size)
-{
-    pTokenData = std::string_view(pointer, Data_size);
+    m_TokenData = input.substr(0, Data_size);
     return Data_size;
 }
 
@@ -717,13 +685,15 @@ long TOKEN::StopArgument(const char *pointer, bool bKeepControlSymbols)
 }
 
 // advance program pointer until not found significant argument symbol
-void TOKEN::StartArgument(char *&pointer, bool bKeepControlSymbols)
+void TOKEN::StartArgument(std::string_view &pointer, bool bKeepControlSymbols)
 {
     do
     {
-        const auto sym = *pointer;
-        if (sym == 0)
+        if (pointer.empty()) {
             return;
+        }
+        const auto sym = pointer.front();
+        Assert(sym != '\0');
         if (sym == 0xa || sym == 0xd)
             return;
         if (bKeepControlSymbols)
@@ -732,7 +702,7 @@ void TOKEN::StartArgument(char *&pointer, bool bKeepControlSymbols)
                 return;
         }
         if (sym <= 0x20)
-            pointer++;
+            pointer.remove_prefix(1);
         else
             return;
     } while (true);
@@ -836,11 +806,11 @@ bool TOKEN::IsOperator(char * pointer, long & syms)
     return false;
 }
 */
-void TOKEN::CacheToken(const char *pointer)
+void TOKEN::CacheToken(const std::string_view &pointer)
 {
     if (ProgramStepsNum < PROGRAM_STEPS_CACHE)
     {
-        ProgramSteps[ProgramStepsNum] = pointer - ProgramBase;
+        ProgramSteps[ProgramStepsNum] = std::distance(m_ProgramBase.data(), pointer.data());
         ProgramStepsNum++;
         return;
     }
@@ -848,7 +818,7 @@ void TOKEN::CacheToken(const char *pointer)
     {
         ProgramSteps[n] = ProgramSteps[n + 1];
     }
-    ProgramSteps[PROGRAM_STEPS_CACHE - 1] = pointer - ProgramBase;
+    ProgramSteps[PROGRAM_STEPS_CACHE - 1] = std::distance(m_ProgramBase.data(), pointer.data());
 }
 
 // set pointer to previous (processed) token, return false if no pointers in cache
@@ -857,23 +827,24 @@ bool TOKEN::StepBack()
     if (ProgramStepsNum == 0)
         return false;
     ProgramStepsNum--;
-    Program = ProgramBase + ProgramSteps[ProgramStepsNum];
+    ProgramPointer = m_ProgramBase;
+    ProgramPointer.remove_prefix(ProgramSteps[ProgramStepsNum]);
     return true;
 }
 
-S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
+S_TOKEN_TYPE TOKEN::ProcessToken(std::string_view &pointer, bool bKeepData)
 {
     char sym;
     // long keywords_num;
     // long n;
 
-    pointer += SetTokenData(std::string_view(pointer, 100), bKeepData);
+    pointer.remove_prefix(SetTokenData(pointer, bKeepData));
 
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
     if (GetData() == nullptr)
     {
-        pointer++;
-        DISCARD_DATABUFFER
+        pointer.remove_prefix(1);
+        m_TokenData.clear();
         return eTokenType;
     }
 
@@ -888,7 +859,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
     }*/
 
     storm::scripting::KeywordManager keyword_manager;
-    eTokenType = keyword_manager.getTokenForKeyword(pTokenData);
+    eTokenType = keyword_manager.getTokenForKeyword(m_TokenData);
 
     // if(IsOperator(GetData())) eTokenType = OPERATOR;
     // else
@@ -914,26 +885,26 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
     case S_TOKEN_TYPE::BLOCK_IN:
         if (bKeepData)
             break;
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         // pointer++;
         break;
     case S_TOKEN_TYPE::BLOCK_OUT:
         if (bKeepData)
             break;
-        DISCARD_DATABUFFER
+        m_TokenData.clear();
         // pointer++;
         break;
     case S_TOKEN_TYPE::LINE_COMMENT: {
-        const char *pBase = bKeepData ? Program - 2 : Program;
+        const std::string_view base = bKeepData ? std::string_view(ProgramPointer.data() - 2, ProgramPointer.size() + 2) : ProgramPointer;
         eTokenType = S_TOKEN_TYPE::COMMENT;
         do
         {
-            sym = *Program;
-            Program++;
+            sym = ProgramPointer.front();
+            ProgramPointer.remove_prefix(1);
             if (sym == 0xd || sym == 0xa)
                 break;
         } while (sym != 0);
-        SetNTokenData(pBase, Program - pBase);
+        m_TokenData = base.substr(0, std::distance(base.data(), ProgramPointer.data()));
         break;
     }
     case S_TOKEN_TYPE::CALL:
@@ -1006,7 +977,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
             break;
 
         StartArgument(pointer);
-        pointer += SetTokenData(std::string_view(pointer, 100));
+        pointer.remove_prefix(SetTokenData(pointer));
         break;
     }
     return eTokenType;

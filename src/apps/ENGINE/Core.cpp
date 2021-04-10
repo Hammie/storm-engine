@@ -90,7 +90,7 @@ void CORE::InitBase()
 
 void CORE::ReleaseBase()
 {
-    Compiler->Token.Release();
+
 }
 
 bool CORE::Run()
