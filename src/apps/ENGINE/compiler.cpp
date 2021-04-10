@@ -3,6 +3,8 @@
 
 #include "internal_functions.hpp"
 
+#include <storm/scripting/keywords.hpp>
+
 #include <cstdio>
 
 #define SKIP_COMMENT_TRACING
@@ -7089,7 +7091,8 @@ uint32_t COMPILER::SetScriptFunction(IFUNCINFO *pFuncInfo)
         fi.return_type = TVOID;
     else
     {
-        const S_TOKEN_TYPE TokenType = Token.Keyword2TokenType(pFuncInfo->pReturnValueName);
+        storm::scripting::KeywordManager keyword_manager;
+        const S_TOKEN_TYPE TokenType = keyword_manager.getTokenForKeyword(pFuncInfo->pReturnValueName);
         switch (TokenType)
         {
         case TVOID:

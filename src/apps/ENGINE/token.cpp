@@ -2,6 +2,7 @@
 #include <cstdio>
 
 #include <storm/scripting/compiler.hpp>
+#include <storm/scripting/keywords.hpp>
 
 #include "defines.h"
 
@@ -142,155 +143,6 @@ const char *TokenTypeName[] = {
 
 };
 
-struct S_KEYWORD
-{
-    S_TOKEN_TYPE type;
-    const char *name;
-};
-
-S_KEYWORD Keywords[] = {
-    S_TOKEN_TYPE::HOLD_COMPILATION,
-    "#hold",
-    S_TOKEN_TYPE::INCLIDE_FILE,
-    "#include",
-    S_TOKEN_TYPE::EVENT_HANDLER,
-    "#event_handler",
-    S_TOKEN_TYPE::INCLUDE_LIBRIARY,
-    "#libriary",
-    S_TOKEN_TYPE::VAR_INTEGER,
-    "int",
-    S_TOKEN_TYPE::VAR_PTR,
-    "ptr",
-    S_TOKEN_TYPE::VAR_FLOAT,
-    "float",
-    S_TOKEN_TYPE::VAR_STRING,
-    "string",
-    S_TOKEN_TYPE::VAR_OBJECT,
-    "object",
-    S_TOKEN_TYPE::VAR_REFERENCE,
-    "ref",
-    S_TOKEN_TYPE::VAR_AREFERENCE,
-    "aref",
-    S_TOKEN_TYPE::BLOCK_IN,
-    "{",
-    S_TOKEN_TYPE::BLOCK_OUT,
-    "}",
-    S_TOKEN_TYPE::SEPARATOR,
-    ";",
-    S_TOKEN_TYPE::FUNCTION_RETURN,
-    "return",
-    //    FUNCTION_RETURN_VOID,"return",
-    S_TOKEN_TYPE::FOR_BLOCK,
-    "for",
-    S_TOKEN_TYPE::IF_BLOCK,
-    "if",
-    S_TOKEN_TYPE::WHILE_BLOCK,
-    "while",
-    S_TOKEN_TYPE::CONTINUE_COMMAND,
-    "continue",
-    S_TOKEN_TYPE::BREAK_COMMAND,
-    "break",
-    S_TOKEN_TYPE::GOTO_COMMAND,
-    "goto",
-    S_TOKEN_TYPE::LABEL,
-    ":",
-    S_TOKEN_TYPE::TVOID,
-    "void",
-    S_TOKEN_TYPE::SWITCH_COMMAND,
-    "switch",
-    S_TOKEN_TYPE::CASE_COMMAND,
-    "case",
-    S_TOKEN_TYPE::DEFINE_COMMAND,
-    "#define",
-    S_TOKEN_TYPE::MAKEREF_COMMAND,
-    "makeref",
-    S_TOKEN_TYPE::MAKEAREF_COMMAND,
-    "makearef",
-    S_TOKEN_TYPE::OPEN_BRACKET,
-    "(",
-    S_TOKEN_TYPE::CLOSE_BRACKET,
-    ")",
-    S_TOKEN_TYPE::SQUARE_OPEN_BRACKET,
-    "[",
-    S_TOKEN_TYPE::SQUARE_CLOSE_BRACKET,
-    "]",
-    S_TOKEN_TYPE::OP_EQUAL,
-    "=",
-    S_TOKEN_TYPE::OP_BOOL_EQUAL,
-    "==",
-    S_TOKEN_TYPE::OP_GREATER,
-    ">",
-    S_TOKEN_TYPE::OP_GREATER_OR_EQUAL,
-    ">=",
-    S_TOKEN_TYPE::OP_LESSER,
-    "<",
-    S_TOKEN_TYPE::OP_LESSER_OR_EQUAL,
-    "<=",
-    S_TOKEN_TYPE::OP_NOT_EQUAL,
-    "!=",
-    S_TOKEN_TYPE::OP_INCADD,
-    "+=",
-    S_TOKEN_TYPE::OP_DECADD,
-    "-=",
-    S_TOKEN_TYPE::OP_MULTIPLYEQ,
-    "*=",
-    S_TOKEN_TYPE::OP_DIVIDEEQ,
-    "/=",
-    S_TOKEN_TYPE::OP_MINUS,
-    "-",
-    S_TOKEN_TYPE::OP_PLUS,
-    "+",
-    S_TOKEN_TYPE::OP_MULTIPLY,
-    "*",
-    S_TOKEN_TYPE::OP_DIVIDE,
-    "/",
-    S_TOKEN_TYPE::OP_POWER,
-    "^",
-    S_TOKEN_TYPE::OP_MODUL,
-    "%",
-    S_TOKEN_TYPE::OP_INC,
-    "++",
-    S_TOKEN_TYPE::OP_DEC,
-    "--",
-    S_TOKEN_TYPE::LINE_COMMENT,
-    "//",
-    S_TOKEN_TYPE::LINE_COMMENT,
-    "#ifndef",
-    S_TOKEN_TYPE::LINE_COMMENT,
-    "#endif",
-    S_TOKEN_TYPE::COMMA,
-    ",",
-    S_TOKEN_TYPE::DOT,
-    ".",
-    S_TOKEN_TYPE::OP_BOOL_AND,
-    "&&",
-    S_TOKEN_TYPE::OP_BOOL_OR,
-    "||",
-    S_TOKEN_TYPE::AND,
-    "&",
-    S_TOKEN_TYPE::DEBUG_FILE_NAME,
-    "#file",
-    S_TOKEN_TYPE::EXTERN,
-    "extern",
-    S_TOKEN_TYPE::ELSE_BLOCK,
-    "else",
-    S_TOKEN_TYPE::VAR_INTEGER,
-    "bool",
-    S_TOKEN_TYPE::TRUE_CONST,
-    "true",
-    S_TOKEN_TYPE::FALSE_CONST,
-    "false",
-    S_TOKEN_TYPE::OP_BOOL_NEG,
-    "!",
-    S_TOKEN_TYPE::CLASS_DECL,
-    "class",
-    S_TOKEN_TYPE::IMPORT,
-    "native",
-    S_TOKEN_TYPE::CALL,
-    "call",
-
-};
-
 TOKEN::TOKEN()
 {
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
@@ -299,8 +151,6 @@ TOKEN::TOKEN()
     Program = nullptr;
     ProgramBase = nullptr;
     Lines_in_token = 0;
-
-    InitializeHashTable();
 }
 
 void TOKEN::Release()
@@ -1016,7 +866,6 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
     char sym;
     // long keywords_num;
     // long n;
-    char *pBase;
 
     pointer += SetTokenData(std::string_view(pointer, 100), bKeepData);
 
@@ -1038,7 +887,8 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
       }
     }*/
 
-    eTokenType = Keyword2TokenType(pTokenData.c_str());
+    storm::scripting::KeywordManager keyword_manager;
+    eTokenType = keyword_manager.getTokenForKeyword(pTokenData);
 
     // if(IsOperator(GetData())) eTokenType = OPERATOR;
     // else
@@ -1073,11 +923,8 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
         DISCARD_DATABUFFER
         // pointer++;
         break;
-    case S_TOKEN_TYPE::LINE_COMMENT:
-        if (bKeepData)
-            pBase = Program - 2;
-        else
-            pBase = Program;
+    case S_TOKEN_TYPE::LINE_COMMENT: {
+        const char *pBase = bKeepData ? Program - 2 : Program;
         eTokenType = S_TOKEN_TYPE::COMMENT;
         do
         {
@@ -1088,6 +935,7 @@ S_TOKEN_TYPE TOKEN::ProcessToken(char *&pointer, bool bKeepData)
         } while (sym != 0);
         SetNTokenData(pBase, Program - pBase);
         break;
+    }
     case S_TOKEN_TYPE::CALL:
     case S_TOKEN_TYPE::IMPORT:
     case S_TOKEN_TYPE::EXTERN:
@@ -1169,30 +1017,6 @@ long TOKEN::TokenLines()
     return Lines_in_token;
 }
 
-S_TOKEN_TYPE TOKEN::Keyword2TokenType(const char *pString)
-{
-    /*    DWORD n;
-      for(n=0;n<dwKeywordsNum;n++)
-      {
-        if(_stricmp(pString,Keywords[n].name) == 0)
-        {
-          return Keywords[n].type;
-        }
-      }
-      return UNKNOWN;//*/
-
-    const auto hash = MakeHashValue(pString, 4) % TOKENHASHTABLE_SIZE;
-    for (uint32_t n = 0; n < KeywordsHash[hash].dwNum; n++)
-    {
-        const uint32_t index = KeywordsHash[hash].pIndex[n];
-        if (_stricmp(pString, Keywords[index].name) == 0)
-        {
-            return Keywords[index].type;
-        }
-    }
-    return S_TOKEN_TYPE::UNKNOWN; //*/
-}
-
 uint32_t TOKEN::MakeHashValue(const char *string, uint32_t max_syms)
 {
     // if ('A' <= string[0] && string[0] <= 'Z') return (DWORD)(string[0] + 'a' - 'A');
@@ -1219,38 +1043,4 @@ uint32_t TOKEN::MakeHashValue(const char *string, uint32_t max_syms)
         }
     }
     return hval;
-}
-
-bool TOKEN::InitializeHashTable()
-{
-    static_assert(sizeof(Keywords) / sizeof(S_KEYWORD) < 256, "keywords num more then 256 - change index type");
-    dwKeywordsNum = sizeof(Keywords) / sizeof(S_KEYWORD);
-    // if(dwKeywordsNum > 255)
-    //{
-    //    trace("keywords num more then 256 - change index type");
-    //    return false;
-    //}
-
-    for (uint32_t n = 0; n < dwKeywordsNum; n++)
-    {
-        const auto hash = MakeHashValue(Keywords[n].name, 4) % TOKENHASHTABLE_SIZE;
-
-        KeywordsHash[hash].dwNum++;
-        KeywordsHash[hash].pIndex =
-            static_cast<uint8_t *>(realloc(KeywordsHash[hash].pIndex, KeywordsHash[hash].dwNum));
-        KeywordsHash[hash].pIndex[KeywordsHash[hash].dwNum - 1] = static_cast<uint8_t>(n);
-    }
-
-    // debug
-    /*DWORD i;
-    for(n=0;n<TOKENHASHTABLE_SIZE;n++)
-    {
-      trace("Hash: %d",n);
-      for(i=0;i<KeywordsHash[n].dwNum;i++)
-      {
-        trace("      String: %s",Keywords[KeywordsHash[n].pIndex[i]].name);
-      }
-    }//*/
-
-    return true;
 }
