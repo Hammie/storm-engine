@@ -143,4 +143,3 @@ class CXI_SCROLLIMAGE final : public CINODE
     std::vector<IMAGEDESCRIBE> m_Image;
     std::vector<SlotProperties> m_SlotProperties;
 };
-

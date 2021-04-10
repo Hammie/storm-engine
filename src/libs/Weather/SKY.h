@@ -97,4 +97,3 @@ class SKY : public Entity
 
     uint32_t GetPixelColor(IDirect3DTexture9 *pTex, float fu, float fv) const;
 };
-

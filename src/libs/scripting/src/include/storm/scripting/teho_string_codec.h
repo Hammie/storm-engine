@@ -164,4 +164,3 @@ class TEHO_STRING_CODEC final : public AbstractStringCodec
     }
     //*/
 };
-

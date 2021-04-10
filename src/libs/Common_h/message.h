@@ -209,4 +209,3 @@ class MESSAGE
         return mem_PTR;
     }
 };
-

@@ -53,4 +53,3 @@ class TOKEN
     std::string m_TokenData{};
     std::string_view m_ProgramBase{};
 };
-
