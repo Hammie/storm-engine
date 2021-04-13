@@ -743,7 +743,7 @@ void COMPILER::BC_ProcessExpression_L7(DATA *value, bool bSkip)
                 BC_TokenGet();
             }
             return;
-            // throw "zero AClass root";
+            // throw std::runtime_error("zero AClass root");
         }
         while (TokenType() == S_TOKEN_TYPE::ACCESS_WORD_CODE || TokenType() == S_TOKEN_TYPE::ACCESS_WORD || TokenType() == S_TOKEN_TYPE::ACCESS_VAR)
         {

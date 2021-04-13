@@ -213,7 +213,7 @@ class EntityManager final
         const auto hash = MakeHashValue(name);
         if (hash == 0)
         {
-            throw std::exception("null hash");
+            throw std::runtime_error("null hash");
         }
         VMA *pClass = nullptr;
         for (const auto &c : _pModuleClassRoot)
@@ -233,7 +233,7 @@ class EntityManager final
         auto *ptr = static_cast<Entity *>(pClass->CreateClass());
         if (ptr == nullptr)
         {
-            throw std::exception("CreateClass returned nullptr");
+            throw std::runtime_error("CreateClass returned nullptr");
         }
 
         /* INIT Entity */
