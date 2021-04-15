@@ -3,19 +3,17 @@
 #include <Windows.h>
 #include <cstdint>
 #include <string_view>
+#include <vector>
 
 #include <storm/scripting/tokens.hpp>
 
 using S_TOKEN_TYPE = storm::scripting::TokenType;
 
-#define PROGRAM_STEPS_CACHE 16
-
 class TOKEN
 {
     S_TOKEN_TYPE eTokenType;
     long Lines_in_token;
-    ptrdiff_t ProgramSteps[PROGRAM_STEPS_CACHE];
-    long ProgramStepsNum;
+    std::vector<ptrdiff_t> ProgramSteps;
     std::string_view ProgramPointer{};
 
   public:
@@ -32,7 +30,7 @@ class TOKEN
     S_TOKEN_TYPE ProcessToken(std::string_view &pointer, bool bKeepData = false);
     S_TOKEN_TYPE GetType();
     void CacheToken(const std::string_view &pointer);
-    bool StepBack();
+    void StepBack();
     long SetTokenData(const std::string_view &input, bool bKeepControlSymbols = false);
     long StopArgument(const char *pointer, bool bKeepControlSymbols = false);
     void StartArgument(std::string_view &pointer, bool bKeepControlSymbols = false);

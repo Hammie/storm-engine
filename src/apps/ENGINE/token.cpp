@@ -7,6 +7,13 @@
 #include "defines.h"
 #include "storm_assert.h"
 
+namespace
+{
+
+constexpr const size_t MAX_PROGRAM_STEPS_CACHE = 16;
+
+} // namespace
+
 #define INVALID_ARG_DCHARS 32
 const char *TokenTypeName[] = {
     "END_OF_PROGRAMM",
@@ -142,9 +149,9 @@ const char *TokenTypeName[] = {
 
 TOKEN::TOKEN()
 {
+    ProgramSteps.reserve(MAX_PROGRAM_STEPS_CACHE);
+
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
-    PZERO(ProgramSteps, sizeof(ProgramSteps));
-    ProgramStepsNum = 0;
     Lines_in_token = 0;
 }
 
@@ -157,16 +164,14 @@ void TOKEN::SetProgram(const std::string_view &pProgramBase, const std::string_v
 {
     ProgramPointer = pProgramControl;
     m_ProgramBase = pProgramBase;
-    PZERO(ProgramSteps, sizeof(ProgramSteps));
-    ProgramStepsNum = 0;
+    ProgramSteps.clear();
 }
 
 void TOKEN::Reset()
 {
     m_TokenData.clear();
     eTokenType = S_TOKEN_TYPE::UNKNOWN;
-    PZERO(ProgramSteps, sizeof(ProgramSteps));
-    ProgramStepsNum = 0;
+    ProgramSteps.clear();
     ProgramPointer = "";
     m_ProgramBase = "";
 }
@@ -698,10 +703,10 @@ void TOKEN::StartArgument(std::string_view &pointer, bool bKeepControlSymbols)
             return;
         if (bKeepControlSymbols)
         {
-            if (sym == 0x9 || sym == 0x20)
+            if (sym == '\t' || sym == ' ')
                 return;
         }
-        if (sym <= 0x20)
+        if (sym <= ' ')
             pointer.remove_prefix(1);
         else
             return;
@@ -808,28 +813,21 @@ bool TOKEN::IsOperator(char * pointer, long & syms)
 */
 void TOKEN::CacheToken(const std::string_view &pointer)
 {
-    if (ProgramStepsNum < PROGRAM_STEPS_CACHE)
+    if (ProgramSteps.size() < MAX_PROGRAM_STEPS_CACHE)
     {
-        ProgramSteps[ProgramStepsNum] = std::distance(m_ProgramBase.data(), pointer.data());
-        ProgramStepsNum++;
-        return;
+        ProgramSteps.push_back(0);
     }
-    for (uint32_t n = 0; n < (PROGRAM_STEPS_CACHE - 1); n++)
-    {
-        ProgramSteps[n] = ProgramSteps[n + 1];
-    }
-    ProgramSteps[PROGRAM_STEPS_CACHE - 1] = std::distance(m_ProgramBase.data(), pointer.data());
+    std::shift_right(ProgramSteps.begin(), ProgramSteps.end(), 1);
+    ProgramSteps[0] = std::distance(m_ProgramBase.data(), pointer.data());
 }
 
 // set pointer to previous (processed) token, return false if no pointers in cache
-bool TOKEN::StepBack()
+void TOKEN::StepBack()
 {
-    if (ProgramStepsNum == 0)
-        return false;
-    ProgramStepsNum--;
     ProgramPointer = m_ProgramBase;
-    ProgramPointer.remove_prefix(ProgramSteps[ProgramStepsNum]);
-    return true;
+    ProgramPointer.remove_prefix(ProgramSteps.front());
+    std::shift_left(ProgramSteps.begin(), ProgramSteps.end(), 1);
+    ProgramSteps.pop_back();
 }
 
 S_TOKEN_TYPE TOKEN::ProcessToken(std::string_view &pointer, bool bKeepData)
