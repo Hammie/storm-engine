@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 namespace storm::scripting {
 
 enum TokenType
@@ -133,6 +135,26 @@ enum TokenType
     PUSH_OBJID,
     PUSH_OBJID_BXINDEX,
     TOKEN_TYPES_COUNT
+};
+
+class Token
+{
+  public:
+    constexpr Token() noexcept = default;
+
+    explicit constexpr Token(TokenType type) noexcept : m_type(type)
+    {
+    }
+
+    [[nodiscard]] constexpr TokenType Type() const noexcept
+    {
+        return m_type;
+    }
+
+    [[nodiscard]] std::string_view Typename() const noexcept;
+
+  private:
+    TokenType m_type = TokenType::UNKNOWN;
 };
 
 } // namespace storm::scripting

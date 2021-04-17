@@ -33,8 +33,7 @@ class TOKEN
     void StepBack();
     long SetTokenData(const std::string_view &input, bool bKeepControlSymbols = false);
     void StartArgument(std::string_view &pointer, bool bKeepControlSymbols = false);
-    const char *GetTypeName(S_TOKEN_TYPE code);
-    const char *GetTypeName();
+    [[nodiscard]] std::string_view GetTypeName(S_TOKEN_TYPE code) const;
     const char *GetData();
     bool IsNumber(const char *pointer);
     bool IsFloatNumber(const char *pointer);
@@ -42,8 +41,6 @@ class TOKEN
     void LowCase();
 
     S_TOKEN_TYPE FormatGet();
-
-    uint32_t MakeHashValue(const char *string, uint32_t max_syms = 0);
 
   private:
     std::string m_TokenData{};

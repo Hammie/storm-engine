@@ -15,137 +15,6 @@ constexpr const size_t MAX_PROGRAM_STEPS_CACHE = 16;
 } // namespace
 
 #define INVALID_ARG_DCHARS 32
-const char *TokenTypeName[] = {
-    "END_OF_PROGRAMM",
-    "INVALID_TOKEN",
-    "UNKNOWN",
-    "WHITESPACE",
-    "COMMENT",
-    "INCLIDE_FILE",
-    "integer",
-    "pointer",
-    "float",
-    "string",
-    "object",
-    "reference",
-    "attribute reference",
-    "BLOCK_IN",
-    "BLOCK_OUT",
-    "NUMBER",
-    "STRING",
-    "FLOAT_NUMBER",
-    "SEPARATOR",
-    "FUNCTION_RETURN",
-    "FUNCTION_RETURN_VOID",
-    "FOR_BLOCK",
-    "IF_BLOCK",
-    "WHILE_BLOCK",
-    "CONTINUE_COMMAND",
-    "BREAK_COMMAND",
-    "GOTO_COMMAND",
-    "LABEL",
-    "VOID",
-    "SWITCH_COMMAND",
-    "CASE_COMMAND",
-    "DEFINE_COMMAND",
-    "MAKEREF_COMMAND",
-    "MAKEAREF_COMMAND",
-    "OPEN_BRACKET",
-    "CLOSE_BRACKET",
-    "SQUARE_OPEN_BRACKET",
-    "SQUARE_CLOSE_BRACKET",
-    "OP_EQUAL",
-    "OP_BOOL_EQUAL",
-    "OP_GREATER",
-    "OP_GREATER_OR_EQUAL",
-    "OP_LESSER",
-    "OP_LESSER_OR_EQUAL",
-    "OP_NOT_EQUAL",
-    "OP_MINUS",
-    "OP_PLUS",
-    "OP_MULTIPLY",
-    "OP_DIVIDE",
-    "OP_POWER",
-    "OP_MODUL",
-    "OP_INC",
-    "OP_DEC",
-    "OP_NEG",
-    "LINE_COMMENT",
-    "COMMA",
-    "DOT",
-    "AND",
-    "CALL_FUNCTION",
-    "DEBUG_FILE_NAME",
-    "DEBUG_LINE_CODE",
-    "DEBUG_LINEFEED",
-    "VARIABLE",
-    "LOCAL_VARIABLE",
-    "EXTERN",
-    "ACCESS_WORD",
-    "ACCESS_VAR",
-    "STACK_ALLOC",
-    "STACK_PUSH",
-    "STACK_POP",
-    "STACK_READ",
-    "STACK_WRITE",
-    "STACK_WRITE_BXINDEX",
-    "STACK_COMPARE",
-    "AX",
-    "BX",
-    "EX",
-    "AP",
-    "STACK_TOP",
-    "AP_VALUE",
-    "MOVE",
-    "MOVEAP",
-    "MOVEAP_BXINDEX",
-    "ADVANCE_AP",
-    "ARRAY_INDEX",
-    "EXPRESSION_END",
-    "JUMP",
-    "JUMP_Z",
-    "JUMP_NZ",
-    "PROCESS_EXPRESSION",
-    "PUSH_EXPRESULT",
-    "POP_EXPRESULT",
-    "POP_VOID",
-    "OP_BOOL_AND",
-    "OP_BOOL_OR",
-    "ELSE_BLOCK",
-    "TRUE_CONST",
-    "FALSE_CONST",
-    "OP_BOOL_NEG",
-    "ACCESS_WORD_CODE",
-    "EVENT_HANDLER",
-    "OP_INCADD",
-    "OP_DECADD",
-    "OP_MULTIPLYEQ",
-    "OP_DIVIDEEQ",
-    "CLASS_DECL",
-    "CLASS_OBJECT",
-    "IMPORT",
-    "INCLUDE_LIBRIARY",
-    "CALL",
-    "SETREF",
-    "SETREF_BXINDEX",
-    "OP_SPLUS",
-    "OP_SMINUS",
-    "OP_BOOL_CONVERT",
-    "OP_REF_CONVERT",
-    "OP_COMPARE_AND_SET",
-    "LEFT_OPERAND",
-    "STACK_POP_VOID",
-    "DEFINE_VAL",
-    "ARGS_NUM",
-    "HOLD_COMPILATION",
-    "SETAREF",
-    "VERIFY_AP",
-    "POP_NZ",
-    "LEFTOP_INDEX",
-    "PUSH_OBJID",
-    "PUSH_OBJID_BXINDEX",
-
-};
 
 TOKEN::TOKEN()
 {
@@ -192,14 +61,9 @@ S_TOKEN_TYPE TOKEN::GetType()
     return eTokenType;
 }
 
-const char *TOKEN::GetTypeName()
+std::string_view TOKEN::GetTypeName(S_TOKEN_TYPE code) const
 {
-    return TokenTypeName[eTokenType];
-}
-
-const char *TOKEN::GetTypeName(S_TOKEN_TYPE code)
-{
-    return TokenTypeName[code];
+    return storm::scripting::Token(code).Typename();
 }
 
 S_TOKEN_TYPE TOKEN::Get(bool bKeepData)
@@ -763,32 +627,4 @@ S_TOKEN_TYPE TOKEN::ProcessToken(std::string_view &pointer, bool bKeepData)
 long TOKEN::TokenLines()
 {
     return Lines_in_token;
-}
-
-uint32_t TOKEN::MakeHashValue(const char *string, uint32_t max_syms)
-{
-    // if ('A' <= string[0] && string[0] <= 'Z') return (DWORD)(string[0] + 'a' - 'A');
-    // else return string[0];
-    // return (DWORD)string[0];
-    uint32_t hval = 0;
-    while (*string != 0)
-    {
-        auto v = *string++;
-        if ('A' <= v && v <= 'Z')
-            v += 'a' - 'A'; // case independent
-        hval = (hval << 4) + static_cast<unsigned long>(v);
-        const uint32_t g = hval & (static_cast<unsigned long>(0xf) << (32 - 4));
-        if (g != 0)
-        {
-            hval ^= g >> (32 - 8);
-            hval ^= g;
-        }
-        if (max_syms != 0)
-        {
-            max_syms--;
-            if (max_syms == 0)
-                return hval;
-        }
-    }
-    return hval;
 }

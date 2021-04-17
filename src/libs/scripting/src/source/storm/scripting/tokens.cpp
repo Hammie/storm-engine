@@ -1,0 +1,160 @@
+#include "storm/scripting/tokens.hpp"
+
+#include <map>
+
+namespace storm::scripting {
+
+namespace
+{
+
+auto getTokenNameMap()
+{
+    return std::map<TokenType, std::string_view>(
+        {
+            {END_OF_PROGRAMM, "END_OF_PROGRAMM"},
+            {INVALID_TOKEN, "INVALID_TOKEN"},
+            {UNKNOWN, "UNKNOWN"},
+            {WHITESPACE, "WHITESPACE"},
+            {COMMENT, "COMMENT"},
+            {INCLIDE_FILE, "INCLIDE_FILE"},
+            {VAR_INTEGER, "VAR_INTEGER"},
+            {VAR_PTR, "VAR_PTR"},
+            {VAR_FLOAT, "VAR_FLOAT"},
+            {VAR_STRING, "VAR_STRING"},
+            {VAR_OBJECT, "VAR_OBJECT"},
+            {VAR_REFERENCE, "VAR_REFERENCE"},
+            {VAR_AREFERENCE, "VAR_AREFERENCE"},
+            {BLOCK_IN, "BLOCK_IN"},
+            {BLOCK_OUT, "BLOCK_OUT"},
+            {NUMBER, "NUMBER"},
+            {STRING, "STRING"},
+            {FLOAT_NUMBER, "FLOAT_NUMBER"},
+            {SEPARATOR, "SEPARATOR"},
+            {FUNCTION_RETURN, "FUNCTION_RETURN"},
+            {FUNCTION_RETURN_VOID, "FUNCTION_RETURN_VOID"},
+            {FOR_BLOCK, "FOR_BLOCK"},
+            {IF_BLOCK, "IF_BLOCK"},
+            {WHILE_BLOCK, "WHILE_BLOCK"},
+            {CONTINUE_COMMAND, "CONTINUE_COMMAND"},
+            {BREAK_COMMAND, "BREAK_COMMAND"},
+            {GOTO_COMMAND, "GOTO_COMMAND"},
+            {LABEL, "LABEL"},
+            {TVOID, "TVOID"},
+            {SWITCH_COMMAND, "SWITCH_COMMAND"},
+            {CASE_COMMAND, "CASE_COMMAND"},
+            {DEFINE_COMMAND, "DEFINE_COMMAND"},
+            {MAKEREF_COMMAND, "MAKEREF_COMMAND"},
+            {MAKEAREF_COMMAND, "MAKEAREF_COMMAND"},
+            {OPEN_BRACKET, "OPEN_BRACKET"},
+            {CLOSE_BRACKET, "CLOSE_BRACKET"},
+            {SQUARE_OPEN_BRACKET, "SQUARE_OPEN_BRACKET"},
+            {SQUARE_CLOSE_BRACKET, "SQUARE_CLOSE_BRACKET"},
+            {OP_EQUAL, "OP_EQUAL"},
+            {OP_BOOL_EQUAL, "OP_BOOL_EQUAL"},
+            {OP_GREATER, "OP_GREATER"},
+            {OP_GREATER_OR_EQUAL, "OP_GREATER_OR_EQUAL"},
+            {OP_LESSER, "OP_LESSER"},
+            {OP_LESSER_OR_EQUAL, "OP_LESSER_OR_EQUAL"},
+            {OP_NOT_EQUAL, "OP_NOT_EQUAL"},
+            {OP_MINUS, "OP_MINUS"},
+            {OP_PLUS, "OP_PLUS"},
+            {OP_MULTIPLY, "OP_MULTIPLY"},
+            {OP_DIVIDE, "OP_DIVIDE"},
+            {OP_POWER, "OP_POWER"},
+            {OP_MODUL, "OP_MODUL"},
+            {OP_INC, "OP_INC"},
+            {OP_DEC, "OP_DEC"},
+            {OP_NEG, "OP_NEG"},
+            {LINE_COMMENT, "LINE_COMMENT"},
+            {COMMA, "COMMA"},
+            {DOT, "DOT"},
+            {AND, "AND"},
+            {CALL_FUNCTION, "CALL_FUNCTION"},
+            {DEBUG_FILE_NAME, "DEBUG_FILE_NAME"},
+            {DEBUG_LINE_CODE, "DEBUG_LINE_CODE"},
+            {DEBUG_LINEFEED, "DEBUG_LINEFEED"},
+            {VARIABLE, "VARIABLE"},
+            {LOCAL_VARIABLE, "LOCAL_VARIABLE"},
+            {EXTERN, "EXTERN"},
+            {ACCESS_WORD, "ACCESS_WORD"},
+            {ACCESS_VAR, "ACCESS_VAR"},
+            {STACK_ALLOC, "STACK_ALLOC"},
+            {STACK_PUSH, "STACK_PUSH"},
+            {STACK_POP, "STACK_POP"},
+            {STACK_READ, "STACK_READ"},
+            {STACK_WRITE, "STACK_WRITE"},
+            {STACK_WRITE_BXINDEX, "STACK_WRITE_BXINDEX"},
+            {STACK_COMPARE, "STACK_COMPARE"},
+            {AX, "AX"},
+            {BX, "BX"},
+            {EX, "EX"},
+            {AP, "AP"},
+            {STACK_TOP, "STACK_TOP"},
+            {AP_VALUE, "AP_VALUE"},
+            {MOVE, "MOVE"},
+            {MOVEAP, "MOVEAP"},
+            {MOVEAP_BXINDEX, "MOVEAP_BXINDEX"},
+            {ADVANCE_AP, "ADVANCE_AP"},
+            {ARRAY_INDEX, "ARRAY_INDEX"},
+            {EXPRESSION_END, "EXPRESSION_END"},
+            {JUMP, "JUMP"},
+            {JUMP_Z, "JUMP_Z"},
+            {JUMP_NZ, "JUMP_NZ"},
+            {PROCESS_EXPRESSION, "PROCESS_EXPRESSION"},
+            {PUSH_EXPRESULT, "PUSH_EXPRESULT"},
+            {POP_EXPRESULT, "POP_EXPRESULT"},
+            {POP_VOID, "POP_VOID"},
+            {OP_BOOL_AND, "OP_BOOL_AND"},
+            {OP_BOOL_OR, "OP_BOOL_OR"},
+            {ELSE_BLOCK, "ELSE_BLOCK"},
+            {TRUE_CONST, "TRUE_CONST"},
+            {FALSE_CONST, "FALSE_CONST"},
+            {OP_BOOL_NEG, "OP_BOOL_NEG"},
+            {ACCESS_WORD_CODE, "ACCESS_WORD_CODE"},
+            {EVENT_HANDLER, "EVENT_HANDLER"},
+            {OP_INCADD, "OP_INCADD"},
+            {OP_DECADD, "OP_DECADD"},
+            {OP_MULTIPLYEQ, "OP_MULTIPLYEQ"},
+            {OP_DIVIDEEQ, "OP_DIVIDEEQ"},
+            {CLASS_DECL, "CLASS_DECL"},
+            {CLASS_OBJECT, "CLASS_OBJECT"},
+            {IMPORT, "IMPORT"},
+            {INCLUDE_LIBRIARY, "INCLUDE_LIBRIARY"},
+            {CALL, "CALL"},
+            {SETREF, "SETREF"},
+            {SETREF_BXINDEX, "SETREF_BXINDEX"},
+            {OP_SPLUS, "OP_SPLUS"},
+            {OP_SMINUS, "OP_SMINUS"},
+            {OP_BOOL_CONVERT, "OP_BOOL_CONVERT"},
+            {OP_REF_CONVERT, "OP_REF_CONVERT"},
+            {OP_COMPARE_AND_SET, "OP_COMPARE_AND_SET"},
+            {LEFT_OPERAND, "LEFT_OPERAND"},
+            {STACK_POP_VOID, "STACK_POP_VOID"},
+            {DEFINE_VAL, "DEFINE_VAL"},
+            {ARGS_NUM, "ARGS_NUM"},
+            {HOLD_COMPILATION, "HOLD_COMPILATION"},
+            {SETAREF, "SETAREF"},
+            {VERIFY_AP, "VERIFY_AP"},
+            {POP_NZ, "POP_NZ"},
+            {LEFTOP_INDEX, "LEFTOP_INDEX"},
+            {PUSH_OBJID, "PUSH_OBJID"},
+            {PUSH_OBJID_BXINDEX, "PUSH_OBJID_BXINDEX"},
+            {TOKEN_TYPES_COUNT, "TOKEN_TYPES_COUNT"},
+        });
+}
+
+} // namespace
+
+std::string_view Token::Typename() const noexcept
+{
+    static auto token_typename_map = getTokenNameMap();
+
+    const auto find = token_typename_map.find(m_type);
+    if (find != token_typename_map.end()) {
+        return find->second;
+    }
+
+    return "INVALID_TOKEN";
+}
+
+} // namespace storm::scripting
