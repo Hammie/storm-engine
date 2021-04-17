@@ -32,12 +32,10 @@ class TOKEN
     void CacheToken(const std::string_view &pointer);
     void StepBack();
     long SetTokenData(const std::string_view &input, bool bKeepControlSymbols = false);
-    long StopArgument(const char *pointer, bool bKeepControlSymbols = false);
     void StartArgument(std::string_view &pointer, bool bKeepControlSymbols = false);
     const char *GetTypeName(S_TOKEN_TYPE code);
     const char *GetTypeName();
     const char *GetData();
-    bool Is(S_TOKEN_TYPE ttype);
     bool IsNumber(const char *pointer);
     bool IsFloatNumber(const char *pointer);
     long TokenLines();
