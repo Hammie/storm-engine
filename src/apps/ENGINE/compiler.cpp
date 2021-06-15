@@ -1,5 +1,8 @@
 #include "compiler.h"
 #include "s_debug.h"
+
+#include <storm/common/ResourceLocator.hpp>
+
 #include <cstdio>
 
 #define SKIP_COMMENT_TRACING
@@ -243,12 +246,19 @@ char *COMPILER::LoadFile(const char *file_name, uint32_t &file_size, bool bFullP
         fName = &buffer[0];
     }
 
-    auto fileS = fio->_CreateFile(fName, std::ios::binary | std::ios::in);
+    auto fileNameOpt = storm::ResourceLocator(true).findScript(fName);
+    if (!fileNameOpt.has_value()) 
+    {
+        return nullptr;
+    }
+    const auto file_path = fileNameOpt.value().generic_string();
+
+    auto fileS = fio->_CreateFile(file_path.c_str(), std::ios::binary | std::ios::in);
     if (!fileS.is_open())
     {
         return nullptr;
     }
-    const auto fsize = fio->_GetFileSize(fName);
+    const auto fsize = fio->_GetFileSize(file_path.c_str());
 
     auto *const pData = static_cast<char *>(new char[fsize + 1]);
     if (!fio->_ReadFile(fileS, pData, fsize))
