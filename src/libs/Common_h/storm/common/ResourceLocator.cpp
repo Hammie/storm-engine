@@ -28,12 +28,14 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
 
     // Check mods folders
     const auto mods = path(ROOT_MODS_DIRECTORY, path::format::generic_format);
-    for(auto& directory: std::filesystem::directory_iterator(mods)) {
-        const path& directory_path = directory.path();
-        if (std::filesystem::is_directory(directory_path)) {
-            const std::filesystem::path test_path = directory_path / fixed_resource_path;
-            if(std::filesystem::exists(test_path)) {
-                return test_path;
+    if(std::filesystem::exists(mods)) {
+        for(auto& directory: std::filesystem::directory_iterator(mods)) {
+            const path& directory_path = directory.path();
+            if (std::filesystem::is_directory(directory_path)) {
+                const std::filesystem::path test_path = directory_path / fixed_resource_path;
+                if(std::filesystem::exists(test_path)) {
+                    return test_path;
+                }
             }
         }
     }
