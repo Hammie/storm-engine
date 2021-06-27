@@ -160,10 +160,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
                     continue;
                 dwOldTime = dwNewTime;
             }
-            const auto runResult = core.Run();
-            if (!isHold && !runResult)
+            try
             {
-                isHold = true;
+                const auto runResult = core.Run();
+                if (!isHold && !runResult)
+                {
+                    isHold = true;
+                    isRunning = false;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                spdlog::error("Unexpected error: {}", e.what());
+                isRunning = false;
+            }
+            catch (...)
+            {
+                spdlog::error("Unknown exception was thrown");
                 isRunning = false;
             }
         }
