@@ -7,7 +7,8 @@
 namespace storm
 {
 
-namespace {
+namespace
+{
 
 constexpr std::string_view ROOT_MODS_DIRECTORY = "Mods";
 constexpr std::string_view ROOT_PROGRAM_DIRECTORY = "PROGRAM";
@@ -22,18 +23,23 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
     const auto root = path(ROOT_PROGRAM_DIRECTORY, path::format::generic_format);
 
     std::string_view fixed_resource_path = resource_path;
-    if (resource_path.starts_with('\\') || resource_path.starts_with('/')) {
+    if (resource_path.starts_with('\\') || resource_path.starts_with('/'))
+    {
         fixed_resource_path = resource_path.substr(1);
     }
 
     // Check mods folders
     const auto mods = path(ROOT_MODS_DIRECTORY, path::format::generic_format);
-    if(std::filesystem::exists(mods)) {
-        for(auto& directory: std::filesystem::directory_iterator(mods)) {
-            const path& directory_path = directory.path();
-            if (std::filesystem::is_directory(directory_path)) {
+    if (std::filesystem::exists(mods))
+    {
+        for (auto &directory : std::filesystem::directory_iterator(mods))
+        {
+            const path &directory_path = directory.path();
+            if (std::filesystem::is_directory(directory_path))
+            {
                 const std::filesystem::path test_path = directory_path / fixed_resource_path;
-                if(std::filesystem::exists(test_path)) {
+                if (std::filesystem::exists(test_path))
+                {
                     return test_path;
                 }
             }
@@ -41,15 +47,19 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
     }
 
     const std::filesystem::path final_path = fixed_resource_path;
-    if(std::filesystem::exists(final_path)) {
+    if (std::filesystem::exists(final_path))
+    {
         return final_path;
     }
 
-    if (m_EnableFileSearch) {
-        const path& filename = final_path.filename();
+    if (m_EnableFileSearch)
+    {
+        const path &filename = final_path.filename();
         auto result = findResource(root, filename.string());
-        if (result) {
-            spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.", resource_path, result->make_preferred().string());
+        if (result)
+        {
+            spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.",
+                         resource_path, result->make_preferred().string());
             return result;
         }
     }
@@ -64,20 +74,25 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     const auto root = path(ROOT_TEXTURES_DIRECTORY, path::format::generic_format);
 
     std::string_view fixed_resource_path = resource_path;
-    if (resource_path.starts_with('\\') || resource_path.starts_with('/')) {
+    if (resource_path.starts_with('\\') || resource_path.starts_with('/'))
+    {
         fixed_resource_path = resource_path.substr(1);
     }
 
     const std::filesystem::path final_path = root / fixed_resource_path;
-    if(std::filesystem::exists(final_path)) {
+    if (std::filesystem::exists(final_path))
+    {
         return final_path;
     }
 
-    if (m_EnableFileSearch) {
-        const path& filename = final_path.filename();
+    if (m_EnableFileSearch)
+    {
+        const path &filename = final_path.filename();
         auto result = findResource(root, filename.string());
-        if (result) {
-            spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.", resource_path, result->make_preferred().string());
+        if (result)
+        {
+            spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.",
+                         resource_path, result->make_preferred().string());
             return result;
         }
     }
@@ -90,11 +105,14 @@ std::optional<std::filesystem::path> ResourceLocator::findResource(const std::fi
 {
     using std::filesystem::path;
 
-    for(auto& directory: std::filesystem::recursive_directory_iterator(root)) {
-        const path& directory_path = directory.path();
-        if (std::filesystem::is_directory(directory_path)) {
+    for (auto &directory : std::filesystem::recursive_directory_iterator(root))
+    {
+        const path &directory_path = directory.path();
+        if (std::filesystem::is_directory(directory_path))
+        {
             const std::filesystem::path test_path = directory_path / file_name;
-            if(std::filesystem::exists(test_path)) {
+            if (std::filesystem::exists(test_path))
+            {
                 return test_path;
             }
         }
@@ -102,4 +120,4 @@ std::optional<std::filesystem::path> ResourceLocator::findResource(const std::fi
     return {};
 }
 
-}
+} // namespace storm
