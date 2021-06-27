@@ -196,7 +196,7 @@ void COMPILER::SetProgramDirectory(const char *dir_name)
 }
 
 // load file into memory
-char *COMPILER::LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath)
+std::optional<std::string> COMPILER::LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath)
 {
     const char *fName;
     char buffer[MAX_PATH];
@@ -247,30 +247,35 @@ char *COMPILER::LoadFile(const char *file_name, uint32_t &file_size, bool bFullP
     }
 
     auto fileNameOpt = storm::ResourceLocator(true).findScript(fName);
-    if (!fileNameOpt.has_value()) 
+    if (!fileNameOpt.has_value())
     {
-        return nullptr;
+        return {};
     }
     const auto file_path = fileNameOpt.value().generic_string();
 
     auto fileS = fio->_CreateFile(file_path.c_str(), std::ios::binary | std::ios::in);
     if (!fileS.is_open())
     {
-        return nullptr;
+        return {};
     }
     const auto fsize = fio->_GetFileSize(file_path.c_str());
 
-    auto *const pData = static_cast<char *>(new char[fsize + 1]);
-    if (!fio->_ReadFile(fileS, pData, fsize))
+    std::string script(fsize, '\0');
+    if (!fio->_ReadFile(fileS, script.data(), fsize))
     {
-        delete[] pData;
         fio->_CloseFile(fileS);
-        return nullptr;
+        return {};
     }
     fio->_CloseFile(fileS);
-    file_size = fsize;
-    pData[fsize] = 0;
-    return pData;
+
+    const bool isUtf8 = utf8::EnsureUtf8(script);
+    if (!isUtf8)
+    {
+        core.tracelog->warn("WARNING! Script file \"{}\" could not be decoded (not valid utf-8)", file_path);
+    }
+
+    file_size = script.size();
+    return script;
 }
 
 // write to compilation log file
@@ -325,12 +330,10 @@ Append_program_size, long& new_program_size)
     return pBase;
 }*/
 
-bool COMPILER::AppendProgram(char *&pBase_program, uint32_t &Base_program_size, const char *pAppend_program,
+bool COMPILER::AppendProgram(char *&pBase_program, uint32_t &Base_program_size, const std::string &pAppend_program,
                              uint32_t &Append_program_size, bool bAddLinefeed)
 {
     const auto offset = Base_program_size;
-    if (pAppend_program == nullptr)
-        return false;
     if (bAddLinefeed)
     {
         // pBase_program = (char *)RESIZE(pBase_program,Base_program_size + Append_program_size + 3); // +1 for
@@ -340,11 +343,10 @@ bool COMPILER::AppendProgram(char *&pBase_program, uint32_t &Base_program_size, 
         delete[] pBase_program;
         pBase_program = newPtr;
         Base_program_size = Base_program_size + Append_program_size + 2;
-        memcpy(&pBase_program[offset], pAppend_program, Append_program_size);
+        memcpy(&pBase_program[offset], pAppend_program.data(), Append_program_size);
         pBase_program[Base_program_size - 2] = 0xd; // code blocks separator to prevent data merging
         pBase_program[Base_program_size - 1] = 0xa; // code blocks separator to prevent data merging
         pBase_program[Base_program_size] = 0;       // terminating zero
-        delete[] pAppend_program;
         Append_program_size += 2;
         return true;
     }
@@ -355,10 +357,9 @@ bool COMPILER::AppendProgram(char *&pBase_program, uint32_t &Base_program_size, 
     delete[] pBase_program;
     pBase_program = newPtr;
     Base_program_size = Base_program_size + Append_program_size + 1;
-    memcpy(&pBase_program[offset], pAppend_program, Append_program_size);
+    memcpy(&pBase_program[offset], pAppend_program.data(), Append_program_size);
     pBase_program[Base_program_size - 1] = ';'; // code blocks separator to prevent data merging
     pBase_program[Base_program_size] = 0;       // terminating zero
-    delete[] pAppend_program;
     Append_program_size += 1;
     return true;
 }
@@ -1228,8 +1229,8 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
     char func_name[MAX_PATH];
     char var_name[MAX_PATH];
     char *pProgram;
-    char *pApend_file;
-    char *pSegmentSource;
+    std::string pApend_file;
+    std::string pSegmentSource;
     FuncInfo fi;
     VarInfo vi = {};
     const VarInfo *real_var = nullptr;
@@ -1271,7 +1272,13 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
         file_code = Segment.Files_list->GetStringCode(file_name);
         pProgram = nullptr;
         Program_size = 0;
-        pSegmentSource = LoadFile(file_name, SegmentSize);
+        auto optSegmentSource = LoadFile(file_name, SegmentSize);
+        if (!optSegmentSource)
+        {
+            SetError("file not found: %s", file_name);
+            return false;
+        }
+        pSegmentSource = optSegmentSource.value();
         AppendProgram(pProgram, Program_size, pSegmentSource, SegmentSize, true);
         Segment.pData = pProgram;
         if (pProgram == nullptr)
@@ -1403,12 +1410,13 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
             {
                 file_code = Segment.Files_list->GetStringCode(Token.GetData());
                 Control_offset = Token.GetProgramControl() - Token.GetProgramBase(); // store program scan point
-                pApend_file = LoadFile(Token.GetData(), Append_file_size);
-                if (pApend_file == nullptr)
+                const auto appendFile = LoadFile(Token.GetData(), Append_file_size);
+                if (!appendFile)
                 {
                     SetError("can't load file: %s", Token.GetData());
                     return false;
                 }
+                pApend_file = appendFile.value();
                 if (bDebugInfo)
                 {
                     uint32_t aps;
@@ -1846,6 +1854,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
                     }
                     else if (!FuncTab.AddFuncVar(func_code, lvi))
                     {
+                        const auto *test = reinterpret_cast<const char8_t *>(pProgram);
                         SetError("Duplicate variable name: %s", lvi.name.c_str());
                         return false;
                     }
@@ -7305,11 +7314,12 @@ void COMPILER::FormatDialog(char *file_name)
     // sprintf_s(sFileName,"PROGRAM\\%sc",file_name);
     strcpy_s(sFileName, file_name);
 
-    char *pFileData = LoadFile(file_name, FileSize, true);
-    if (pFileData == nullptr)
+    auto fileData = LoadFile(file_name, FileSize, true);
+    if (!fileData)
     {
         return;
     }
+    std::string pFileData = fileData.value();
 
     auto fileS = fio->_CreateFile(sFileName, std::ios::binary | std::ios_base::out);
     if (!fileS.is_open())
@@ -7325,7 +7335,6 @@ void COMPILER::FormatDialog(char *file_name)
     if (!fileS2.is_open())
     {
         fio->_CloseFile(fileS);
-        delete[] pFileData;
         return;
     }
 
@@ -7350,7 +7359,7 @@ void COMPILER::FormatDialog(char *file_name)
     fio->_WriteFile(fileS2, buffer, strlen(buffer));
     fio->_WriteFile(fileS2, sNewLine, strlen(sNewLine));
 
-    Token.SetProgram(pFileData, pFileData);
+    Token.SetProgram(pFileData.data(), pFileData.data());
 
     do
     {
@@ -7520,8 +7529,6 @@ void COMPILER::FormatDialog(char *file_name)
             break;
         }
     } while (Token_type != END_OF_PROGRAMM);
-
-    delete[] pFileData;
 
     sprintf_s(buffer, "};");
     fio->_WriteFile(fileS2, sNewLine, strlen(sNewLine));

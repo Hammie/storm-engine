@@ -606,21 +606,21 @@ long STRSERVICE::OpenUsersStringFile(const char *fileName)
         return -1;
     }
 
-    char *fileBuf = new char[filesize + 1];
-    if (fileBuf == nullptr)
-    {
-        throw std::runtime_error("Allocate memory error");
-    }
+    std::string fileBuf(filesize + 1, '\0');
 
-    if (!fio->_ReadFile(fileS, fileBuf, filesize))
+    if (!fio->_ReadFile(fileS, fileBuf.data(), filesize))
     {
         core.Trace("Can`t read strings file: %s", fileName);
         fio->_CloseFile(fileS);
-        STORM_DELETE(fileBuf);
         return -1;
     }
     fio->_CloseFile(fileS);
-    fileBuf[filesize] = 0;
+
+    const bool isUtf8 = utf8::EnsureUtf8(fileBuf);
+    if (!isUtf8)
+    {
+        core.tracelog->warn("WARNING! Strings file \"{}\" could not be decoded (not valid utf-8)", fileName);
+    }
 
     pUSB->nref = 1;
     const auto len = strlen(fileName) + 1;
@@ -637,7 +637,7 @@ long STRSERVICE::OpenUsersStringFile(const char *fileName)
     pUSB->psString = nullptr;
     for (pUSB->nStringsQuantity = 0;; pUSB->nStringsQuantity++)
     {
-        if (!GetNextUsersString(fileBuf, stridx, nullptr, nullptr))
+        if (!GetNextUsersString(fileBuf.data(), stridx, nullptr, nullptr))
         {
             break;
         }
@@ -657,11 +657,11 @@ long STRSERVICE::OpenUsersStringFile(const char *fileName)
         stridx = 0;
         for (i = 0; i < pUSB->nStringsQuantity; i++)
         {
-            GetNextUsersString(fileBuf, stridx, &pUSB->psStrName[i], &pUSB->psString[i]);
+            GetNextUsersString(fileBuf.data(), stridx, &pUSB->psStrName[i], &pUSB->psString[i]);
         }
     }
 
-    STORM_DELETE(fileBuf);
+    fileBuf.clear();
 
     const long block_id = pUSB->blockID;
     pUSB->next = nullptr;

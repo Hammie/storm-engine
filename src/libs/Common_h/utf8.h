@@ -41,6 +41,8 @@ inline std::wstring ConvertUtf8ToWide(const std::string &str)
     return wstr;
 }
 
+bool EnsureUtf8(std::string &str);
+
 /* is c the start of a utf8 sequence? */
 #define isutf(c) (((c)&0xC0) != 0x80)
 

@@ -17,6 +17,8 @@
 #include "tclass_list.h"
 #include "token.h"
 
+#include <optional>
+
 #define COMPILER_LOG_FILENAME u8"compile.log"
 #define COMPILER_ERRORLOG_FILENAME u8"error.log"
 #define BCODE_BUFFER_BLOCKSIZE 4096
@@ -189,10 +191,10 @@ class COMPILER : public VIRTUAL_COMPILER
         return &SCodec;
     }
 
-    char *LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath = false);
+    std::optional<std::string> LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath = false);
     // char *    AppendProgram(char * base_program, long base_program_size, char * append_program, long
     // append_program_size, long& new_program_size);
-    bool AppendProgram(char *&pBase_program, uint32_t &Base_program_size, const char *pAppend_program,
+    bool AppendProgram(char *&pBase_program, uint32_t &Base_program_size, const std::string &pAppend_program,
                        uint32_t &Append_program_size, bool bAddLinefeed);
     void Trace(const char *data_PTR, ...);
     void DTrace(const char *data_PTR, ...);
