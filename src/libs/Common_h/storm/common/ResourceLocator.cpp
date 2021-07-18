@@ -28,25 +28,15 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
         fixed_resource_path = resource_path.substr(1);
     }
 
+    const std::filesystem::path final_path = fixed_resource_path;
+    const path &filename = final_path.filename();
+
     // Check mods folders
-    const auto mods = path(ROOT_MODS_DIRECTORY, path::format::generic_format);
-    if (std::filesystem::exists(mods))
-    {
-        for (auto &directory : std::filesystem::directory_iterator(mods))
-        {
-            const path &directory_path = directory.path();
-            if (std::filesystem::is_directory(directory_path))
-            {
-                const std::filesystem::path test_path = directory_path / fixed_resource_path;
-                if (std::filesystem::exists(test_path))
-                {
-                    return test_path;
-                }
-            }
-        }
+    auto mod_result = findModResource({}, fixed_resource_path);
+    if (mod_result) {
+        return mod_result;
     }
 
-    const std::filesystem::path final_path = fixed_resource_path;
     if (std::filesystem::exists(final_path))
     {
         return final_path;
@@ -54,7 +44,6 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
 
     if (m_EnableFileSearch)
     {
-        const path &filename = final_path.filename();
         auto result = findResource(root, filename.string());
         if (result)
         {
@@ -69,9 +58,14 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
 
 std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::string_view &resource_path)
 {
+    return findTexture(resource_path, ROOT_TEXTURES_DIRECTORY);
+}
+
+std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::string_view &resource_path, const std::string_view &root_dir)
+{
     using std::filesystem::path;
 
-    const auto root = path(ROOT_TEXTURES_DIRECTORY, path::format::generic_format);
+    const auto root = path(root_dir, path::format::generic_format);
 
     std::string_view fixed_resource_path = resource_path;
     if (resource_path.starts_with('\\') || resource_path.starts_with('/'))
@@ -79,7 +73,15 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
         fixed_resource_path = resource_path.substr(1);
     }
 
-    const std::filesystem::path final_path = root / fixed_resource_path;
+    const std::filesystem::path final_path = fixed_resource_path;
+    const path &filename = final_path.filename();
+
+    // Check mods folders
+    auto mod_result = findModResource(root, fixed_resource_path);
+    if (mod_result) {
+        return mod_result;
+    }
+
     if (std::filesystem::exists(final_path))
     {
         return final_path;
@@ -87,7 +89,6 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
 
     if (m_EnableFileSearch)
     {
-        const path &filename = final_path.filename();
         auto result = findResource(root, filename.string());
         if (result)
         {
@@ -100,20 +101,51 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     return {};
 }
 
+std::optional<std::filesystem::path> ResourceLocator::findModResource(const std::filesystem::path &root,
+                                                                      const std::string_view &file_name)
+{
+    using std::filesystem::path;
+
+    // Check mods folders
+    const auto mods = path(ROOT_MODS_DIRECTORY, path::format::generic_format);
+    if (std::filesystem::exists(mods))
+    {
+        for (auto &directory : std::filesystem::directory_iterator(mods))
+        {
+            const path &directory_path = directory.path();
+            if (std::filesystem::is_directory(directory_path))
+            {
+                const auto mod_search_directory = root.empty() ? directory_path : directory_path / root;
+                const std::filesystem::path test_path = mod_search_directory / file_name;
+                if (std::filesystem::exists(test_path))
+                {
+                    return test_path;
+                }
+            }
+        }
+    }
+
+    return {};
+}
+
 std::optional<std::filesystem::path> ResourceLocator::findResource(const std::filesystem::path &root,
                                                                    const std::string_view &file_name)
 {
     using std::filesystem::path;
-
-    for (auto &directory : std::filesystem::recursive_directory_iterator(root))
+    
+    // Check standard folders
+    if (std::filesystem::exists(root))
     {
-        const path &directory_path = directory.path();
-        if (std::filesystem::is_directory(directory_path))
+        for (auto &directory : std::filesystem::recursive_directory_iterator(root))
         {
-            const std::filesystem::path test_path = directory_path / file_name;
-            if (std::filesystem::exists(test_path))
+            const path &directory_path = directory.path();
+            if (std::filesystem::is_directory(directory_path))
             {
-                return test_path;
+                const std::filesystem::path test_path = directory_path / file_name;
+                if (std::filesystem::exists(test_path))
+                {
+                    return test_path;
+                }
             }
         }
     }

@@ -1,8 +1,10 @@
-#include "sea.h"
+#include "SEA.h"
+
+#include <storm/common/ResourceLocator.hpp>
 
 #include "core.h"
 
-#include "../../Shared/sea_ai/Script_defines.h"
+#include "../../shared/sea_ai/Script_defines.h"
 #include "SSE.h"
 #include "inlines.h"
 #include "tga.h"
@@ -279,17 +281,22 @@ bool SEA::Init()
 
     uint32_t i;
 
+    storm::ResourceLocator resource_locator(true);
+
     for (i = 0; i < FRAMES; i++)
     {
-        char str[256];
+        const std::string seaFileName = fmt::format("sea{:0>4}.tga", i);
+        auto seaTextureFound = resource_locator.findTexture(seaFileName, "resource/sea");
+        if (!seaTextureFound) {
+            core.Trace("Sea: Can't find %s", seaFileName.c_str());
+            return false;
+        }
         char *pFBuffer = nullptr;
-        uint32_t dwSize;
-        sprintf_s(str, "resource\\sea\\sea%.4d.tga", i);
-        // sprintf_s(str, "resource\\sea\\sea0000.tga", i);
-        fio->LoadFile(str, &pFBuffer, &dwSize);
+        uint32_t dwSize{};
+        fio->LoadFile(seaTextureFound.value().string().c_str(), &pFBuffer, &dwSize);
         if (!pFBuffer)
         {
-            core.Trace("Sea: Can't load %s", str);
+            core.Trace("Sea: Can't load %s", seaTextureFound.value().c_str());
             return false;
         }
 
