@@ -5,6 +5,7 @@
 
 #include <SDL.h>
 #include <exception>
+#include <storm/common/ResourceLocator.hpp>
 #include <storm/string_compare.hpp>
 #include <string>
 
@@ -269,7 +270,14 @@ std::unique_ptr<INIFILE> FILE_SERVICE::OpenIniFile(const char *file_name)
         OpenFiles[n] = new IFS(this);
         if (OpenFiles[n] == nullptr)
             throw std::runtime_error("Failed to create IFS");
-        if (!OpenFiles[n]->LoadFile(file_name))
+
+        storm::ResourceLocator resource_locator(true);
+        auto iniFileOpt = resource_locator.findConfig(file_name);
+        if (!iniFileOpt) {
+            return nullptr;
+        }
+
+        if (!OpenFiles[n]->LoadFile(iniFileOpt.value().string().c_str()))
         {
             delete OpenFiles[n];
             OpenFiles[n] = nullptr;

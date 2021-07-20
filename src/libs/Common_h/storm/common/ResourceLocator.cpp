@@ -13,6 +13,7 @@ namespace
 constexpr std::string_view ROOT_MODS_DIRECTORY = "Mods";
 constexpr std::string_view ROOT_PROGRAM_DIRECTORY = "PROGRAM";
 constexpr std::string_view ROOT_TEXTURES_DIRECTORY = "RESOURCE/Textures";
+constexpr std::string_view ROOT_INI_DIRECTORY = "RESOURCE/INI";
 
 } // namespace
 
@@ -66,6 +67,46 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     using std::filesystem::path;
 
     const auto root = path(root_dir, path::format::generic_format);
+
+    std::string_view fixed_resource_path = resource_path;
+    if (resource_path.starts_with('\\') || resource_path.starts_with('/'))
+    {
+        fixed_resource_path = resource_path.substr(1);
+    }
+
+    const std::filesystem::path final_path = fixed_resource_path;
+    const path &filename = final_path.filename();
+
+    // Check mods folders
+    auto mod_result = findModResource(root, fixed_resource_path);
+    if (mod_result) {
+        return mod_result;
+    }
+
+    if (std::filesystem::exists(final_path))
+    {
+        return final_path;
+    }
+
+    if (m_EnableFileSearch)
+    {
+        auto result = findResource(root, filename.string());
+        if (result)
+        {
+            spdlog::warn("Failed to find file '{}', using a file with the same name found in '{}' instead.",
+                         resource_path, result->make_preferred().string());
+            return result;
+        }
+    }
+
+    return {};
+}
+
+std::optional<std::filesystem::path> ResourceLocator::findConfig(const std::string_view &resource_path)
+{
+    using std::filesystem::path;
+
+    const path root{};
 
     std::string_view fixed_resource_path = resource_path;
     if (resource_path.starts_with('\\') || resource_path.starts_with('/'))

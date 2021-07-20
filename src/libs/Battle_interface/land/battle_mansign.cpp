@@ -750,11 +750,13 @@ void BIManSign::CheckDataChange()
             m_bMakeVertexFill = true;
         if (FRectACompare(pA, "uv", m_Man[n].rUV))
             m_bMakeVertexFill = true;
-        if (StringACompare(pA, "texture", m_Man[n].sTexture))
-        {
-            TEXTURE_RELEASE(m_pRS, m_Man[n].nTexture);
-            m_Man[n].nTexture = m_pRS->TextureCreate(m_Man[n].sTexture.c_str());
-            m_bMakeVertexFill = true;
+        if (pA->GetAttribute("texture") != nullptr) {
+            if (StringACompare(pA, "texture", m_Man[n].sTexture))
+            {
+                TEXTURE_RELEASE(m_pRS, m_Man[n].nTexture);
+                m_Man[n].nTexture = m_pRS->TextureCreate(m_Man[n].sTexture.c_str());
+                m_bMakeVertexFill = true;
+            }
         }
     }
 
