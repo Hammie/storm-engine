@@ -75,7 +75,7 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     {
         fixed_resource_path = resource_path.substr(1);
     }
-    
+
     const std::filesystem::path final_path = root / fixed_resource_path;
     const path &filename = final_path.filename();
 
