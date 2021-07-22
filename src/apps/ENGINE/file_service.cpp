@@ -273,7 +273,8 @@ std::unique_ptr<INIFILE> FILE_SERVICE::OpenIniFile(const char *file_name)
 
         storm::ResourceLocator resource_locator(true);
         auto iniFileOpt = resource_locator.findConfig(file_name);
-        if (!iniFileOpt) {
+        if (!iniFileOpt)
+        {
             return nullptr;
         }
 

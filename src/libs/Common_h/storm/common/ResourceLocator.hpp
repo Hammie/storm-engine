@@ -19,13 +19,14 @@ class ResourceLocator final
 
     std::optional<std::filesystem::path> findTexture(const std::string_view &resource_path);
 
-    std::optional<std::filesystem::path> findTexture(const std::string_view &resource_path, const std::string_view &root_dir);
+    std::optional<std::filesystem::path> findTexture(const std::string_view &resource_path,
+                                                     const std::string_view &root_dir);
 
     std::optional<std::filesystem::path> findConfig(const std::string_view &resource_path);
 
   private:
     std::optional<std::filesystem::path> findModResource(const std::filesystem::path &root,
-                                                      const std::string_view &file_name);
+                                                         const std::string_view &file_name);
 
     std::optional<std::filesystem::path> findResource(const std::filesystem::path &root,
                                                       const std::string_view &file_name);
