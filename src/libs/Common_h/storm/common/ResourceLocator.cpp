@@ -33,7 +33,8 @@ std::optional<std::filesystem::path> ResourceLocator::findScript(const std::stri
 
     // Check mods folders
     auto mod_result = findModResource({}, fixed_resource_path);
-    if (mod_result) {
+    if (mod_result)
+    {
         return mod_result;
     }
 
@@ -61,7 +62,8 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
     return findTexture(resource_path, ROOT_TEXTURES_DIRECTORY);
 }
 
-std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::string_view &resource_path, const std::string_view &root_dir)
+std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::string_view &resource_path,
+                                                                  const std::string_view &root_dir)
 {
     using std::filesystem::path;
 
@@ -78,7 +80,8 @@ std::optional<std::filesystem::path> ResourceLocator::findTexture(const std::str
 
     // Check mods folders
     auto mod_result = findModResource(root, fixed_resource_path);
-    if (mod_result) {
+    if (mod_result)
+    {
         return mod_result;
     }
 
@@ -132,7 +135,7 @@ std::optional<std::filesystem::path> ResourceLocator::findResource(const std::fi
                                                                    const std::string_view &file_name)
 {
     using std::filesystem::path;
-    
+
     // Check standard folders
     if (std::filesystem::exists(root))
     {

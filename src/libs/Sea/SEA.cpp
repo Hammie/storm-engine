@@ -287,7 +287,8 @@ bool SEA::Init()
     {
         const std::string seaFileName = fmt::format("sea{:0>4}.tga", i);
         auto seaTextureFound = resource_locator.findTexture(seaFileName, "resource/sea");
-        if (!seaTextureFound) {
+        if (!seaTextureFound)
+        {
             core.Trace("Sea: Can't find %s", seaFileName.c_str());
             return false;
         }
