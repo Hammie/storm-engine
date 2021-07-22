@@ -9,6 +9,7 @@
 //============================================================================================
 
 #include "WdmObjects.h"
+#include "core.h"
 #include "defines.h"
 #include "geometry.h"
 
@@ -42,6 +43,13 @@ WdmObjects::WdmObjects()
     {
         entryModels[i] = -1;
     }
+
+    if (core.GetTargetEngineVersion() >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN)
+    {
+        // Show coordinate placeholder
+        coordinate = "N -- --' W -- --'";
+    }
+
     strcpy(stCoordinate, "Coordinates");
     resizeRatio = 1.0f;
 }
