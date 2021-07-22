@@ -9,9 +9,9 @@
 //============================================================================================
 
 #include "WdmObjects.h"
+#include "core.h"
 #include "defines.h"
 #include "geometry.h"
-#include "core.h"
 
 //============================================================================================
 
@@ -44,7 +44,8 @@ WdmObjects::WdmObjects()
         entryModels[i] = -1;
     }
 
-    if (core.GetTargetEngineVersion() >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN) {
+    if (core.GetTargetEngineVersion() >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN)
+    {
         // Show coordinate placeholder
         coordinate = "N -- --' W -- --'";
     }
