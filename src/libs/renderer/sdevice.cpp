@@ -12,6 +12,7 @@
 
 #include <DxErr.h>
 #include <corecrt_io.h>
+#include <storm/common/ResourceLocator.hpp>
 
 #define POST_PROCESS_FVF (D3DFVF_XYZRHW | D3DFVF_TEX4)
 
@@ -147,7 +148,7 @@ char sSplashText[] = {'\xbb', '\x9a', '\x89', '\x9a', '\x93', '\x90', '\x8f', '\
 #pragma warning(pop)
 char splashbuffer[256];
 
-#define TEXTURESDIR "resource\\textures\\%s.tx"
+constexpr std::string_view kTexturesDirectory = "resource/textures";
 #define VIDEODIR "Resource\\Videos\\%s"
 
 struct DX9SphVertex
@@ -1277,14 +1278,13 @@ bool DX9RENDER::TextureLoad(long t)
 {
     ProgressView();
     // Form the path to the texture
-    char fn[_MAX_FNAME];
     Textures[t].dwSize = 0;
     // sprintf_s(fn,"resource\\textures\\%s.tx",fname);
     if (Textures[t].name == nullptr)
     {
         return false;
     }
-    sprintf_s(fn, TEXTURESDIR, Textures[t].name);
+    std::string fn = fmt::format("{}.tx", Textures[t].name);
     for (long s = 0, d = 0; fn[d]; s++)
     {
         if (d > 0 && fn[d - 1] == '\\' && fn[s] == '\\')
@@ -1293,13 +1293,28 @@ bool DX9RENDER::TextureLoad(long t)
         }
         fn[d++] = fn[s];
     }
+
+    // Find correct file path
+    storm::ResourceLocator resource_locator(true);
+    auto textureFound = resource_locator.findTexture(fn, kTexturesDirectory);
+    if (!textureFound)
+    {
+        if (bTrace)
+        {
+            core.tracelog->warn("Can't load texture {}", fn);
+        }
+        delete Textures[t].name;
+        Textures[t].name = nullptr;
+        return false;
+    }
+
     // Opening the file
-    auto fileS = fio->_CreateFile(fn, std::ios::binary | std::ios::in);
+    std::fstream fileS(textureFound.value(), std::ios::binary | std::ios::in);
     if (!fileS.is_open())
     {
         if (bTrace)
         {
-            core.Trace("Can't load texture %s", fn);
+            core.tracelog->error("Can't load texture {}", textureFound->string());
         }
         delete Textures[t].name;
         Textures[t].name = nullptr;
