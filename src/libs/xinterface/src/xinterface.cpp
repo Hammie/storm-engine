@@ -1010,7 +1010,7 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
             pvdat->Set(param2);
         }
 
-        if (message.GetFormat() == "lsee") 
+        if (message.GetFormat() == "lsee")
         {
             std::strftime(param2, sizeof(param2), "%d.%m.%Y", locTime);
             pvdat = message.ScriptVariablePointer();
@@ -3022,7 +3022,7 @@ long FindMaxStrForWidth(VDX9RENDER *pVR, int nW, char *str, int nFontID, float f
 }
 
 long XINTERFACE::PrintIntoWindow(long wl, long wr, long idFont, uint32_t dwFCol, uint32_t dwBCol, long align,
-                                 bool shadow, float scale, long sxs, long sys, long left, long top, char *str,
+                                 bool shadow, float scale, long sxs, long sys, long left, long top, const char *str,
                                  int nWidthForScaleCorrecting, int nSplit)
 {
     if (!str)
@@ -3075,7 +3075,7 @@ long XINTERFACE::PrintIntoWindow(long wl, long wr, long idFont, uint32_t dwFCol,
         return pRenderService->ExtPrint(idFont, dwFCol, dwBCol, align, shadow, scale, sxs, sys, left, top, "%s", str);
     }
 
-    char *newStr = str;
+    char *newStr = const_cast<char *>(str); // TODO: Rewrite this code so the string is not (temporarily) modified
     // cut on the left
     while (strLeft < wl && newStr != nullptr && newStr[0] != 0)
     {
