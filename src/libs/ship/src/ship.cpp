@@ -1365,8 +1365,6 @@ bool SHIP::Mount(ATTRIBUTES *_pAShip)
     Assert(_pAShip);
     pAShip = _pAShip;
 
-    auto iIndex = GetIndex(pAShip);
-
     core.Event("Ship_StartLoad", "a", GetACharacter());
     core.Event(SEA_GET_LAYERS, "i", GetId());
 
