@@ -702,8 +702,6 @@ VDATA *COMPILER::ProcessEvent(const char *event_name)
             pMem->Move2Start();
         }
 
-        core.Start_CriticalSection();
-
         const uint32_t nStackVars = SStack.GetDataNum(); // remember stack elements num
         RDTSC_B(nTicks);
         BC_Execute(ei.pFuncInfo[n].func_code, pResult);
@@ -742,8 +740,6 @@ VDATA *COMPILER::ProcessEvent(const char *event_name)
             pVD = nullptr;
             SetError("process event stack error");
         }
-
-        core.Leave_CriticalSection();
 
         if (bEventsBreak)
             break;
@@ -3851,7 +3847,6 @@ bool COMPILER::BC_CallFunction(uint32_t func_code, uint32_t &ip, DATA *&pVResult
     else
     {
         // BC_Execute(func_code,pVResult);
-        core.Start_CriticalSection();
         RDTSC_B(nTicks);
         BC_Execute(func_code, pVResult);
         RDTSC_E(nTicks);
@@ -3859,7 +3854,6 @@ bool COMPILER::BC_CallFunction(uint32_t func_code, uint32_t &ip, DATA *&pVResult
         {
             core.Trace("Invalid func_code = %u for AddTime", func_code);
         }
-        core.Leave_CriticalSection();
     }
     if (nDebugEnterMode == TMODE_MAKESTEP)
     {
