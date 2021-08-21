@@ -1,6 +1,8 @@
 #include "data.h"
 #include "core.h"
 
+#include "storm/string_compare.hpp"
+
 const char *UNINIT_REF = {"Using reference variable without initializing"};
 const char *INVALID_REF_OP = {"Invalid operation on reference object"};
 const char *NO_INDEX = {"Missed array index"};
@@ -14,12 +16,12 @@ const char *INVALID_STRING = {"Invalid string"};
 extern void DumpError(const char *data_PTR, ...);
 
 DATA::DATA()
+    : pValue(0), object_id(0)
 {
     Data_type = UNKNOWN;
     Number_of_elements = 0;
     lValue = 0;
     fValue = 0;
-    sValue = nullptr;
     bArray = false;
     bEntity = false;
     pVCompiler = nullptr;
@@ -30,13 +32,19 @@ DATA::DATA()
     nGlobalVarTableIndex = 0xffffffff;
 }
 
+DATA::DATA(const DATA &data)
+{
+    *this = data;
+}
+
 DATA::DATA(DATA &&data) noexcept(false)
+    : pValue(0)
 {
     Data_type = data.Data_type;
     Number_of_elements = data.Number_of_elements;
     lValue = data.lValue;
     fValue = data.fValue;
-    sValue = data.sValue;
+    sValue = std::move(data.sValue);
     bArray = data.bArray;
     bEntity = data.bEntity;
     pVCompiler = data.pVCompiler;
@@ -47,17 +55,50 @@ DATA::DATA(DATA &&data) noexcept(false)
     object_id = data.object_id;
     ArrayPTR = std::move(data.ArrayPTR);
 
-    data.sValue = nullptr;
     data.AttributesClass = nullptr;
 }
 
+DATA & DATA::operator=(const DATA &data)
+{
+    if (this == &data)
+    {
+        return *this;
+    }
+
+    Data_type = data.Data_type;
+    Number_of_elements = data.Number_of_elements;
+    lValue = data.lValue;
+    fValue = data.fValue;
+    sValue = data.sValue;
+    bArray = data.bArray;
+    bEntity = data.bEntity;
+    pVCompiler = data.pVCompiler;
+    Segment_id = data.Segment_id;
+    pReference = data.pReference;
+    if (data.AttributesClass)
+    {
+        AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
+        AttributesClass->Copy(data.AttributesClass);
+    }
+    else
+    {
+        AttributesClass = nullptr;
+    }
+
+    nGlobalVarTableIndex = std::numeric_limits<decltype(nGlobalVarTableIndex)>::max();
+    object_id = data.object_id;
+    ArrayPTR = data.ArrayPTR;
+
+    return *this;
+}
+
 DATA::DATA(S_TOKEN_TYPE _element_type)
+    : pValue(0), object_id(0)
 {
     Data_type = _element_type;
     Number_of_elements = 0;
     lValue = 0;
     fValue = 0;
-    sValue = nullptr;
     bArray = false;
     bEntity = false;
     pVCompiler = nullptr;
@@ -69,12 +110,12 @@ DATA::DATA(S_TOKEN_TYPE _element_type)
 }
 
 DATA::DATA(uint32_t _num_of_elements, S_TOKEN_TYPE _element_type)
+    : pValue(0), object_id(0)
 {
     nGlobalVarTableIndex = 0xffffffff;
     Number_of_elements = _num_of_elements;
     lValue = 0;
     fValue = 0;
-    sValue = nullptr;
     bArray = true;
     bEntity = false;
     Data_type = _element_type;
@@ -122,9 +163,6 @@ bool DATA::IsAReference()
 
 void DATA::Release()
 {
-    uint32_t n;
-    delete sValue;
-    sValue = nullptr;
     if (bArray)
     {
         /*for(n=0;n<Number_of_elements;n++)
@@ -280,6 +318,29 @@ void DATA::Set(float value)
         Error("NAN ERROR");
 }
 
+void DATA::Set(std::string value)
+{
+    // if(bRef)
+    if (Data_type == VAR_REFERENCE)
+    {
+        if (pReference)
+        {
+            pReference->Set(value);
+            return;
+        }
+        Error(UNINIT_REF);
+        return;
+    }
+    if (bArray)
+    {
+        Error(NO_INDEX);
+        return;
+    }
+    Data_type = VAR_STRING;
+
+    sValue = std::move(value);
+}
+
 void DATA::Set(const char *value)
 {
     // if(bRef)
@@ -299,14 +360,15 @@ void DATA::Set(const char *value)
         return;
     }
     Data_type = VAR_STRING;
-    delete sValue;
-    sValue = nullptr;
-    if (value == nullptr)
-        return;
 
-    const auto len = strlen(value) + 1;
-    sValue = new char[len];
-    memcpy(sValue, value, len);
+    if (value != nullptr)
+    {
+        sValue = value;
+    }
+    else
+    {
+        sValue.clear();
+    }
 }
 
 void DATA::Set(const char *attribute_name, const char *attribute_value)
@@ -491,7 +553,7 @@ bool DATA::Get(const char *&value)
     }
     if (Data_type == VAR_STRING)
     {
-        value = sValue;
+        value = sValue.c_str();
         return true;
     }
     return false;
@@ -910,8 +972,6 @@ void DATA::ClearType()
     {
         delete AttributesClass;
     }
-    delete sValue;
-    sValue = nullptr;
     AttributesClass = nullptr;
     Data_type = UNKNOWN;
     pReference = nullptr;
@@ -1018,23 +1078,17 @@ bool DATA::Convert(S_TOKEN_TYPE type)
         }
         break;
     case VAR_STRING:
-        if (sValue == nullptr)
-        {
-            sValue = new char[1];
-            sValue[0] = 0;
-            // Error(INVALID_CONVERSATION); return false;
-        }
         switch (type)
         {
         case NUMBER:
         case VAR_INTEGER:
             Data_type = VAR_INTEGER;
-            lValue = static_cast<long>(atoll(sValue));
+            lValue = std::atol(sValue.c_str());
             return true;
         case FLOAT_NUMBER:
         case VAR_FLOAT:
             Data_type = VAR_FLOAT;
-            fValue = static_cast<float>(atof(sValue));
+            fValue = std::atof(sValue.c_str());
             return true;
         case STRING:
         case VAR_STRING:
@@ -1075,7 +1129,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
             Set(AttributesClass->GetThisAttr());
             AttributesClass = nullptr;
             Data_type = VAR_INTEGER;
-            lValue = static_cast<long>(atoll(sValue));
+            lValue = std::atol(sValue.c_str());
             return true;
         case FLOAT_NUMBER:
         case VAR_FLOAT:
@@ -1086,7 +1140,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
             Set(AttributesClass->GetThisAttr());
             AttributesClass = nullptr;
             Data_type = VAR_FLOAT;
-            fValue = static_cast<float>(atof(sValue));
+            fValue = std::atof(sValue.c_str());
             return true;
         }
         break;
@@ -1230,9 +1284,7 @@ bool DATA::Neg()
         Set(lValue);
         break;
     case VAR_STRING:
-        if (sValue == nullptr)
-            lValue = 1;
-        else if (sValue[0] == 0)
+        if (sValue.empty())
             lValue = 1;
         else
             lValue = 0;
@@ -1573,9 +1625,7 @@ bool DATA::Plus(DATA *pV)
     pV = pV->GetVarPointer();
     if (pV == nullptr)
         return false;
-    uint32_t size;
-    char *sTemp;
-    char buffer[128];
+
     switch (Data_type)
     {
     case VAR_INTEGER:
@@ -1590,13 +1640,7 @@ bool DATA::Plus(DATA *pV)
             break;
         case VAR_STRING:
             Convert(VAR_STRING);
-            size = strlen(sValue) + strlen(pV->sValue) + 1;
-
-            sTemp = new char[size];
-            strcpy_s(sTemp, size, sValue);
-            strcat_s(sTemp, size, pV->sValue);
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + pV->sValue);
             break;
         default:
             return false;
@@ -1613,13 +1657,7 @@ bool DATA::Plus(DATA *pV)
             break;
         case VAR_STRING:
             Convert(VAR_STRING);
-            size = strlen(sValue) + strlen(pV->sValue) + 1;
-
-            sTemp = new char[size];
-            strcpy_s(sTemp, size, sValue);
-            strcat_s(sTemp, size, pV->sValue);
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + pV->sValue);
             break;
         default:
             return false;
@@ -1629,110 +1667,21 @@ bool DATA::Plus(DATA *pV)
         switch (pV->GetType())
         {
         case VAR_AREFERENCE:
-            if (!pV->AttributesClass)
+            if (!pV->AttributesClass || !pV->AttributesClass->GetThisAttr())
                 break;
-            if (!pV->AttributesClass->GetThisAttr())
-                break;
-            if (sValue != nullptr)
-            {
-                size = strlen(sValue) + strlen(pV->AttributesClass->GetThisAttr()) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, pV->AttributesClass->GetThisAttr());
-            }
-            else
-            {
-                size = strlen(pV->AttributesClass->GetThisAttr()) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, pV->AttributesClass->GetThisAttr());
-            }
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + pV->AttributesClass->GetThisAttr());
             break;
         case VAR_INTEGER:
-            _ltoa_s(pV->lValue, buffer, 10);
-            if (sValue != nullptr)
-            {
-                size = strlen(sValue) + strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, buffer);
-            }
-            else
-            {
-                size = strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, buffer);
-            }
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + std::to_string(pV->lValue));
             break;
         case VAR_FLOAT:
-            _gcvt(pV->fValue, 5, buffer);
-            if (sValue != nullptr)
-            {
-                size = strlen(sValue) + strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, buffer);
-            }
-            else
-            {
-                size = strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, buffer);
-            }
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + fmt::format("{:.5f}", pV->fValue));
             break;
         case VAR_STRING:
-            if (sValue == nullptr)
-            {
-                if (pV->sValue == nullptr)
-                    return false;
-                size = strlen(pV->sValue) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, pV->sValue);
-            }
-            else
-            {
-                if (pV->sValue == nullptr)
-                    return false;
-                size = strlen(sValue) + strlen(pV->sValue) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, pV->sValue);
-            }
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + pV->sValue);
             break;
         case VAR_PTR:
-            _ui64toa_s(pV->pValue, buffer, sizeof(buffer), 16);
-            if (sValue != nullptr)
-            {
-                size = strlen(sValue) + strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, sValue);
-                strcat_s(sTemp, size, buffer);
-            }
-            else
-            {
-                size = strlen(buffer) + 1;
-
-                sTemp = new char[size];
-                strcpy_s(sTemp, size, buffer);
-            }
-            Set(sTemp);
-            delete[] sTemp;
+            Set(sValue + std::to_string(pV->pValue));
             break;
         default:
             return false;
@@ -1989,57 +1938,25 @@ bool DATA::Compare(DATA *pV, char opA, char opB)
             switch (opA)
             {
             case '=':
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    if (sValue == pV->sValue)
-                        return true;
-                    return false;
-                }
-                if (_stricmp(sValue, pV->sValue) == 0)
-                    return true;
-                return false;
+                return sValue == pV->sValue;
+
             case '!':
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    if (sValue != pV->sValue)
-                        return true;
-                    return false;
-                }
-                if (_stricmp(sValue, pV->sValue) != 0)
-                    return true;
-                return false;
+                return sValue!= pV->sValue;
+
             case '>':
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    return false;
-                }
                 if (opB == '=')
                 {
-                    if (strlen(sValue) >= strlen(pV->sValue))
-                        return true;
+                    return std::size(sValue) >= std::size(pV->sValue);
                 }
-                else
-                {
-                    if (strlen(sValue) > strlen(pV->sValue))
-                        return true;
-                }
-                return false;
+                return std::size(sValue) > std::size(pV->sValue);
+
             case '<':
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    return false;
-                }
                 if (opB == '=')
                 {
-                    if (strlen(sValue) <= strlen(pV->sValue))
-                        return true;
+                    return std::size(sValue) <= std::size(pV->sValue);
                 }
-                else
-                {
-                    if (strlen(sValue) < strlen(pV->sValue))
-                        return true;
-                }
-                return false;
+
+                return std::size(sValue) < std::size(pV->sValue);
             }
             break;
         default:
@@ -2132,17 +2049,9 @@ bool DATA::Copy(DATA *pV)
             Error("Can't copy two arrays with different size");
             return false;
         }
-        const uint32_t copy_size = Number_of_elements * sizeof(DATA *);
-        memcpy(ArrayPTR.data(), pV->ArrayPTR.data(), copy_size); //~!~
-        // ArrayPTR = pV->ArrayPTR;
 
+        ArrayPTR = pV->ArrayPTR;
         return true;
-    }
-
-    if (Data_type == VAR_STRING)
-    {
-        delete sValue;
-        sValue = nullptr;
     }
 
     switch (pV->Data_type)
@@ -2779,85 +2688,26 @@ bool DATA::CompareAndSetResult(DATA *pV, S_TOKEN_TYPE op)
             switch (op)
             {
             case OP_BOOL_EQUAL:
-                if (sValue == pV->sValue)
-                {
-                    Set(static_cast<long>(1));
-                    break;
-                }
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (_stricmp(sValue, pV->sValue) == 0)
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
+                Set(static_cast<long>(storm::iEquals(sValue, pV->sValue)));
                 break;
             case OP_GREATER:
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (strlen(sValue) > strlen(pV->sValue))
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
+                Set(static_cast<long>(storm::iGreater(sValue, pV->sValue)));
                 break;
             case OP_GREATER_OR_EQUAL:
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (strlen(sValue) >= strlen(pV->sValue))
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
+                Set(static_cast<long>(storm::iGreaterOrEqual(sValue, pV->sValue)));
                 break;
             case OP_LESSER:
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (strlen(sValue) < strlen(pV->sValue))
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
+                Set(static_cast<long>(storm::iLess(sValue, pV->sValue)));
                 break;
             case OP_LESSER_OR_EQUAL:
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (strlen(sValue) <= strlen(pV->sValue))
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
+                Set(static_cast<long>(storm::iLessOrEqual(sValue, pV->sValue)));
                 break;
             case OP_NOT_EQUAL:
-                if (sValue == pV->sValue)
-                {
-                    Set(static_cast<long>(0));
-                    break;
-                }
-                if (sValue == nullptr || pV->sValue == nullptr)
-                {
-                    Set(static_cast<long>(1));
-                    break;
-                }
-                if (_stricmp(sValue, pV->sValue) != 0)
-                    Set(static_cast<long>(1));
-                else
-                    Set(static_cast<long>(0));
-
+                Set(static_cast<long>(!storm::iEquals(sValue, pV->sValue)));
                 break;
             case OP_BOOL_AND:
             case OP_BOOL_OR:
-                Error("boll operation on sting");
+                Error("bool operation on string");
                 return false;
             }
 
@@ -2902,17 +2752,7 @@ bool DATA::BoolConvert()
             Set(static_cast<long>(0));
         break;
     case VAR_STRING:
-        if (sValue == nullptr)
-        {
-            Set(static_cast<long>(0));
-            break;
-        }
-        if (sValue[0] == 0)
-        {
-            Set(static_cast<long>(0));
-            break;
-        }
-        Set(static_cast<long>(1));
+        Set(static_cast<long>(!sValue.empty()));
         break;
     case VAR_PTR:
         if (pValue != 0)
@@ -2971,9 +2811,9 @@ float DATA::GetFloat()
     return fValue;
 }
 
-char *DATA::GetString()
+const char *DATA::GetString()
 {
-    return sValue;
+    return sValue.c_str();
 }
 
 entid_t DATA::GetEntityID()

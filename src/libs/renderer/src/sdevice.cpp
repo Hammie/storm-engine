@@ -25,6 +25,33 @@ CREATE_SCRIPTLIBRIARY(DX9RENDER_SCRIPT_LIBRIARY)
         a = NULL;                                                                                                      \
     }
 
+namespace
+{
+    void InvokeEntitiesLostRender()
+    {
+        const auto its = EntityManager::GetEntityIdIterators();
+        for (auto it = its.first; it != its.second; ++it)
+        {
+            if (!it->deleted && it->ptr != nullptr)
+            {
+                it->ptr->ProcessStage(Entity::Stage::lost_render);
+            }
+        }
+    }
+
+    void InvokeEntitiesRestoreRender()
+    {
+        const auto its = EntityManager::GetEntityIdIterators();
+        for (auto it = its.first; it != its.second; ++it)
+        {
+            if (!it->deleted && it->ptr != nullptr)
+            {
+                it->ptr->ProcessStage(Entity::Stage::restore_render);
+            }
+        }
+    }
+}
+
 DX9RENDER *DX9RENDER::pRS = nullptr;
 
 class LostDeviceSentinel : public SERVICE
@@ -1304,6 +1331,42 @@ long DX9RENDER::TextureCreate(const char *fname)
     return -1;
 }
 
+long DX9RENDER::TextureCreate(UINT width, UINT height, UINT levels, uint32_t usage, D3DFORMAT format, D3DPOOL pool)
+{
+    IDirect3DTexture9 *texture = nullptr;
+
+    const auto result = CreateTexture(width, height, levels, usage, format, pool, &texture);
+    if (CHECKD3DERR(result))
+    {
+        return -1;
+    }
+
+    long t;
+    for (t = 0; t < MAX_STEXTURES; t++)
+    {
+        if (Textures[t].ref == 0)
+        {
+            break;
+        }
+    }
+
+    Textures[t].d3dtex = texture;
+    Textures[t].name = nullptr;
+    Textures[t].hash = 0;
+    Textures[t].ref = 1;
+    Textures[t].dwSize = width * height * 4; // Assuming 32-bit pixels
+    Textures[t].isCubeMap = false;
+    Textures[t].loaded = true;
+
+    return t;
+}
+
+bool DX9RENDER::TextureIncReference(long texid)
+{
+    ++Textures[texid].ref;
+    return true;
+}
+
 bool DX9RENDER::TextureLoad(long t)
 {
     ProgressView();
@@ -1328,6 +1391,13 @@ bool DX9RENDER::TextureLoad(long t)
     auto fileS = fio->_CreateFile(fn, std::ios::binary | std::ios::in);
     if (!fileS.is_open())
     {
+        // try to load without '.tx' (e.g. raw Targa)
+        std::filesystem::path path_to_tex{fn};
+        path_to_tex.replace_extension();
+        if (exists(path_to_tex))
+        {
+            return TextureLoadUsingD3DX(path_to_tex.string().c_str(), t);
+        }
         if (bTrace)
         {
             core.Trace("Can't load texture %s", fn);
@@ -1630,6 +1700,30 @@ bool DX9RENDER::TextureLoad(long t)
     Textures[t].loaded = true;
     // Close the file
     fio->_CloseFile(fileS);
+    return true;
+}
+
+bool DX9RENDER::TextureLoadUsingD3DX(const char* path, long t)
+{
+    // TODO: reimplement the whole thing in a tidy way
+    IDirect3DTexture9 *pTex;
+    if(CHECKD3DERR(D3DXCreateTextureFromFileA(d3d9, path, &pTex)))
+    {
+        delete Textures[t].name;
+        Textures[t].name = nullptr;
+        return false;
+    }
+
+    D3DSURFACE_DESC desc;
+    pTex->GetLevelDesc(0, &desc);
+
+    Textures[t].hash = 0;
+    Textures[t].ref = 1;
+    Textures[t].d3dtex = pTex;
+    Textures[t].isCubeMap = false;
+    Textures[t].dwSize = desc.Height * desc.Width * 4;
+    Textures[t].loaded = true;
+
     return true;
 }
 
@@ -2363,14 +2457,7 @@ void DX9RENDER::LostRender()
         return;
     }
 
-    const auto its = EntityManager::GetEntityIdIterators();
-    for (auto it = its.first; it != its.second; ++it)
-    {
-        if (!it->deleted && it->ptr != nullptr)
-        {
-            it->ptr->ProcessStage(Entity::Stage::lost_render);
-        }
-    }
+    InvokeEntitiesLostRender();
 
     Release(pOriginalScreenSurface);
     Release(pOriginalDepthSurface);
@@ -2482,14 +2569,7 @@ void DX9RENDER::RestoreRender()
 
     RecompileEffects();
 
-    const auto its = EntityManager::GetEntityIdIterators();
-    for (auto it = its.first; it != its.second; ++it)
-    {
-        if (!it->deleted && it->ptr != nullptr)
-        {
-            it->ptr->ProcessStage(Entity::Stage::restore_render);
-        }
-    }
+    InvokeEntitiesRestoreRender();
 
     resourcesReleased = false;
 }
@@ -2595,7 +2675,9 @@ void DX9RENDER::RunStart()
     // boal del_cheat
     if (core.Controls->GetDebugAsyncKeyState(VK_SHIFT) < 0 && core.Controls->GetDebugAsyncKeyState(VK_F11) < 0)
     {
+        InvokeEntitiesLostRender();
         RecompileEffects();
+        InvokeEntitiesRestoreRender();
     }
 
     SetRenderState(D3DRS_FILLMODE, (core.Controls->GetDebugAsyncKeyState('F') < 0) ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
