@@ -605,7 +605,7 @@ bool IFS::FlushFile()
                 }
                 buff[0] = INI_LINEFEED[0];
                 buff[1] = INI_LINEFEED[1];
-                if (fs->_WriteFile(fileS, buff, 2))
+                if (!fs->_WriteFile(fileS, buff, 2))
                 {
                     throw std::runtime_error("Failed to write to file");
                 }
@@ -1026,6 +1026,7 @@ void IFS::WriteString(const char *section_name, const char *key_name, const char
         throw std::runtime_error("zero key value");
 
     auto *snode = CreateSection(section_name);
+    // do not free it. it gets linked to root node
     if (snode == nullptr)
         throw std::runtime_error("section create error");
     auto *node = snode->FindKey(key_name);
@@ -1033,7 +1034,7 @@ void IFS::WriteString(const char *section_name, const char *key_name, const char
     {
         node->SetValue(string);
         bDataChanged = true;
-        return;
+        return; //-V773
     }
     AddString(section_name, key_name, string);
 }

@@ -13,8 +13,8 @@
 #include <stack>
 #include <vector>
 
-#define MAX_STEXTURES 1024
-#define MAX_BUFFERS 1024
+#define MAX_STEXTURES 10240
+#define MAX_BUFFERS 10240
 #define MAX_FONTS 256
 
 struct D3DERRORS
@@ -250,6 +250,7 @@ class DX9RENDER : public VDX9RENDER
     std::stack<RenderTarget> stRenderTarget;
 
     bool TextureLoad(long texid);
+    bool TextureLoadUsingD3DX(const char* path, long texid);
 
     bool MakeCapture();
     void SaveCaptureBuffers();

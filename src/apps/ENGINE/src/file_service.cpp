@@ -121,7 +121,7 @@ std::vector<std::filesystem::path> FILE_SERVICE::_GetFsPathsByMask(const char *s
     std::vector<std::filesystem::path> result;
 
     std::filesystem::path srcPath;
-    if (sourcePath == nullptr || sourcePath == "")
+    if (sourcePath == nullptr || sourcePath[0] =='\0')
     {
         srcPath = std::filesystem::current_path();
     }
@@ -210,7 +210,7 @@ void FILE_SERVICE::_SetCurrentDirectory(const char *pathName)
 bool FILE_SERVICE::_CreateDirectory(const char *pathName)
 {
     std::filesystem::path path = std::filesystem::u8path(pathName);
-    return std::filesystem::create_directory(path);
+    return std::filesystem::create_directories(path);
 }
 
 std::uintmax_t FILE_SERVICE::_RemoveDirectory(const char *pathName)

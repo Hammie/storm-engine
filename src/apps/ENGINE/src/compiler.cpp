@@ -1685,7 +1685,7 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
                                         if (bNeg)
                                             real_var->value->Set(-atol(Token.GetData()), aindex);
                                         else
-                                            real_var->value->Set(static_cast<long>(atoll(Token.GetData())));
+                                            real_var->value->Set(static_cast<long>(atoll(Token.GetData())), aindex);
                                         aindex++;
                                         break;
                                     case FLOAT_NUMBER:
@@ -5218,7 +5218,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                     return false;
                 if (pVDst->GetType() != VAR_REFERENCE)
                 {
-                    SetError("'%s' isnt reference", real_var->name.c_str());
+                    SetError("Local variable is not reference");
                     return false;
                 }
                 break;
@@ -6230,7 +6230,7 @@ ATTRIBUTES *COMPILER::TraceARoot(ATTRIBUTES *pA, const char *&pAccess)
         const auto len = slen + strlen(pAccess) + 1;
         // pAS = (char *)RESIZE(pAS, len);
         auto *const newPtr = new char[len];
-        memcpy(newPtr, pAS, len);
+        memcpy(newPtr, pAS, slen);
         delete[] pAS;
         pAS = newPtr;
         strcat_s(pAS, len, ".");
@@ -6649,9 +6649,6 @@ bool COMPILER::OnLoad()
 bool COMPILER::SaveState(std::fstream &fileS)
 {
     uint32_t n;
-    const VarInfo *real_var;
-    const VarInfo *last_var;
-
     delete pBuffer;
     pBuffer = nullptr;
 
@@ -6704,9 +6701,10 @@ bool COMPILER::SaveState(std::fstream &fileS)
     const uint32_t nVarNum = VarTab.GetVarNum();
     WriteVDword(nVarNum);
 
+    const VarInfo *last_var{ nullptr };
     for (n = 0; n < nVarNum; n++)
     {
-        real_var = VarTab.GetVar(n);
+        const VarInfo *real_var = VarTab.GetVar(n);
         if (real_var == nullptr)
         {
             real_var = last_var; // preserve old semanthics
@@ -7295,7 +7293,7 @@ void COMPILER::FormatDialog(char *file_name)
     TOKEN Token;
     S_TOKEN_TYPE Token_type;
     char sFileName[MAX_PATH];
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH]{};
     char sNewLine[] = {0xd, 0xa, 0};
     bool bExportString;
 
