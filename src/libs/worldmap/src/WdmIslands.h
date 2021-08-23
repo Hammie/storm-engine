@@ -136,7 +136,7 @@ class WdmIslands : public WdmRenderObject
     // Model containing all locators
     WdmRenderModel *baseModel;
     // Pathfinder patch
-    PtcData *patch;
+    PtcData *patch = nullptr;
     // Island models
     std::vector<Islands> islands;
     // Labels

@@ -40,6 +40,12 @@ WdmIslands::WdmIslands()
     // Loading the base model
     baseModel = static_cast<WdmRenderModel *>(
         wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands\\islands", false, false, false, 1));
+
+    if (!baseModel && core.GetTargetEngineVersion() <= storm::ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN) {
+        baseModel = static_cast<WdmRenderModel *>(
+            wdmObjects->wm->CreateModel(new WdmRenderModel(), "islands", false, false, true, 2));
+    }
+
     if (!baseModel || !baseModel->geo)
         return;
     // Geometry information
