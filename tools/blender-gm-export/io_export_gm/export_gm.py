@@ -116,6 +116,8 @@ def prepare_vertices_with_multiple_uvs(bm_verts, uv_layer):
 
             if uv_layer.data[loop_index].uv != uv:
                 #print(uv, obj_uv_layer.data[loop_index].uv, loop.face.index)
+                #diff = uv_layer.data[loop_index].uv - uv
+                #if abs(diff[0]) >= 0.01 or abs(diff[1]) >= 0.01:
                 bmesh.utils.loop_separate(loop)
                 bm_verts.index_update()
 
@@ -254,18 +256,8 @@ def export_gm(context, file_path=""):
     bones_list = []
 
     vertices = []
-    # TODO rewrote
-    vertices_type = []
     faces = []
     normals = []
-
-    weights = []
-    bone_ids = []
-
-    colors = []
-
-    uv_array = []
-    uv_normals_array = []
 
     types = []
 
@@ -315,8 +307,20 @@ def export_gm(context, file_path=""):
 
     bpy.context.scene.frame_set(0)
 
+    for object in objects:
+        if bpy.context.view_layer.objects.get(object.name):
+            bpy.context.view_layer.objects.active = object
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            bpy.ops.uv.select_all(action='SELECT')
+            bpy.ops.uv.seams_from_islands()
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+    bpy.context.view_layer.objects.active = root
+
     # TODO multiple objects
     for object in objects:
+        opposite = object.scale[0] * object.scale[1] * object.scale[2] < 0
+
         faces_quantity = 0
         vertices_quantity = 0
 
@@ -341,18 +345,26 @@ def export_gm(context, file_path=""):
 
         bm.verts.ensure_lookup_table()
 
-        print(len(bm.verts), len(bm.faces))
+        print('\nBefore Blender mesh export preparations:')
+        print('Mesh name: ' + src_obj.name + ', vertices: ' +
+              str(len(bm.verts)) + ', faces: ' + str(len(bm.faces)))
 
-        prepare_vertices_with_multiple_uvs(bm.verts, obj_uv_layer)
+        # prepare_vertices_with_multiple_uvs(bm.verts, obj_uv_layer)
 
-        if obj_uv_normals_layer:
-            prepare_vertices_with_multiple_uvs(bm.verts, obj_uv_normals_layer)
+        # if obj_uv_normals_layer:
+        #     prepare_vertices_with_multiple_uvs(bm.verts, obj_uv_normals_layer)
+
+        seams = [e for e in bm.edges if e.seam]
+        bmesh.ops.split_edges(bm, edges=seams)
 
         bm.to_mesh(obj.data)
-        print(len(bm.verts), len(bm.faces))
+        print('After Blender mesh export preparations:')
+        print('Mesh name: ' + src_obj.name + ', vertices: ' +
+              str(len(bm.verts)) + ', faces: ' + str(len(bm.faces)))
 
         obj_vertices = obj_data.vertices
         obj_vertices_coords = []
+        obj_normals = []
         obj_polygons = obj_data.polygons
 
         # TODO get active?
@@ -373,7 +385,8 @@ def export_gm(context, file_path=""):
 
         if vertices_quantity > 65536:
             bpy.data.objects.remove(obj, do_unlink=True)
-            raise ValueError('Vertices_quantity bigger than 65536!')
+            raise ValueError(
+                src_obj.name + ' vertices_quantity bigger than 65536!')
 
         for vertex in bm.verts:
             pos = (obj.matrix_world @ mathutils.Vector(vertex.co)) - \
@@ -389,16 +402,21 @@ def export_gm(context, file_path=""):
             if x_is_mirrored:
                 norm *= mathutils.Vector([-1, 1, 1])
             normals.append(norm)
+            obj_normals.append(norm)
 
         faces_quantity = len(bm.faces)
         for face in bm.faces:
             [v1, v2, v3] = face.verts[:]
             # opposite
-            face = [v2.index, v1.index, v3.index]
+            face = [v1.index, v2.index, v3.index] if opposite else [
+                v2.index, v1.index, v3.index]
             faces.append(face)
 
         obj.to_mesh_clear()
         bm.free()
+
+        obj_weights = []
+        obj_bone_ids = []
 
         if is_animated:
             for vertex in obj_vertices:
@@ -426,8 +444,8 @@ def export_gm(context, file_path=""):
                     except StopIteration as e:
                         print(vertex_group_name + ' is missing in armature!')
 
-                weights.append(weight_1)
-                bone_ids.append((bone_2 << 8) | (bone_1 << 0))
+                obj_weights.append(weight_1)
+                obj_bone_ids.append((bone_2 << 8) | (bone_1 << 0))
 
         obj_colors = [[127, 127, 127, 255]] * len(obj_vertices)
         obj_uv_array = [[0, 0]] * len(obj_vertices)
@@ -451,10 +469,6 @@ def export_gm(context, file_path=""):
                     obj_uv_normals_array[index] = mathutils.Vector(
                         obj_uv_normals_layer.data[loop_index].uv) * mathutils.Vector([1, -1])
 
-        colors += obj_colors
-        uv_array += obj_uv_array
-        uv_normals_array += obj_uv_normals_array
-
         bounding_box = get_bounding_box_coords([obj], x_is_mirrored)
         bounding_boxes.append(bounding_box)
 
@@ -468,31 +482,39 @@ def export_gm(context, file_path=""):
             type = 1
         types.append(type)
 
-        vertices_type += [type] * vertices_quantity
-
         if len(vertex_buffers) == 0:
             vertex_buffers.append({
                 "type": type,
                 "index": 0,
                 "vertices_quantity": 0,
+                "vertices": [],
+                "normals": [],
+                "colors": [],
+                "weights": [],
+                "bone_ids": [],
+                "uv_array": [],
+                "uv_normals_array": []
             })
 
-        # TODO FIX IT, add all vertices data to buffer too
-        # current_vertex_buffer_idx = -1
-        # for idx in range(len(vertex_buffers)):
-        #     buffer_type = vertex_buffers[idx].get("type")
-        #     if buffer_type == type:
-        #         current_vertex_buffer_idx = idx
-        current_vertex_buffer_idx = len(vertex_buffers) - 1
+        current_vertex_buffer_idx = -1
+        for idx in range(len(vertex_buffers)):
+            buffer_type = vertex_buffers[idx].get("type")
+            if buffer_type == type:
+                current_vertex_buffer_idx = idx
 
-        # if vertex_buffers[current_vertex_buffer_idx].get("vertices_quantity") + vertices_quantity > 65536 or current_vertex_buffer_idx == -1:
-        if vertex_buffers[current_vertex_buffer_idx].get("vertices_quantity") + vertices_quantity > 65536 or vertex_buffers[current_vertex_buffer_idx].get("type") != type:
+        if vertex_buffers[current_vertex_buffer_idx].get("vertices_quantity") + vertices_quantity > 65536 or current_vertex_buffer_idx == -1:
             current_vertex_buffer_idx = len(vertex_buffers)
-            # TODO FIX IT, add all vertices data to buffer too
             vertex_buffers.append({
                 "type": type,
                 "index": current_vertex_buffer_idx,
                 "vertices_quantity": 0,
+                "vertices": [],
+                "normals": [],
+                "colors": [],
+                "weights": [],
+                "bone_ids": [],
+                "uv_array": [],
+                "uv_normals_array": []
             })
 
         current_vertex_buffer = vertex_buffers[current_vertex_buffer_idx]
@@ -512,6 +534,13 @@ def export_gm(context, file_path=""):
         }
         objects_data.append(object_data)
         current_vertex_buffer["vertices_quantity"] = current_vertex_buffer_vertices_quantity + vertices_quantity
+        current_vertex_buffer["vertices"] += obj_vertices_coords
+        current_vertex_buffer["normals"] += obj_normals
+        current_vertex_buffer["colors"] += obj_colors
+        current_vertex_buffer["weights"] += obj_weights
+        current_vertex_buffer["bone_ids"] += obj_bone_ids
+        current_vertex_buffer["uv_array"] += obj_uv_array
+        current_vertex_buffer["uv_normals_array"] += obj_uv_normals_array
 
         # TODO delete on error
         bpy.data.objects.remove(obj, do_unlink=True)
@@ -581,26 +610,36 @@ def export_gm(context, file_path=""):
             file.write(struct.pack('<s', c.encode("utf-8")))
 
         current_name_offset = 0
+        names_offsets = [current_name_offset]
         for i in range(header_names_quantity):
             file.write(struct.pack('<l', current_name_offset))
             current_name_offset = globname.index('\0', current_name_offset) + 1
+            names_offsets.append(current_name_offset)
+
+        index_by_names = {}
+        for i in range(header_names_quantity):
+            offset = names_offsets[i]
+            next_offset = header_name_size if i == header_names_quantity - \
+                1 else names_offsets[i + 1]
+            name = globname[offset:next_offset].replace('\0', '')
+            index_by_names[name] = offset
 
         # TODO
         for i in range(header_ntextures):
             current_texture_name = textures[i]
-            current_texture_name_offset = globname.index(
-                current_texture_name + '\0')
+            current_texture_name_offset = index_by_names.get(
+                current_texture_name)
             file.write(struct.pack('<l', current_texture_name_offset))
 
         for i in range(header_nmaterials):
             material = materials[i]
 
-            material_group_name_idx = globname.index(
-                'unknown material group' + '\0')
+            material_group_name_idx = index_by_names.get(
+                'unknown material group')
             file.write(struct.pack('<l', material_group_name_idx))
 
             material_name = material.get("name")
-            material_name_idx = globname.index(material_name + '\0')
+            material_name_idx = index_by_names.get(material_name)
             file.write(struct.pack('<l', material_name_idx))
 
             material_diffuse = 0.8
@@ -643,10 +682,10 @@ def export_gm(context, file_path=""):
             label_group_name = remove_blender_name_postfix(locator.parent_bone) if is_animated else remove_blender_name_postfix(
                 locator.parent.name)
 
-            label_group_name_idx = globname.index(label_group_name + '\0')
+            label_group_name_idx = index_by_names.get(label_group_name)
             file.write(struct.pack('<l', label_group_name_idx))
 
-            label_name_idx = globname.index(label_name + '\0')
+            label_name_idx = index_by_names.get(label_name)
             file.write(struct.pack('<l', label_name_idx))
 
             label_flags = 0
@@ -689,11 +728,11 @@ def export_gm(context, file_path=""):
 
             object_group_name = remove_blender_name_postfix(
                 objects[i].parent.name)
-            object_group_name_idx = globname.index(object_group_name + '\0')
+            object_group_name_idx = index_by_names.get(object_group_name)
             file.write(struct.pack('<l', object_group_name_idx))
 
             object_name = remove_blender_name_postfix(objects[i].name)
-            object_name_idx = globname.index(object_name + '\0')
+            object_name_idx = index_by_names.get(object_name)
             file.write(struct.pack('<l', object_name_idx))
 
             # TODO check
@@ -750,20 +789,28 @@ def export_gm(context, file_path=""):
                 "vertices_quantity") * vertex_buffer_stride
             file.write(struct.pack('<l', vertex_buffer_size))
 
-        print(len(vertices), len(weights), len(bone_ids),
-              len(normals), len(colors), len(uv_array))
+        for vertex_buffer in vertex_buffers:
+            vertex_type = vertex_buffer.get("type")
+            buffer_vertices = vertex_buffer.get("vertices")
+            buffer_normals = vertex_buffer.get("normals")
+            buffer_colors = vertex_buffer.get("colors")
+            buffer_weights = vertex_buffer.get("weights")
+            buffer_bone_ids = vertex_buffer.get("bone_ids")
+            buffer_uv_array = vertex_buffer.get("uv_array")
+            buffer_uv_normals_array = vertex_buffer.get("uv_normals_array")
 
-        for i in range(len(vertices)):
-            vertex_type = vertices_type[i]
-            if vertex_type == 0:
-                write_vertex0(file, vertices[i], normals[i], colors[i],
-                              uv_array[i][0], uv_array[i][1])
-            if vertex_type == 1:
-                write_vertex1(file, vertices[i], normals[i], colors[i],
-                              uv_array[i][0], uv_array[i][1], uv_normals_array[i][0], uv_normals_array[i][1])
-            if vertex_type == 4:
-                write_avertex0(file, vertices[i], weights[i], bone_ids[i], normals[i],
-                               colors[i], uv_array[i][0], uv_array[i][1])
+            for i in range(len(buffer_vertices)):
+                if vertex_type == 0:
+                    write_vertex0(file, buffer_vertices[i], buffer_normals[i], buffer_colors[i],
+                                  buffer_uv_array[i][0], buffer_uv_array[i][1])
+                if vertex_type == 1:
+                    write_vertex1(file, buffer_vertices[i], buffer_normals[i], buffer_colors[i],
+                                  buffer_uv_array[i][0], buffer_uv_array[i][1], buffer_uv_normals_array[i][0], buffer_uv_normals_array[i][1])
+                if vertex_type == 4:
+                    write_avertex0(file, buffer_vertices[i], buffer_weights[i], buffer_bone_ids[i], buffer_normals[i],
+                                   buffer_colors[i], buffer_uv_array[i][0], buffer_uv_array[i][1])
+
+    print('\nGM Export finished successfully!')
 
     return {'FINISHED'}
 
@@ -803,4 +850,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-

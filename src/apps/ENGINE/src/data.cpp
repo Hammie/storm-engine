@@ -975,6 +975,7 @@ void DATA::ClearType()
     AttributesClass = nullptr;
     Data_type = UNKNOWN;
     pReference = nullptr;
+    sValue.clear();
 }
 
 void DATA::SetType(S_TOKEN_TYPE _element_type, uint32_t array_size)
@@ -1675,7 +1676,7 @@ bool DATA::Plus(DATA *pV)
             Set(sValue + std::to_string(pV->lValue));
             break;
         case VAR_FLOAT:
-            Set(sValue + fmt::format("{:.5f}", pV->fValue));
+            Set(sValue + fmt::format("{}", pV->fValue));
             break;
         case VAR_STRING:
             Set(sValue + pV->sValue);
