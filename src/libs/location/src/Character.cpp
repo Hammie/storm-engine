@@ -539,7 +539,7 @@ Character::Character()
     fgtCurIndex = fgtSetIndex = -1;
     isParryState = false;
     isFeintState = false;
-    isStunEnable = true;
+    stunChance = 100;
     //
     isMove = false;
     isBack = false;
@@ -661,11 +661,6 @@ bool Character::Init()
     effects = EntityManager::GetEntityId("LocationEffects");
     soundService = static_cast<VSoundService *>(core.CreateService("SoundService"));
     // register our appearance in the location
-    if (location->supervisor.numCharacters >= MAX_CHARACTERS)
-    {
-        core.Trace("Many characters in location");
-        return false;
-    }
     location->supervisor.AddCharacter(this);
     // The sea
     sea = EntityManager::GetEntityId("sea");
@@ -1808,13 +1803,12 @@ void Character::Dead()
     Assert(dead);
     // spread weights depending on the direction
     const float _ay = ay;
-    static Supervisor::FindCharacter fnd[MAX_CHARACTERS];
-    static long numChr = 0;
     auto *const location = GetLocation();
     for (long i = 0; i < num; i++)
     {
         ay = _ay + dead[i].ang;
-        if (location->supervisor.FindCharacters(fnd, numChr, this, 2.0f, 0.0f, 0.0f))
+        auto fnd = location->supervisor.FindCharacters(this, 2.0f, 0.0f, 0.0f);
+        if (!fnd.empty())
             dead[i].p *= 0.1f;
         const float cs = cosf(dead[i].ang);
         const float sn = sinf(dead[i].ang);
@@ -4217,23 +4211,33 @@ void Character::UpdateAnimation()
                     fgtSetIndex = -1;
                     isFired = false;
                     break;
-                case fgt_hit_attack: // The reaction of hitting a character putting him into the stall
-                    if (IsPlayer() && !isStunEnable)
-                    // boal did not find a better one, but ours always has this ID, it will work
+                case fgt_hit_attack: { // The reaction of hitting a character putting him into the stall
+                    const auto version = core.GetTargetEngineVersion();
+
+                    if (version == storm::ENGINE_VERSION::CITY_OF_ABANDONED_SHIPS)
                     {
-                        if (rand() % 100 >= 50)
-                            break; // boal doesn't always break into animation
-                    }
-                    if (isStunEnable)
-                    {
-                        core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
-                        if (!(isSet = SetAction(hit[fgtSetIndex].name, hit[fgtSetIndex].tblend, 0.0f, 1.0f, true)))
+                        if (IsPlayer() && rand() % 100 >= 50)
                         {
-                            core.Trace("Character animation: not set fight attack hit action: \"%s\"",
-                                       hit[fgtSetIndex].name);
+                            break;
                         }
                     }
+
+                    if (version >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN)
+                    {
+                        if (rand() % 100 >= stunChance)
+                        {
+                            break;
+                        }
+                    }
+
+                    core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
+                    if (!(isSet = SetAction(hit[fgtSetIndex].name, hit[fgtSetIndex].tblend, 0.0f, 1.0f, true)))
+                    {
+                        core.Trace("Character animation: not set fight attack hit action: \"%s\"",
+                                   hit[fgtSetIndex].name);
+                    }
                     break;
+                }
                 case fgt_blockbreak: // The reaction of hitting a character putting him into the stall
                     core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
                     if (!(isSet = SetAction(blockbreak.name, blockbreak.tblend, 0.0f, 1.0f, true)))
@@ -4266,21 +4270,32 @@ void Character::UpdateAnimation()
                         core.Trace("Character animation: not set fight round hit action: \"%s\"", hitRound.name);
                     }
                     break;
-                case fgt_hit_fire: // The reaction from the shot, putting him into stall
-                    if (IsPlayer() && !isStunEnable)
+                case fgt_hit_fire: { // The reaction from the shot, putting him into stall
+                    const auto version = core.GetTargetEngineVersion();
+
+                    if (version == storm::ENGINE_VERSION::CITY_OF_ABANDONED_SHIPS)
                     {
-                        if (rand() % 100 >= 50)
-                            break; // boal doesn't always break into animation
-                    }
-                    if (isStunEnable)
-                    {
-                        core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
-                        if (!(isSet = SetAction(hitFire.name, hitFire.tblend, 0.0f, 0.0f, true)))
+                        if (IsPlayer() && rand() % 100 >= 50)
                         {
-                            core.Trace("Character animation: not set fight fire hit action: \"%s\"", hitFire.name);
+                            break;
                         }
                     }
+
+                    if (version >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN)
+                    {
+                        if (rand() % 100 >= stunChance)
+                        {
+                            break;
+                        }
+                    }
+
+                    core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
+                    if (!(isSet = SetAction(hitFire.name, hitFire.tblend, 0.0f, 0.0f, true)))
+                    {
+                        core.Trace("Character animation: not set fight fire hit action: \"%s\"", hitFire.name);
+                    }
                     break;
+                }
                 case fgt_block: // Saber protection
                     core.Send_Message(blade, "ll", MSG_BLADE_TRACE_OFF, 0);
                     if (_stricmp(pWeaponID, "topor") == 0)
@@ -4641,14 +4656,13 @@ Character *Character::FindDialogCharacter()
     if (IsFight() || liveValue < 0 || deadName)
         return nullptr;
     // Find the surrounding characters
-    static Supervisor::FindCharacter fndCharacter[MAX_CHARACTERS];
-    static long num = 0;
-    if (!location->supervisor.FindCharacters(fndCharacter, num, this, 3.0f))
+    auto fndCharacter = location->supervisor.FindCharacters(this, 3.0f);
+    if (fndCharacter.empty())
         return nullptr;
     // Choosing the best
     float minDst;
     long j = -1;
-    for (long i = 0; i < num; i++)
+    for (size_t i = 0; i < fndCharacter.size(); i++)
     {
         // Character
         Supervisor::FindCharacter &fc = fndCharacter[i];
@@ -4766,16 +4780,16 @@ inline void Character::CheckAttackHit()
         }
     }
     // Find the surrounding characters
-    static Supervisor::FindCharacter fndCharacter[MAX_CHARACTERS];
-    long num = 0;
     auto *const location = GetLocation();
-    if (!location->supervisor.FindCharacters(fndCharacter, num, this, attackDist, attackAng, 0.1f, 0.0f, false, true))
+    auto fndCharacter =
+        location->supervisor.FindCharacters(this, attackDist, attackAng, 0.1f, 0.0f, false, true);
+    if (fndCharacter.empty())
         return;
     // go through all the enemies
     bool isParry = false;
     bool isHrrrSound = true;
     bool isUseEnergy = true; // remove energy once boal
-    for (long i = 0; i < num; i++)
+    for (size_t i = 0; i < fndCharacter.size(); i++)
     {
         // Character
         Supervisor::FindCharacter &fc = fndCharacter[i];
@@ -4857,15 +4871,14 @@ Character *Character::FindGunTarget(float &kDist, bool bOnlyEnemyTest, bool bAbo
     }
 
     // Find the surrounding characters
-    static Supervisor::FindCharacter fndCharacter[MAX_CHARACTERS];
-    static long num = 0;
     auto *const location = GetLocation();
-    if (!location->supervisor.FindCharacters(fndCharacter, num, this, CHARACTER_FIGHT_FIREDIST, CHARACTER_FIGHT_FIREANG,
-                                             0.4f, 30.0f, false))
+    auto fndCharacter = location->supervisor.FindCharacters(this, CHARACTER_FIGHT_FIREDIST, CHARACTER_FIGHT_FIREANG,
+                                                            0.4f, 30.0f, false);
+    if (fndCharacter.empty())
         return nullptr;
     float minDst;
     long j = -1;
-    for (long i = 0; i < num; i++)
+    for (size_t i = 0; i < fndCharacter.size(); i++)
     {
         Supervisor::FindCharacter &fc = fndCharacter[i];
         if (fc.d2 <= 0.0f || fc.c->radius <= 0.0f)
@@ -4935,10 +4948,10 @@ void Character::FindNearCharacters(MESSAGE &message)
     const bool isSort = message.Long() != 0;
     // Looking for characters
     // Find the surrounding characters
-    static Supervisor::FindCharacter fndCharacter[MAX_CHARACTERS];
-    static long n = 0;
     auto *const location = GetLocation();
-    if (!location->supervisor.FindCharacters(fndCharacter, n, this, rad, viewAng, planeDist, ax, isSort))
+    auto fndCharacter = location->supervisor.FindCharacters(this, rad, viewAng, planeDist, ax, isSort);
+    auto n = fndCharacter.size();
+    if (fndCharacter.empty())
     {
         num->Set(0L);
         return;
