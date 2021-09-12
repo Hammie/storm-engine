@@ -12,6 +12,7 @@
 #include <DxErr.h>
 #include <corecrt_io.h>
 #include <storm/common/ResourceLocator.hpp>
+#include <storm/string_replace.hpp>
 
 CREATE_SERVICE(DX9RENDER)
 
@@ -1379,14 +1380,7 @@ bool DX9RENDER::TextureLoad(long t)
         return false;
     }
     std::string fn = fmt::format("{}.tx", Textures[t].name);
-    for (long s = 0, d = 0; fn[d]; s++)
-    {
-        if (d > 0 && fn[d - 1] == '\\' && fn[s] == '\\')
-        {
-            continue;
-        }
-        fn[d++] = fn[s];
-    }
+    storm::ReplaceAll(fn, "\\\\", "\\");
 
     // Find correct file path
     storm::ResourceLocator resource_locator(true);
