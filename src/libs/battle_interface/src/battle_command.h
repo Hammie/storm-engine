@@ -21,7 +21,8 @@ class BICommandList
   public:
     BICommandList(BICommandList &&) = delete;
     BICommandList(const BICommandList &) = delete;
-    BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs);
+
+    BICommandList(ATTRIBUTES &pA, VDX9RENDER &rs);
     virtual ~BICommandList();
 
     void Draw();
@@ -53,35 +54,20 @@ class BICommandList
     void AddAdditiveToIconList(long nTextureNum, long nPictureNum, float fDist, float fWidth, float fHeight);
 
   protected:
-    entid_t m_idHostObj;
-    ATTRIBUTES *m_pARoot;
-    VDX9RENDER *m_pRS;
-
-    BIImageRender *m_pImgRender;
-
-    struct TextureDescr
-    {
-        std::string sFileName;
-        uint32_t nCols;
-        uint32_t nRows;
-    };
-
-    std::vector<TextureDescr> m_aTexture;
-
     struct UsedCommand
     {
-        long nCharIndex;
+        long nCharIndex = 0;
         std::string sCommandName;
-        long nTargetIndex;
+        long nTargetIndex = 0;
         std::string sLocName;
         std::string sNote;
 
-        long nTextureIndex;
-        long nSelPictureIndex;
-        long nNormPictureIndex;
-        long nCooldownPictureIndex;
+        long nTextureIndex = 0;
+        long nSelPictureIndex = 0;
+        long nNormPictureIndex = 0;
+        long nCooldownPictureIndex = 0;
 
-        float fCooldownFactor;
+        float fCooldownFactor = 1;
 
         struct AdditiveIcon
         {
@@ -94,44 +80,72 @@ class BICommandList
         std::vector<AdditiveIcon> aAddPicList;
     };
 
-    bool m_bActive;
+    void Release();
 
-    std::vector<UsedCommand> m_aUsedCommand;
-    long m_nStartUsedCommandIndex;
-    long m_nSelectedCommandIndex;
-    long m_nIconShowMaxQuantity;
-    bool m_bLeftArrow;
-    bool m_bRightArrow;
+    long IconAdd(long nPictureNum, long nTextureNum, RECT &rpos);
+    long ClockIconAdd(long nForePictureNum, long nBackPictureNum, long nTextureNum, RECT &rpos, float fFactor);
+    void AdditiveIconAdd(float fX, float fY, std::vector<UsedCommand::AdditiveIcon> &aList);
+    FRECT &GetPictureUV(long nTextureNum, long nPictureNum, FRECT &uv);
+    RECT &GetCurrentPos(long num, RECT &rpos) const;
 
-    POINT m_pntActiveIconOffset;
-    POINT m_pntActiveIconSize;
-    std::string m_sActiveIconTexture;
-    FRECT m_frActiveIconUV1;
-    FRECT m_frActiveIconUV2;
-    std::string m_sActiveIconNote;
+    void UpdateShowIcon();
+    void SetNote(const char *pcNote, long nX, long nY);
 
-    bool m_bUpArrow;
-    bool m_bDownArrow;
-    std::string m_sUpDownArrowTexture;
-    FRECT m_frUpArrowUV;
-    FRECT m_frDownArrowUV;
-    POINT m_pntUpDownArrowSize;
-    POINT m_pntUpArrowOffset;
-    POINT m_pntDownArrowOffset;
+    ATTRIBUTES *GetCurrentCommandAttribute() const;
+
+    ATTRIBUTES *m_pARoot = nullptr;
 
     std::string m_sCurrentCommandName;
-    long m_nCurrentCommandCharacterIndex;
-    long m_nCurrentCommandMode;
+    long m_nCurrentCommandMode = 0;
+    long m_nCurrentCommandCharacterIndex = -1;
 
-    POINT m_LeftTopPoint;
-    POINT m_IconSize;
-    long m_nIconSpace;
+    long m_nIconShowMaxQuantity = 5;
 
-    long m_NoteFontID;
-    uint32_t m_NoteFontColor;
-    float m_NoteFontScale;
-    POINT m_NotePos;
-    POINT m_NoteOffset;
+  private:
+    VDX9RENDER &renderer_;
+
+    std::unique_ptr<BIImageRender> m_pImgRender{};
+
+    struct TextureDescr
+    {
+        std::string sFileName;
+        uint32_t nCols = 1;
+        uint32_t nRows = 1;
+    };
+
+    std::vector<TextureDescr> m_aTexture;
+
+    bool m_bActive = false;
+
+    std::vector<UsedCommand> m_aUsedCommand;
+    long m_nStartUsedCommandIndex = 0;
+    long m_nSelectedCommandIndex = 0;
+
+    POINT m_pntActiveIconOffset{};
+    POINT m_pntActiveIconSize{};
+    std::string m_sActiveIconTexture;
+    FRECT m_frActiveIconUV1{};
+    FRECT m_frActiveIconUV2{};
+    std::string m_sActiveIconNote;
+
+    bool m_bUpArrow = false;
+    bool m_bDownArrow = false;
+    std::string m_sUpDownArrowTexture;
+    FRECT m_frUpArrowUV{};
+    FRECT m_frDownArrowUV{};
+    POINT m_pntUpDownArrowSize{};
+    POINT m_pntUpArrowOffset{};
+    POINT m_pntDownArrowOffset{};
+
+    POINT m_LeftTopPoint{};
+    POINT m_IconSize{};
+    long m_nIconSpace = 8;
+
+    long m_NoteFontID = -1;
+    uint32_t m_NoteFontColor = ARGB(255, 255, 255, 255);
+    float m_NoteFontScale = 1;
+    POINT m_NotePos{};
+    POINT m_NoteOffset{};
     std::string m_NoteText;
 
     struct CoolDownUpdateData
@@ -142,18 +156,4 @@ class BICommandList
     };
 
     std::vector<CoolDownUpdateData> m_aCooldownUpdate;
-
-    void Release();
-
-    long IconAdd(long nPictureNum, long nTextureNum, RECT &rpos);
-    long ClockIconAdd(long nForePictureNum, long nBackPictureNum, long nTextureNum, RECT &rpos, float fFactor);
-    void AdditiveIconAdd(float fX, float fY, std::vector<UsedCommand::AdditiveIcon> &aList);
-    FRECT &GetPictureUV(long nTextureNum, long nPictureNum, FRECT &uv);
-    RECT &GetCurrentPos(long num, RECT &rpos) const;
-    RECT &GetAddingPos(long num, RECT &rpos);
-
-    void UpdateShowIcon();
-    void SetNote(const char *pcNote, long nX, long nY);
-
-    ATTRIBUTES *GetCurrentCommandAttribute() const;
 };

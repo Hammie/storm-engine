@@ -3,14 +3,8 @@
 #include "shared/battle_interface/msg_control.h"
 #include "vmodule_api.h"
 
-BIManCommandList::BIManCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
+BIManCommandList::BIManCommandList(ATTRIBUTES &pA, VDX9RENDER &rs) : BICommandList(pA, rs)
 {
-    Init();
-}
-
-BIManCommandList::~BIManCommandList()
-{
-    Release();
 }
 
 void BIManCommandList::FillIcons()
@@ -26,10 +20,14 @@ void BIManCommandList::FillIcons()
     if (m_nCurrentCommandMode & BI_COMMODE_ABILITY_ICONS)
         nIconsQuantity += AbilityAdding();
 
-    nIconsQuantity += AddCancelIcon();
-
-    /*if( nIconsQuantity == 0 )
-      AddCancelIcon();*/
+    if (core.GetTargetEngineVersion() >= storm::ENGINE_VERSION::PIRATES_OF_THE_CARIBBEAN)
+    {
+        AddCancelIcon();
+    }
+    else if (nIconsQuantity == 0)
+    {
+        AddCancelIcon();
+    }
 }
 
 void BIManCommandList::Init()
@@ -46,10 +44,6 @@ void BIManCommandList::Init()
         m_nIconShowMaxQuantity = pA->GetAttributeAsDword("CommandMaxIconQuantity", m_nIconShowMaxQuantity);
     }
     // boal <--
-}
-
-void BIManCommandList::Release()
-{
 }
 
 long BIManCommandList::CommandAdding()

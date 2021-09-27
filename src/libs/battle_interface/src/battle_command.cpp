@@ -5,14 +5,9 @@
 #include "sea/ships_list.h"
 #include "shared/battle_interface/msg_control.h"
 
-BICommandList::BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs)
+BICommandList::BICommandList(ATTRIBUTES &pA, VDX9RENDER &rs) : m_pARoot(&pA), renderer_(rs)
 {
-    m_idHostObj = eid;
-    m_pARoot = pA;
-    m_pRS = rs;
-
-    m_pImgRender = new BIImageRender(rs);
-    Assert(m_pImgRender);
+    m_pImgRender = std::make_unique<BIImageRender>(&rs);
 
     m_nStartUsedCommandIndex = 0;
     m_nSelectedCommandIndex = 0;
@@ -25,8 +20,6 @@ BICommandList::BICommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs)
     m_bUpArrow = m_bDownArrow = false;
 
     m_bActive = false;
-
-    Init();
 }
 
 BICommandList::~BICommandList()
@@ -57,7 +50,7 @@ void BICommandList::Draw()
         m_pImgRender->Render();
 
     if (!m_NoteText.empty())
-        m_pRS->ExtPrint(m_NoteFontID, m_NoteFontColor, 0, PR_ALIGN_CENTER, true, m_NoteFontScale, 0, 0, m_NotePos.x,
+        renderer_.ExtPrint(m_NoteFontID, m_NoteFontColor, 0, PR_ALIGN_CENTER, true, m_NoteFontScale, 0, 0, m_NotePos.x,
                         m_NotePos.y, "%s", m_NoteText.c_str());
 }
 
@@ -203,7 +196,7 @@ void BICommandList::SetUpDown(bool bUp, bool bDown)
 
 void BICommandList::Init()
 {
-    Assert(m_pImgRender);
+    Assert(m_pImgRender != nullptr);
     ATTRIBUTES *pAList, *pATextures;
 
     m_LeftTopPoint.x = 120;
@@ -212,7 +205,7 @@ void BICommandList::Init()
     m_IconSize.y = 64;
     m_nIconSpace = 8;
 
-    FONT_RELEASE(m_pRS, m_NoteFontID);
+    FONT_RELEASE((&renderer_), m_NoteFontID);
     m_NoteFontColor = ARGB(255, 255, 255, 255);
     m_NoteFontScale = 1.f;
     m_NoteOffset.x = m_NoteOffset.y = 0;
@@ -251,7 +244,7 @@ void BICommandList::Init()
 
         // get note font parameters
         if (pAList->GetAttribute("CommandNoteFont"))
-            m_NoteFontID = m_pRS->LoadFont(pAList->GetAttribute("CommandNoteFont"));
+            m_NoteFontID = renderer_.LoadFont(pAList->GetAttribute("CommandNoteFont"));
         m_NoteFontColor = pAList->GetAttributeAsDword("CommandNoteColor", m_NoteFontColor);
         m_NoteFontScale = pAList->GetAttributeAsFloat("CommandNoteScale", m_NoteFontScale);
         if (pAList->GetAttribute("CommandNoteOffset"))
@@ -378,8 +371,7 @@ void BICommandList::AddAdditiveToIconList(long nTextureNum, long nPictureNum, fl
 
 void BICommandList::Release()
 {
-    STORM_DELETE(m_pImgRender);
-    FONT_RELEASE(m_pRS, m_NoteFontID);
+    FONT_RELEASE((&renderer_), m_NoteFontID);
 }
 
 long BICommandList::IconAdd(long nPictureNum, long nTextureNum, RECT &rpos)
@@ -481,9 +473,6 @@ void BICommandList::UpdateShowIcon()
     rPos.right = rPos.left + m_pntActiveIconSize.x;
     rPos.bottom = rPos.top + m_pntActiveIconSize.y;
     m_pImgRender->CreateImage(BIType_square, m_sActiveIconTexture.c_str(), 0xFF808080, m_frActiveIconUV2, rPos);
-
-    m_bLeftArrow = m_nStartUsedCommandIndex > 0;
-    m_bRightArrow = false;
 
     long i = 0;
     for (auto n = m_nStartUsedCommandIndex; n < m_aUsedCommand.size() && i < m_nIconShowMaxQuantity; n++)

@@ -5,15 +5,12 @@
 class BIShipCommandList : public BICommandList
 {
   public:
-    BIShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs);
-    ~BIShipCommandList() override;
+    BIShipCommandList(ATTRIBUTES &pA, VDX9RENDER &rs);
 
     void FillIcons() override;
     void Init() override;
 
   protected:
-    void Release();
-
     long ShipAdding(bool allLabel, bool bMyShip, bool bEnemy, bool bNeutral, bool bFriend);
     long FortAdding(bool allLabel, bool bFriend, bool bNeutral, bool bEnemy);
     long LandAdding(bool allLabel);

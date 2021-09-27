@@ -3,14 +3,8 @@
 #include "shared/battle_interface/msg_control.h"
 #include "vmodule_api.h"
 
-WMShipCommandList::WMShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
+WMShipCommandList::WMShipCommandList(ATTRIBUTES &pA, VDX9RENDER &rs) : BICommandList(pA, rs)
 {
-    Init();
-}
-
-WMShipCommandList::~WMShipCommandList()
-{
-    Release();
 }
 
 void WMShipCommandList::FillIcons()
@@ -19,15 +13,6 @@ void WMShipCommandList::FillIcons()
 
     if (m_nCurrentCommandMode & BI_COMMODE_COMMAND_SELECT)
         nIconsQuantity += CommandAdding();
-}
-
-void WMShipCommandList::Init()
-{
-    BICommandList::Init();
-}
-
-void WMShipCommandList::Release()
-{
 }
 
 long WMShipCommandList::CommandAdding()

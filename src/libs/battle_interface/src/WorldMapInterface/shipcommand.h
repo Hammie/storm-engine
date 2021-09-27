@@ -5,14 +5,10 @@
 class WMShipCommandList : public BICommandList
 {
   public:
-    WMShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs);
-    ~WMShipCommandList() override;
+    WMShipCommandList(ATTRIBUTES &pA, VDX9RENDER &rs);
 
     void FillIcons() override;
-    void Init() override;
 
   protected:
-    void Release();
-
     long CommandAdding();
 };

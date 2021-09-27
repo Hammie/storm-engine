@@ -99,8 +99,10 @@ void WM_INTERFACE::LoadIniFile()
 
     m_nMainCharIndex = AttributesPointer ? AttributesPointer->GetAttributeAsDword("maincharindex", -1) : -1;
 
-    m_pCommandList = new WMShipCommandList(GetId(), AttributesPointer, rs);
+    Assert(AttributesPointer);
+    m_pCommandList = new WMShipCommandList(*AttributesPointer, *rs);
     Assert(m_pCommandList);
+    m_pCommandList->Init();
 
     UpdateCommandList();
 }

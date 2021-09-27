@@ -6,14 +6,8 @@
 #include "shared/battle_interface/msg_control.h"
 #include "ships_list.h"
 
-BIShipCommandList::BIShipCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs) : BICommandList(eid, pA, rs)
+BIShipCommandList::BIShipCommandList(ATTRIBUTES &pA, VDX9RENDER &rs): BICommandList(pA, rs)
 {
-    Init();
-}
-
-BIShipCommandList::~BIShipCommandList()
-{
-    Release();
 }
 
 void BIShipCommandList::FillIcons()
@@ -90,10 +84,6 @@ void BIShipCommandList::Init()
     {
         m_nIconShowMaxQuantity = pA->GetAttributeAsDword("CommandMaxIconQuantity", m_nIconShowMaxQuantity);
     }
-}
-
-void BIShipCommandList::Release()
-{
 }
 
 long BIShipCommandList::ShipAdding(bool allLabel, bool bMyShip, bool bEnemy, bool bNeutral, bool bFriend)

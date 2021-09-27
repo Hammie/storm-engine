@@ -5,15 +5,12 @@
 class BIManCommandList : public BICommandList
 {
   public:
-    BIManCommandList(entid_t eid, ATTRIBUTES *pA, VDX9RENDER *rs);
-    ~BIManCommandList() override;
+    BIManCommandList(ATTRIBUTES &pA, VDX9RENDER &rs);
 
     void FillIcons() override;
     void Init() override;
 
   protected:
-    void Release();
-
     long CommandAdding();
     long UserIconsAdding();
     long AbilityAdding();
