@@ -1,17 +1,19 @@
 #pragma once
 
 #include "image_defines.h"
+#include <gsl/gsl>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class BIImage;
 class BIImageRender;
 
-class BIImageMaterial
+class BIImageMaterial final
 {
   public:
-    BIImageMaterial(VDX9RENDER *pRS, BIImageRender *pImgRender);
-    ~BIImageMaterial();
+    BIImageMaterial(gsl::not_null<VDX9RENDER *> pRS, gsl::not_null<BIImageRender *> pImgRender);
+    ~BIImageMaterial() noexcept;
 
     void Render(long nBegPrior, long nEndPrior);
 
@@ -25,8 +27,8 @@ class BIImageMaterial
         return (m_sTechniqueName == pcTechniqueName);
     }
 
-    const BIImage *CreateImage(BIImageType type, uint32_t color, const FRECT &uv, long nLeft, long nTop, long nRight,
-                               long nBottom, long nPrior);
+    const gsl::not_null<BIImage *> CreateImage(BIImageType type, uint32_t color, const FRECT &uv, long nLeft, long nTop,
+                                               long nRight, long nBottom, long nPrior);
     void DeleteImage(const BIImage *pImg);
 
     void SetTexture(const char *pcTextureName);
@@ -42,38 +44,37 @@ class BIImageMaterial
         m_bMakeBufferUpdate = true;
     }
 
-    size_t GetImageQuantity() const
+    [[nodiscard]] size_t GetImageQuantity() const noexcept
     {
         return m_apImage.size();
     }
 
     void ReleaseAllImages();
 
-    long GetMinPriority() const
+    [[nodiscard]] long GetMinPriority() const noexcept
     {
         return m_nMinPriority;
     }
 
-    long GetMaxPriority() const
+    [[nodiscard]] long GetMaxPriority() const noexcept
     {
         return m_nMaxPriority;
     }
 
-    BIImageRender *GetImgRender() const
+    [[nodiscard]] BIImageRender &GetImgRender() const noexcept
     {
-        return m_pImageRender;
+        return *m_pImageRender;
     }
 
-  protected:
-    void Release();
+  private:
     void UpdateImageBuffers(long nStartIdx, size_t nEndIdx);
     void RemakeBuffers();
     bool GetOutputRangeByPriority(long nBegPrior, long nEndPrior, size_t &nStartIndex, size_t &nTriangleQuantity);
     void RecalculatePriorityRange();
     void InsertImageToList(BIImage *pImg);
 
-    VDX9RENDER *m_pRS;
-    BIImageRender *m_pImageRender;
+    gsl::not_null<VDX9RENDER *> m_pRS;
+    gsl::not_null<BIImageRender *> m_pImageRender;
 
     std::string m_sTextureName;
     std::string m_sTechniqueName;

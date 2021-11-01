@@ -3,10 +3,9 @@
 #include "image.h"
 #include "imgrender.h"
 
-BIImageMaterial::BIImageMaterial(VDX9RENDER *pRS, BIImageRender *pImgRender)
+BIImageMaterial::BIImageMaterial(gsl::not_null<VDX9RENDER *> pRS, gsl::not_null<BIImageRender *> pImgRender)
+    : m_pRS(pRS), m_pImageRender(pImgRender)
 {
-    m_pRS = pRS;
-    m_pImageRender = pImgRender;
     m_sTechniqueName = "battle_tex_col_Rectangle";
 
     m_nTextureID = -1;
@@ -22,9 +21,19 @@ BIImageMaterial::BIImageMaterial(VDX9RENDER *pRS, BIImageRender *pImgRender)
     m_nMaxPriority = ImagePrioritet_DefaultValue;
 }
 
-BIImageMaterial::~BIImageMaterial()
+BIImageMaterial::~BIImageMaterial() noexcept
 {
-    Release();
+    m_bDeleteEverything = true;
+    m_pImageRender->DeleteMaterial(this);
+    for (const auto &image : m_apImage)
+        delete image;
+    // m_apImage.DelAllWithPointers();
+    TEXTURE_RELEASE(m_pRS, m_nTextureID);
+    VERTEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
+    INDEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
+
+    m_nVertexQuantity = 0;
+    m_nTriangleQuantity = 0;
 }
 
 void BIImageMaterial::Render(long nBegPrior, long nEndPrior)
@@ -45,16 +54,17 @@ void BIImageMaterial::Render(long nBegPrior, long nEndPrior)
     }
 }
 
-const BIImage *BIImageMaterial::CreateImage(BIImageType type, uint32_t color, const FRECT &uv, long nLeft, long nTop,
-                                            long nRight, long nBottom, long nPrior)
+const gsl::not_null<BIImage *> BIImageMaterial::CreateImage(BIImageType type, uint32_t color, const FRECT &uv,
+                                                            long nLeft, long nTop, long nRight, long nBottom,
+                                                            long nPrior)
 {
-    auto *pImg = new BIImage(m_pRS, this);
+    auto *pImg = new BIImage(this);
     Assert(pImg);
     pImg->SetColor(color);
     pImg->SetPosition(nLeft, nTop, nRight, nBottom);
     pImg->SetUV(uv);
     pImg->SetType(type);
-    pImg->SetPrioritet(nPrior);
+    pImg->SetPriority(nPrior);
     InsertImageToList(pImg);
     // m_apImage.Add( pImg );
     m_bMakeBufferUpdate = true;
@@ -94,21 +104,6 @@ void BIImageMaterial::ReleaseAllImages()
     // m_apImage.DelAllWithPointers();
     m_bDeleteEverything = false;
     m_bMakeBufferUpdate = true;
-}
-
-void BIImageMaterial::Release()
-{
-    m_bDeleteEverything = true;
-    m_pImageRender->DeleteMaterial(this);
-    for (const auto &image : m_apImage)
-        delete image;
-    // m_apImage.DelAllWithPointers();
-    TEXTURE_RELEASE(m_pRS, m_nTextureID);
-    VERTEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
-    INDEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
-
-    m_nVertexQuantity = 0;
-    m_nTriangleQuantity = 0;
 }
 
 void BIImageMaterial::UpdateImageBuffers(long nStartIdx, size_t nEndIdx)
@@ -178,14 +173,14 @@ bool BIImageMaterial::GetOutputRangeByPriority(long nBegPrior, long nEndPrior, s
 {
     if (m_apImage.size() == 0)
         return false;
-    if (m_apImage[0]->GetPrioritet() > nEndPrior || m_apImage.back()->GetPrioritet() < nBegPrior)
+    if (m_apImage[0]->GetPriority() > nEndPrior || m_apImage.back()->GetPriority() < nBegPrior)
         return false;
 
     nStartIndex = 0;
     long n;
     for (n = 0; n < m_apImage.size(); n++)
     {
-        if (m_apImage[n]->GetPrioritet() >= nBegPrior)
+        if (m_apImage[n]->GetPriority() >= nBegPrior)
             break;
         nStartIndex += m_apImage[n]->GetTriangleQuantity() * 3;
     }
@@ -193,7 +188,7 @@ bool BIImageMaterial::GetOutputRangeByPriority(long nBegPrior, long nEndPrior, s
     nTriangleQuantity = 0;
     for (; n < m_apImage.size(); n++)
     {
-        if (m_apImage[n]->GetPrioritet() > nEndPrior)
+        if (m_apImage[n]->GetPriority() > nEndPrior)
             break;
         nTriangleQuantity += m_apImage[n]->GetTriangleQuantity();
     }
@@ -207,10 +202,10 @@ void BIImageMaterial::RecalculatePriorityRange()
         return;
     const auto oldMin = m_nMinPriority;
     const auto oldMax = m_nMaxPriority;
-    m_nMinPriority = m_nMaxPriority = m_apImage[0]->GetPrioritet();
+    m_nMinPriority = m_nMaxPriority = m_apImage[0]->GetPriority();
     for (long n = 1; n < m_apImage.size(); n++)
     {
-        const auto p = m_apImage[n]->GetPrioritet();
+        const auto p = m_apImage[n]->GetPriority();
         if (p < m_nMinPriority)
             m_nMinPriority = p;
         else if (p > m_nMaxPriority)
@@ -223,10 +218,10 @@ void BIImageMaterial::RecalculatePriorityRange()
 void BIImageMaterial::InsertImageToList(BIImage *pImg)
 {
     Assert(pImg);
-    const auto nPrior = pImg->GetPrioritet();
+    const auto nPrior = pImg->GetPriority();
     long n;
     for (n = 0; n < m_apImage.size(); n++)
-        if (m_apImage[n]->GetPrioritet() > nPrior)
+        if (m_apImage[n]->GetPriority() > nPrior)
             break;
 
     m_apImage.insert(m_apImage.begin() + n, pImg);

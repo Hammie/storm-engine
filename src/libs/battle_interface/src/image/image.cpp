@@ -1,19 +1,22 @@
 #include "image.h"
 #include "imgrender.h"
 
-BIImage::BIImage(VDX9RENDER *rs, BIImageMaterial *pMaterial)
-    : m_BasePos(), m_BaseUV(), m_dwColor(0), m_eType()
+namespace {
+
+constexpr float CalculateMidPos(float fMin, float fMax, float fK) noexcept
 {
-    m_pRS = rs;
-    m_pMaterial = pMaterial;
-    m_nVertexQuantity = 4;
-    m_nTriangleQuantity = 2;
-    m_nPrioritet = ImagePrioritet_DefaultValue;
+    return fMin + fK * (fMax - fMin);
 }
+
+} // namespace
+
+BIImage::BIImage(gsl::not_null<BIImageMaterial *> pMaterial)
+    : m_pMaterial(pMaterial)
+{}
 
 BIImage::~BIImage()
 {
-    Release();
+    m_pMaterial->DeleteImage(this);
 }
 
 void BIImage::FillBuffers(BI_IMAGE_VERTEX *pV, uint16_t *pT, size_t &nV, size_t &nT)
@@ -70,9 +73,9 @@ void BIImage::SetColor(uint32_t color)
 
 void BIImage::SetPosition(long nLeft, long nTop, long nRight, long nBottom)
 {
-    m_pMaterial->GetImgRender()->TranslateBasePosToRealPos(static_cast<float>(nLeft), static_cast<float>(nTop),
+    m_pMaterial->GetImgRender().TranslateBasePosToRealPos(static_cast<float>(nLeft), static_cast<float>(nTop),
                                                            m_BasePos.left, m_BasePos.top);
-    m_pMaterial->GetImgRender()->TranslateBasePosToRealPos(static_cast<float>(nRight), static_cast<float>(nBottom),
+    m_pMaterial->GetImgRender().TranslateBasePosToRealPos(static_cast<float>(nRight), static_cast<float>(nBottom),
                                                            m_BasePos.right, m_BasePos.bottom);
     m_pMaterial->UpdateFlagOn();
 }
@@ -227,9 +230,4 @@ float BIImage::GetPrevClockCorner(float fAng)
         if (fAng > f)
             return f;
     return fAng - .25f;
-}
-
-void BIImage::Release() const
-{
-    m_pMaterial->DeleteImage(this);
 }

@@ -23,7 +23,7 @@ class BICommandList
     BICommandList(const BICommandList &) = delete;
 
     BICommandList(ATTRIBUTES &pA, VDX9RENDER &rs);
-    virtual ~BICommandList();
+    virtual ~BICommandList() noexcept;
 
     void Draw();
     void Update(long nTopLine, long nCharacterIndex, long nCommandMode);
@@ -80,9 +80,6 @@ class BICommandList
         std::vector<AdditiveIcon> aAddPicList;
     };
 
-    void Release();
-
-    long IconAdd(long nPictureNum, long nTextureNum, RECT &rpos);
     long ClockIconAdd(long nForePictureNum, long nBackPictureNum, long nTextureNum, RECT &rpos, float fFactor);
     void AdditiveIconAdd(float fX, float fY, std::vector<UsedCommand::AdditiveIcon> &aList);
     FRECT &GetPictureUV(long nTextureNum, long nPictureNum, FRECT &uv);
@@ -102,6 +99,10 @@ class BICommandList
     long m_nIconShowMaxQuantity = 5;
 
   private:
+    void Release();
+
+    long IconAdd(long nPictureNum, long nTextureNum, RECT &rpos);
+
     VDX9RENDER &renderer_;
 
     std::unique_ptr<BIImageRender> m_pImgRender{};

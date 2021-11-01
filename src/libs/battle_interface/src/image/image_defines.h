@@ -42,25 +42,5 @@ class IBIImage
     virtual void CutClock(float fBegin, float fEnd, float fFactor) = 0;
 };
 
-class IBIString
-{
-  protected:
-    IBIString()
-    {
-    }
-
-  public:
-    virtual ~IBIString()
-    {
-    }
-
-    virtual void SetColor(uint32_t color) = 0;
-    virtual void SetScale(float fScale) = 0;
-    virtual void SetFont(const char *pcFontName) = 0;
-    virtual void SetAlign(long nHorzAlign, long nVertAlign) = 0;
-    virtual void SetPosition(long nLeft, long nTop, long nRight, long nBottom) = 0;
-    virtual void SetString(const char *pcStr) = 0;
-};
-
-#define ImagePrioritet_MaxValue 100000
-#define ImagePrioritet_DefaultValue 10000
+constexpr long ImagePrioritet_MaxValue = 10000;
+constexpr long ImagePrioritet_DefaultValue = 10000;

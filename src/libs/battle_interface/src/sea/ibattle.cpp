@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "ibattle.h"
 
 #include "core.h"
@@ -19,8 +17,6 @@
 #include "../timer/Timer.h"
 
 #include "shared/battle_interface/msg_control.h"
-
-#include "../interfacemanager/InterfaceManager.h"
 
 #include "ShipInfoImages.h"
 
@@ -43,8 +39,6 @@ CREATE_CLASS(BITimer)
 CREATE_CLASS(ItemEntity)
 
 CREATE_CLASS(WM_INTERFACE)
-
-CREATE_CLASS(BI_InterfaceManager)
 
 SHIP_DESCRIBE_LIST g_ShipList;
 ISLAND_DESCRIBER g_IslandDescr;

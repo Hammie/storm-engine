@@ -3,20 +3,22 @@
 #include "image_defines.h"
 #include <vector>
 
+#include <gsl/gsl>
+
 class BIImageMaterial;
 
-class BIImage : public IBIImage
+class BIImage final : public IBIImage
 {
   public:
-    BIImage(VDX9RENDER *rs, BIImageMaterial *pMaterial);
+    explicit BIImage(gsl::not_null<BIImageMaterial *> pMaterial);
     ~BIImage() override;
 
-    size_t GetVertexQuantity() const
+    [[nodiscard]] size_t GetVertexQuantity() const noexcept
     {
         return m_nVertexQuantity;
     }
 
-    size_t GetTriangleQuantity() const
+    [[nodiscard]] size_t GetTriangleQuantity() const noexcept
     {
         return m_nTriangleQuantity;
     }
@@ -31,40 +33,33 @@ class BIImage : public IBIImage
 
     void CutSide(float fleft, float fright, float ftop, float fbottom) override;
     void CutClock(float fBegin, float fEnd, float fFactor) override;
-    FPOINT &GetClockPoint(float fAng, FPOINT &fp);
-    float GetNextClockCorner(float fAng);
-    float GetPrevClockCorner(float fAng);
 
-    long GetPrioritet() const
+    [[nodiscard]] long GetPriority() const noexcept
     {
-        return m_nPrioritet;
+        return priority_;
     }
 
-    void SetPrioritet(long nPrior)
+    void SetPriority(long priority) noexcept
     {
-        m_nPrioritet = nPrior;
+        priority_ = priority;
     }
 
-  protected:
-    float CalculateMidPos(float fMin, float fMax, float fK)
-    {
-        return fMin + fK * (fMax - fMin);
-    }
+  private:
+    static FPOINT &GetClockPoint(float fAng, FPOINT &fp);
+    static float GetNextClockCorner(float fAng);
+    static float GetPrevClockCorner(float fAng);
 
-    void Release() const;
+    gsl::not_null<BIImageMaterial *> m_pMaterial;
 
-    VDX9RENDER *m_pRS;
-    BIImageMaterial *m_pMaterial;
+    size_t m_nVertexQuantity = 4;
+    size_t m_nTriangleQuantity = 2;
 
-    size_t m_nVertexQuantity;
-    size_t m_nTriangleQuantity;
-
-    FRECT m_BasePos;
-    FRECT m_BaseUV;
-    uint32_t m_dwColor;
+    FRECT m_BasePos{};
+    FRECT m_BaseUV{};
+    uint32_t m_dwColor{};
 
     std::vector<FPOINT> m_aRelPos;
-    BIImageType m_eType;
+    BIImageType m_eType{};
 
-    long m_nPrioritet;
+    long priority_ = ImagePrioritet_DefaultValue;
 };

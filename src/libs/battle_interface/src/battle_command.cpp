@@ -396,9 +396,8 @@ long BICommandList::ClockIconAdd(long nForePictureNum, long nBackPictureNum, lon
     FRECT uv;
     m_pImgRender->CreateImage(BIType_square, m_aTexture[nTextureNum].sFileName.c_str(), 0xFF808080,
                               GetPictureUV(nTextureNum, nBackPictureNum, uv), rpos);
-    auto *pImg = m_pImgRender->CreateImage(BIType_clocksquare, m_aTexture[nTextureNum].sFileName.c_str(), 0xFF808080,
+    auto pImg = m_pImgRender->CreateImage(BIType_clocksquare, m_aTexture[nTextureNum].sFileName.c_str(), 0xFF808080,
                                            GetPictureUV(nTextureNum, nForePictureNum, uv), rpos);
-    if (pImg)
         pImg->CutClock(0.f, 1.f, fFactor);
     return 1;
 }

@@ -11,6 +11,7 @@
 #include "shared/battle_interface/msg_control.h"
 #include "shared/events.h"
 #include "shared/messages.h"
+#include "../image/image.h"
 
 void ISPYGLASS::ImageParam::Release()
 {
@@ -31,7 +32,7 @@ void ISPYGLASS::ImageParam::LoadFromAttr(BIImageRender *pImgRender, ATTRIBUTES *
     rPos.bottom = nDefBottomPos;
     BIUtils::ReadRectFromAttr(pA, "pos", rPos, rPos);
     pImage = static_cast<BIImage *>(
-        pImgRender->CreateImage(BIType_square, sTextureName.c_str(), dwColor, rUV, rPos, nPrior));
+        pImgRender->CreateImage(BIType_square, sTextureName.c_str(), dwColor, rUV, rPos, nPrior).get());
     Assert(pImage);
 }
 
@@ -44,11 +45,11 @@ void ISPYGLASS::ImageParam::ChangeIcon(BIImageRender *pImgRender, const char *pc
     }
     else
     {
-        const auto nPrior = pImage ? pImage->GetPrioritet() : ImagePrioritet_DefaultValue;
+        const auto nPrior = pImage ? pImage->GetPriority() : ImagePrioritet_DefaultValue;
         STORM_DELETE(pImage);
         sTextureName = pcTextureName;
         pImage = static_cast<BIImage *>(
-            pImgRender->CreateImage(BIType_square, sTextureName.c_str(), dwColor, rUV, rPos, nPrior));
+            pImgRender->CreateImage(BIType_square, sTextureName.c_str(), dwColor, rUV, rPos, nPrior).get());
     }
 }
 
