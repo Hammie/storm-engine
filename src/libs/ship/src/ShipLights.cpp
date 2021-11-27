@@ -642,7 +642,7 @@ void ShipLights::Realize(uint32_t dwDeltaTime)
         cColor.Normalize();
         cColor = cColor * 255.0f * L.fFlareAlpha;
         cColor.a = Clamp(L.fFlareAlpha * fReflSize);
-        r.dwColor = ARGB(cColor.a, cColor.r, cColor.g, cColor.b);
+        r.dwColor = ARGB(static_cast<uint8_t>(cColor.a), static_cast<uint8_t>(cColor.r), static_cast<uint8_t>(cColor.g), static_cast<uint8_t>(cColor.b));
         aRects.push_back(r);
     }
 

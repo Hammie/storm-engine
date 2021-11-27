@@ -1,8 +1,9 @@
+#pragma once
+
 #include <limits>
 #include <cstddef>
 
-namespace storm {
-namespace detail {
+namespace storm::detail {
 
 class BaseHandle
 {
@@ -13,10 +14,10 @@ public:
 		: index_(index)
 	{ }
 
-	constexpr size_t Index () const noexcept
+	[[nodiscard]] constexpr size_t Index () const noexcept
 	{ return index_; }
 
-	constexpr bool IsValid () const noexcept
+	[[nodiscard]] constexpr bool IsValid () const noexcept
 	{ return index_ != InvalidIndex; }
 
 protected:
@@ -57,5 +58,4 @@ public: \
 	} \
 };
 
-} // namespace detail
-} // namespace storm
+} // namespace storm::detail

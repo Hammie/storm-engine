@@ -1398,7 +1398,7 @@ void SEA::Realize(uint32_t dwDeltaTime)
         uint32_t dw2 = static_cast<long>(fBumpMapFrame + 1.0f) % aBumpMaps.size();
 
         float fAlpha = 255.0f * (fBumpMapFrame - static_cast<float>(static_cast<long>(fBumpMapFrame)));
-        rs->SetRenderState(D3DRS_TEXTUREFACTOR, ARGB(fAlpha, 0, 0, 0));
+        rs->SetRenderState(D3DRS_TEXTUREFACTOR, ARGB(static_cast<uint8_t>(fAlpha), 0, 0, 0));
 
         rs->SetTexture(0, aBumpMaps[dw1]);
         rs->SetTexture(1, aBumpMaps[dw2]);
@@ -1688,7 +1688,7 @@ void SEA::Realize(uint32_t dwDeltaTime)
             r.vPos = aSeaTrash[i].vPos;
             r.fSize = aSeaTrash[i].fSize;
             r.fAngle = 0.0f;
-            r.dwColor = ARGB(fAlpha * 255.0f, 255, 255, 255);
+            r.dwColor = ARGB(static_cast<uint8_t>(fAlpha * 255.0f), 255, 255, 255);
             r.dwSubTexture = aSeaTrash[i].dwSubTexture;
         }
 
@@ -1749,7 +1749,7 @@ void SEA::Realize(uint32_t dwDeltaTime)
             r.vPos = CVECTOR(v.x, WaveXZ(v.x, v.z) - 5.0f, v.z);
             r.fSize = 20.0f;
             r.fAngle = 0.0f;
-            r.dwColor = ARGB(0.07f * fAlphaK * fAlpha * 255.0f, 227, 245, 153);
+            r.dwColor = ARGB(static_cast<uint8_t>(0.07f * fAlphaK * fAlpha * 255.0f), 227, 245, 153);
             r.dwSubTexture = aSeaLights[i].dwSubTexture;
         }
 

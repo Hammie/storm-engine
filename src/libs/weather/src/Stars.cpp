@@ -205,7 +205,7 @@ void Astronomy::STARS::Init(ATTRIBUTES *pAP)
                 s.fAlpha = (vPos.y < fHeightFade) ? Clamp(vPos.y / fHeightFade) : 1.0f;
 
                 pVPos[i] = vPos;
-                pVColors[i] = ARGB(s.fAlpha * 255.0f, 255, 255, 255);
+                pVColors[i] = ARGB(static_cast<uint8_t>(s.fAlpha * 255.0f), 255, 255, 255);
             }
             // core.Trace("Stars: min = %.3f, max = %.3f", fMinMag, fMaxMag);
 

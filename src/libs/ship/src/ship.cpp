@@ -1027,7 +1027,7 @@ void SHIP::SetLightAndFog(bool bSetLight)
         const auto fScale = Bring2Range(0.0f, 1.0f, -35.0f, 0.0f, State.vPos.y);
         pRS->GetRenderState(D3DRS_AMBIENT, &dwSaveAmbient);
         const CVECTOR vAmbient = fScale * COLOR2VECTOR(dwSaveAmbient);
-        pRS->SetRenderState(D3DRS_AMBIENT, ARGB((dwSaveAmbient >> 24L), vAmbient.x, vAmbient.y, vAmbient.z));
+        pRS->SetRenderState(D3DRS_AMBIENT, ARGB((dwSaveAmbient >> 24L), static_cast<uint8_t>(vAmbient.x), static_cast<uint8_t>(vAmbient.y), static_cast<uint8_t>(vAmbient.z)));
 
         // light
         D3DLIGHT9 newLight;
@@ -1051,7 +1051,7 @@ void SHIP::SetLightAndFog(bool bSetLight)
         const auto fFogScale = Bring2Range(0.0f, 1.0f, -30.0f, 0.0f, State.vPos.y);
         pRS->GetRenderState(D3DRS_FOGCOLOR, &dwSaveFogColor);
         const CVECTOR vFogColor = fFogScale * COLOR2VECTOR(dwSaveFogColor);
-        pRS->SetRenderState(D3DRS_FOGCOLOR, ARGB((dwSaveFogColor >> 24L), vFogColor.x, vFogColor.y, vFogColor.z));
+        pRS->SetRenderState(D3DRS_FOGCOLOR, ARGB((dwSaveFogColor >> 24L), static_cast<uint8_t>(vFogColor.x), static_cast<uint8_t>(vFogColor.y), static_cast<uint8_t>(vFogColor.z)));
     }
 }
 

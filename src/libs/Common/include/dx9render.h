@@ -4,6 +4,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 
+#include "storm/common/Handles.hpp"
 #include "Entity.h"
 #include "Matrix.h"
 #include "service.h"
@@ -186,6 +187,20 @@ class VDX9RENDER : public SERVICE
     virtual void UnLockIndexBuffer(long id) = 0;
     virtual void ReleaseVertexBuffer(long id) = 0;
     virtual void ReleaseIndexBuffer(long id) = 0;
+
+    virtual void ReleaseBuffer(storm::VertexBufferHandle& vertex_buffer) {
+        if (vertex_buffer.IsValid()) {
+            ReleaseVertexBuffer(vertex_buffer.Index());
+            vertex_buffer.Invalidate();
+        }
+    }
+
+    virtual void ReleaseBuffer(storm::IndexBufferHandle& index_buffer) {
+        if (index_buffer.IsValid()) {
+            ReleaseIndexBuffer(index_buffer.Index());
+            index_buffer.Invalidate();
+        }
+    }
 
     // DX9Render: Render/Texture States Section
     virtual uint32_t SetRenderState(uint32_t State, uint32_t Value) = 0;

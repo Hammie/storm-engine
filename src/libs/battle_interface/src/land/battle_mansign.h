@@ -1,12 +1,45 @@
 #pragma once
 
 #include "../bi_defines.h"
+#include "../Renderer.hpp"
+
 #include <string>
 #include <vector>
 
-#define MAX_MAN_QUANTITY 10
+#include <storm/common/Color.hpp>
+
+constexpr static size_t MAX_MAN_QUANTITY = 10;
 
 class BIManCommandList;
+
+namespace storm::graphics
+{
+
+struct Material
+{
+  public:
+    Color color;
+    TextureHandle diffuseTexture;
+};
+
+class Sprite
+{
+  public:
+    FRECT position{0, 0, 1, 1};
+    FRECT uv{0, 1, 1, 0};
+    Material material;
+};
+
+inline void ReleaseTexture(VDX9RENDER &renderer, TextureHandle &texture)
+{
+    if (texture.IsValid())
+    {
+        renderer.TextureRelease(texture.Index());
+        texture.Invalidate();
+    }
+}
+
+} // namespace storm::graphics
 
 class BIManSign
 {
@@ -70,15 +103,15 @@ class BIManSign
     entid_t m_idHostEntity;
     long m_nCommandMode;
 
-    long m_nVBufID;
-    long m_nIBufID;
+    storm::VertexBufferHandle m_nVBufID;
+    storm::IndexBufferHandle m_nIBufID;
     long m_nSquareQ;
 
     long m_nMaxSquareQ;
 
     long m_nBackTextureID;
     long m_nBackSquareQ;
-    uint32_t m_dwBackColor;
+    storm::Color m_dwBackColor;
     FRECT m_rBackUV;
     BIFPOINT m_pntBackOffset;
     FPOINT m_pntBackIconSize;
@@ -123,9 +156,9 @@ class BIManSign
 
     struct ManDescr
     {
+        storm::graphics::Sprite sprite;
         FPOINT pntPos; // center
         std::string sTexture;
-        long nTexture;
         FRECT rUV;
 
         long nSlotIndex;
@@ -135,7 +168,9 @@ class BIManSign
         bool bAlarm;
         long nShootMax;
         long nShootCurrent;
-    } m_Man[MAX_MAN_QUANTITY];
+    };
+
+    std::array<ManDescr, MAX_MAN_QUANTITY> m_Man;
 
     long m_nManQuantity;
     long m_nCurrentManIndex;

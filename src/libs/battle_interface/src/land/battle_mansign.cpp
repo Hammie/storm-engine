@@ -13,8 +13,6 @@ BIManSign::BIManSign(entid_t BIEntityID, VDX9RENDER *pRS)
     m_pCommandList = nullptr;
     m_nManQuantity = 0;
 
-    m_nVBufID = -1;
-    m_nIBufID = -1;
     m_nBackTextureID = -1;
     m_nManStateTextureID = -1;
     m_nGunChargeTextureID = -1;
@@ -32,9 +30,6 @@ BIManSign::BIManSign(entid_t BIEntityID, VDX9RENDER *pRS)
     m_nCommandListVerticalOffset = -48;
 
     m_nCurrentManIndex = 0;
-
-    for (long n = 0; n < MAX_MAN_QUANTITY; n++)
-        m_Man[n].nTexture = -1;
 
     m_bIsAlarmOn = false;
     m_nAlarmTextureID = -1;
@@ -73,15 +68,15 @@ void BIManSign::Draw()
         m_bMakeVertexFill = false;
     }
 
-    if (m_nVBufID != -1 && m_nIBufID != -1)
+    if (m_nVBufID.IsValid() && m_nIBufID.IsValid())
     {
         long nStartV = 0;
         const long nStartI = 0;
 
         for (long n = 0; n < m_nManQuantity; n++)
         {
-            m_pRS->TextureSet(0, m_Man[n].nTexture);
-            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, 4, nStartI, 2,
+            m_pRS->TextureSet(0, m_Man[n].sprite.material.diffuseTexture.Index());
+            m_pRS->DrawBuffer(m_nVBufID.Index(), sizeof(BI_COLOR_VERTEX), m_nIBufID.Index(), nStartV, 4, nStartI, 2,
                               "battle_colorRectangle");
             nStartV += 4;
         }
@@ -90,15 +85,15 @@ void BIManSign::Draw()
         if (m_nBackSquareQ > 0)
         {
             m_pRS->TextureSet(0, m_nBackTextureID);
-            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, m_nBackSquareQ * 4, nStartI,
-                              m_nBackSquareQ * 2, "battle_colorRectangle");
+            m_pRS->DrawBuffer(m_nVBufID.Index(), sizeof(BI_COLOR_VERTEX), m_nIBufID.Index(), nStartV,
+                              m_nBackSquareQ * 4, nStartI, m_nBackSquareQ * 2, "battle_colorRectangle");
         }
         nStartV += m_nBackSquareQ * 4;
 
         if (m_bIsAlarmOn && m_nManQuantity > 0)
         {
             m_pRS->TextureSet(0, m_nAlarmTextureID);
-            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, 4, nStartI, 2,
+            m_pRS->DrawBuffer(m_nVBufID.Index(), sizeof(BI_COLOR_VERTEX), m_nIBufID.Index(), nStartV, 4, nStartI, 2,
                               "battle_tex_col_Rectangle");
             nStartV += 4;
         }
@@ -107,8 +102,8 @@ void BIManSign::Draw()
         if (m_nManStateSquareQ > 0)
         {
             m_pRS->TextureSet(0, m_nManStateTextureID);
-            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, m_nManStateSquareQ * 4, nStartI,
-                              m_nManStateSquareQ * 2, "battle_colorRectangle");
+            m_pRS->DrawBuffer(m_nVBufID.Index(), sizeof(BI_COLOR_VERTEX), m_nIBufID.Index(), nStartV,
+                              m_nManStateSquareQ * 4, nStartI, m_nManStateSquareQ * 2, "battle_colorRectangle");
         }
         nStartV += m_nManStateSquareQ * 4;
 
@@ -116,8 +111,8 @@ void BIManSign::Draw()
         if (m_nGunChargeSquareQ > 0)
         {
             m_pRS->TextureSet(0, m_nGunChargeTextureID);
-            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, m_nGunChargeSquareQ * 4, nStartI,
-                              m_nGunChargeSquareQ * 2, "battle_alphacutcolor");
+            m_pRS->DrawBuffer(m_nVBufID.Index(), sizeof(BI_COLOR_VERTEX), m_nIBufID.Index(), nStartV,
+                              m_nGunChargeSquareQ * 4, nStartI, m_nGunChargeSquareQ * 2, "battle_alphacutcolor");
         }
         nStartV += m_nGunChargeSquareQ * 4;
     }
@@ -141,7 +136,7 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
 
     // default value
     m_nBackTextureID = -1;
-    m_dwBackColor = ARGB(255, 128, 128, 128);
+    m_dwBackColor = storm::Color(128, 128, 128);
     FULLRECT(m_rBackUV);
     ZERROPOINT(m_pntBackOffset);
     FILLPOINT(m_pntBackIconSize, 128, 128);
@@ -190,7 +185,7 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
         pcTmp = pA->GetAttribute("backtexturename");
         if (pcTmp)
             m_nBackTextureID = m_pRS->TextureCreate(pcTmp);
-        m_dwBackColor = pA->GetAttributeAsDword("backcolor", m_dwBackColor);
+        m_dwBackColor = storm::Color(pA->GetAttributeAsDword("backcolor", static_cast<uint32_t>(m_dwBackColor)));
         pcTmp = pA->GetAttribute("backuv");
         if (pcTmp)
             sscanf(pcTmp, "%f,%f,%f,%f", &m_rBackUV.left, &m_rBackUV.top, &m_rBackUV.right, &m_rBackUV.bottom);
@@ -285,7 +280,10 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
             sprintf_s(param, sizeof(param), "iconoffset%d", n + 1);
             pcTmp = pA->GetAttribute(param);
             if (pcTmp)
+            {
                 sscanf(pcTmp, "%f,%f", &m_Man[n].pntPos.x, &m_Man[n].pntPos.y);
+            }
+            m_Man[n].sprite.material.color = storm::Color(m_dwManFaceColor);
         }
     }
 
@@ -403,8 +401,8 @@ void BIManSign::Release()
     // TEXTURE_RELEASE( m_pRS, m_nShipTextureID );
     TEXTURE_RELEASE(m_pRS, m_nManStateTextureID);
     TEXTURE_RELEASE(m_pRS, m_nGunChargeTextureID);
-    VERTEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
-    INDEX_BUFFER_RELEASE(m_pRS, m_nIBufID);
+    m_pRS->ReleaseBuffer(m_nVBufID);
+    m_pRS->ReleaseBuffer(m_nIBufID);
 
     m_nMaxSquareQ = 0;
     m_nSquareQ = 0;
@@ -462,27 +460,27 @@ void BIManSign::UpdateBuffers(long nShipQ)
     if (m_nMaxSquareQ != nMaxSquareQ)
     {
         m_nMaxSquareQ = nMaxSquareQ;
-        INDEX_BUFFER_RELEASE(m_pRS, m_nIBufID);
+        m_pRS->ReleaseBuffer(m_nIBufID);
         if (m_nMaxSquareQ > 0)
-            m_nIBufID = m_pRS->CreateIndexBuffer(m_nMaxSquareQ * 6 * sizeof(uint16_t));
+            m_nIBufID = storm::IndexBufferHandle(m_pRS->CreateIndexBuffer(m_nMaxSquareQ * 6 * sizeof(uint16_t)));
         FillIndexBuffer();
     }
 
     if ((m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + nManSquareQ + nAlarmSquareQ) != m_nSquareQ)
     {
         m_nSquareQ = m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + nManSquareQ + nAlarmSquareQ;
-        VERTEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
-        m_nVBufID = m_pRS->CreateVertexBuffer(BI_COLOR_VERTEX_FORMAT, m_nSquareQ * 4 * sizeof(BI_COLOR_VERTEX),
-                                              D3DUSAGE_WRITEONLY);
+        m_pRS->ReleaseBuffer(m_nVBufID);
+        m_nVBufID = storm::VertexBufferHandle(m_pRS->CreateVertexBuffer(
+            BI_COLOR_VERTEX_FORMAT, m_nSquareQ * 4 * sizeof(BI_COLOR_VERTEX), D3DUSAGE_WRITEONLY));
     }
     // FillVertexBuffer();
 }
 
 void BIManSign::FillIndexBuffer() const
 {
-    if (m_nIBufID < 0)
+    if (!m_nIBufID.IsValid())
         return;
-    auto *pI = static_cast<uint16_t *>(m_pRS->LockIndexBuffer(m_nIBufID));
+    auto *pI = static_cast<uint16_t *>(m_pRS->LockIndexBuffer(m_nIBufID.Index()));
     if (pI)
     {
         for (long n = 0; n < m_nMaxSquareQ; n++)
@@ -495,29 +493,32 @@ void BIManSign::FillIndexBuffer() const
             pI[n * 6 + 4] = static_cast<uint16_t>(n * 4 + 1);
             pI[n * 6 + 5] = static_cast<uint16_t>(n * 4 + 3);
         }
-        m_pRS->UnLockIndexBuffer(m_nIBufID);
+        m_pRS->UnLockIndexBuffer(m_nIBufID.Index());
     }
 }
 
 void BIManSign::FillVertexBuffer()
 {
     long n;
-    if (m_nVBufID < 0)
+    if (!m_nVBufID.IsValid())
         return;
-    auto *pV = static_cast<BI_COLOR_VERTEX *>(m_pRS->LockVertexBuffer(m_nVBufID));
+    auto *pV = static_cast<BI_COLOR_VERTEX *>(m_pRS->LockVertexBuffer(m_nVBufID.Index()));
     if (pV)
     {
         long vn = 0;
 
         // face
         for (n = 0; n < m_nManQuantity; n++)
-            vn += WriteSquareToVBuff(&pV[vn], m_Man[n].rUV, m_dwManFaceColor, m_Man[n].pntPos + m_pntManPicOffset,
-                                     m_pntManPicIconSize);
+        {
+            WriteSquareToVBuff(&pV[vn], m_Man[n].rUV, static_cast<uint32_t>(m_Man[n].sprite.material.color),
+                               m_Man[n].pntPos + m_pntManPicOffset, m_pntManPicIconSize);
+            vn += 4;
+        }
 
         // back icon
         for (n = 0; n < m_nManQuantity; n++)
-            vn += WriteSquareToVBuff(&pV[vn], m_rBackUV, m_dwBackColor, m_Man[n].pntPos + m_pntBackOffset,
-                                     m_pntBackIconSize);
+            vn += WriteSquareToVBuff(&pV[vn], m_rBackUV, static_cast<uint32_t>(m_dwBackColor),
+                                     m_Man[n].pntPos + m_pntBackOffset, m_pntBackIconSize);
 
         // alarm icon
         if (m_bIsAlarmOn && m_nManQuantity > 0)
@@ -549,7 +550,7 @@ void BIManSign::FillVertexBuffer()
                                                  0.f, 0.f, GetProgressGunCharge(n));
         }
 
-        m_pRS->UnLockVertexBuffer(m_nVBufID);
+        m_pRS->UnLockVertexBuffer(m_nVBufID.Index());
     }
 }
 
@@ -754,8 +755,9 @@ void BIManSign::CheckDataChange()
         {
             if (StringACompare(pA, "texture", m_Man[n].sTexture))
             {
-                TEXTURE_RELEASE(m_pRS, m_Man[n].nTexture);
-                m_Man[n].nTexture = m_pRS->TextureCreate(m_Man[n].sTexture.c_str());
+                storm::graphics::ReleaseTexture(*m_pRS, m_Man[n].sprite.material.diffuseTexture);
+                m_Man[n].sprite.material.diffuseTexture =
+                    storm::TextureHandle(m_pRS->TextureCreate(m_Man[n].sTexture.c_str()));
                 m_bMakeVertexFill = true;
             }
         }

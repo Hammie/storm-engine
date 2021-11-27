@@ -367,7 +367,7 @@ void ShipTracks::ShipTrack::Execute(float fDeltaTime)
                     pV[i * dwTrackStep1 + xxx].vPos = vPos - vCurPos;
                     pV[i * dwTrackStep1 + xxx].tu = xx / (fTrackStep1 - 1.0f);
                     pV[i * dwTrackStep1 + xxx].tv = T.fTV;
-                    pV[i * dwTrackStep1 + xxx].dwColor = ARGB(T.fAlpha * 255.0f, 0, 0, 0);
+                    pV[i * dwTrackStep1 + xxx].dwColor = ARGB(static_cast<uint8_t>(T.fAlpha * 255.0f), 0, 0, 0);
                     xxx++;
                 }
             }
@@ -409,7 +409,7 @@ void ShipTracks::ShipTrack::Execute(float fDeltaTime)
                     pV[i * dwTrackStep2 + xxx].vPos = vPos - vCurPos;
                     pV[i * dwTrackStep2 + xxx].tu = static_cast<float>(xx) / (fTrackStep2 - 1.0f);
                     pV[i * dwTrackStep2 + xxx].tv = T.fTV * 6.0f;
-                    pV[i * dwTrackStep2 + xxx].dwColor = ARGB(T.fAlpha * 255.0f, 0, 0, 0);
+                    pV[i * dwTrackStep2 + xxx].dwColor = ARGB(static_cast<uint8_t>(T.fAlpha * 255.0f), 0, 0, 0);
                     xxx++;
                 }
             }

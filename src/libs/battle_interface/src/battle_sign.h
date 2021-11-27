@@ -3,7 +3,7 @@
 #include "bi_defines.h"
 #include <string>
 
-#define MAX_SIGN_QUANTITY 8
+constexpr const size_t MAX_SIGN_QUANTITY = 8;
 
 class BISignIcon
 {
@@ -120,7 +120,9 @@ class BISignIcon
         float fStarProgress;
         FRECT rFaceUV;
         std::string sText;
-    } m_Sign[MAX_SIGN_QUANTITY];
+    };
+
+    std::array<SignDescr, MAX_SIGN_QUANTITY> m_Sign;
 
     long m_nMaxSquareQ;
     long m_nSignQ;
