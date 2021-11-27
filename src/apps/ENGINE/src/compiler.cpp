@@ -6138,6 +6138,10 @@ char *COMPILER::ReadString()
 
     char *pBuffer = new char[n];
     ReadData(pBuffer, n);
+    if (!utf8::IsValidUtf8(pBuffer))
+    {
+        spdlog::warn("Deserializing invalid utf8 string: {}", pBuffer);
+    }
     return pBuffer;
 }
 
@@ -6223,6 +6227,25 @@ bool COMPILER::ReadVariable(char *name, /* DWORD code,*/ bool bDim, uint32_t a_i
         // load array elements
         for (uint32_t n = 0; n < nElementsNum; n++)
         {
+            if (bSkipVariable)
+            {
+                if (eType == S_TOKEN_TYPE::VAR_INTEGER)
+                    ReadData(nullptr, sizeof(long));
+                else if (eType == S_TOKEN_TYPE::VAR_FLOAT)
+                    ReadData(nullptr, sizeof(float));
+                else if (eType == S_TOKEN_TYPE::VAR_STRING)
+                    ReadString();
+                else if (eType == S_TOKEN_TYPE::VAR_OBJECT)
+                {
+                    ReadData(nullptr, sizeof(uint64_t));
+                    ATTRIBUTES TA(&SCodec);
+                    ReadAttributesData(&TA, nullptr);
+                }
+                else
+                    Assert(false);
+                continue;
+            }
+
             if (!ReadVariable(name, /*code,*/ true, n))
                 return false;
         }
@@ -6611,7 +6634,6 @@ bool COMPILER::LoadState(std::fstream &fileS)
         pString = ReadString();
         if (pString)
         {
-            Assert(utf8::IsValidUtf8(pString));
             SCodec.Convert(pString);
             delete[] pString;
         }
@@ -6628,7 +6650,6 @@ bool COMPILER::LoadState(std::fstream &fileS)
     for (n = 0; n < nSegments2Load; n++)
     {
         char *pSegmentName = ReadString();
-        Assert(utf8::IsValidUtf8(pSegmentName));
         if (!BC_LoadSegment(pSegmentName))
             return false;
         delete[] pSegmentName;
@@ -6644,7 +6665,6 @@ bool COMPILER::LoadState(std::fstream &fileS)
             SetError("missing variable name");
             return false;
         }
-        Assert(utf8::IsValidUtf8(pString));
         ReadVariable(pString /*,n*/);
 
         delete[] pString;
@@ -6861,7 +6881,8 @@ void *COMPILER::GetSaveData(const char *file_name, long &data_size)
         return nullptr;
     }
 
-    if (fio->_GetFileSize(file_name) < sizeof(EXTDATA_HEADER) + sizeof(uint32_t))
+    const auto file_size = fio->_GetFileSize(file_name);
+    if (file_size < sizeof(EXTDATA_HEADER) + sizeof(uint32_t))
     {
         data_size = 0;
         fio->_CloseFile(fileS);
@@ -6872,7 +6893,7 @@ void *COMPILER::GetSaveData(const char *file_name, long &data_size)
     RDTSC_B(dw2);
     EXTDATA_HEADER exdh;
     fio->_ReadFile(fileS, &exdh, sizeof(exdh));
-    if (exdh.dwExtDataSize <= 0)
+    if (exdh.dwExtDataSize <= 0 || file_size < exdh.dwExtDataOffset + sizeof(uint32_t))
     {
         data_size = 0;
         fio->_CloseFile(fileS);
@@ -6882,7 +6903,7 @@ void *COMPILER::GetSaveData(const char *file_name, long &data_size)
     uint32_t dwPackLen;
     fio->_SetFilePointer(fileS, exdh.dwExtDataOffset, std::ios::beg);
     fio->_ReadFile(fileS, &dwPackLen, sizeof(dwPackLen));
-    if (dwPackLen == 0 || dwPackLen > 0x8000000)
+    if (dwPackLen == 0 || file_size < exdh.dwExtDataOffset + sizeof(uint32_t) + dwPackLen)
     {
         data_size = 0;
         fio->_CloseFile(fileS);

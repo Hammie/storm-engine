@@ -9,6 +9,7 @@
 #include "storm/fs.h"
 #include "vfile_service.h"
 #include "spdlog_sinks/syncable_sink.hpp"
+#include "watermark.hpp"
 
 #ifdef _UNICODE
 #include <tchar.h>
@@ -19,6 +20,11 @@
 #include <cstdlib>
 #define _T(x) x
 #define _tsystem std::system
+#endif
+
+#ifdef _WIN32
+#include "logging.hpp"
+#include "seh_extractor.hpp"
 #endif
 
 namespace
@@ -157,6 +163,7 @@ LifecycleDiagnosticsService::Guard LifecycleDiagnosticsService::initialize(const
         // TODO: make this crossplatform
         auto *options = sentry_options_new();
         sentry_options_set_dsn(options, "https://1798a1bcfb654cbd8ce157b381964525@o572138.ingest.sentry.io/5721165");
+        sentry_options_set_release(options, STORM_BUILD_WATERMARK_STRING);
         sentry_options_set_database_path(options, (fs::GetStashPath() / "sentry-db").c_str());
         sentry_options_set_handler_path(options, (getExecutableDir() / "crashpad_handler.exe").c_str());
         sentry_options_add_attachment(options, getLogsArchive().c_str());
@@ -196,15 +203,28 @@ void LifecycleDiagnosticsService::setCrashInfoCollector(crash_info_collector f)
     collectCrashInfo_ = std::move(f);
 }
 
-sentry_value_t LifecycleDiagnosticsService::beforeCrash(const sentry_value_t event, void *, void *data)
+sentry_value_t LifecycleDiagnosticsService::beforeCrash(const sentry_value_t event, void * hint, void *closure)
 {
-    const auto *self = static_cast<LifecycleDiagnosticsService *>(data);
+    const auto *self = static_cast<LifecycleDiagnosticsService *>(closure);
 
-    // collect additional data
+    // collect engine data
     if (self->collectCrashInfo_)
     {
         self->collectCrashInfo_();
     }
+
+#ifdef _WIN32
+    // collect exception data
+    if (hint != nullptr)
+    {
+        if(const seh_extractor seh(static_cast<EXCEPTION_POINTERS *>(hint)); seh.is_abnormal())
+        {
+            static auto logger = logging::getOrCreateLogger("exceptions");
+            logger->set_pattern("%v");
+            seh.sink([](const char *msg) { logger->trace(msg); });
+        }
+    }
+#endif
     
     // terminate logging
     self->loggingService_->terminate();
