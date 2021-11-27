@@ -16,6 +16,7 @@
 #include "WdmShip.h"
 #include "WorldMap.h"
 #include "defines.h"
+#include "storm/string_compare.hpp"
 
 // ============================================================================================
 // Collision data
@@ -866,7 +867,7 @@ bool WdmIslands::GetQuestLocator(const char *locName, CVECTOR &p)
     }
     for (long i = 0; i < quests.size(); i++)
     {
-        if (quests[i].name == locName)
+        if (storm::iEquals(quests[i].name, std::string_view(locName)))
         {
             p = quests[i].pos;
             return true;
