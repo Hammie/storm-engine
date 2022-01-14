@@ -162,6 +162,7 @@ class DX9RENDER : public VDX9RENDER
     long Print(long nFontNum, uint32_t color, long x, long y, const char *format, ...) override;
     long ExtPrint(long nFontNum, uint32_t foreColor, uint32_t backColor, int wAlignment, bool bShadow, float fScale,
                   long scrWidth, long scrHeight, long x, long y, const char *format, ...) override;
+    int32_t StringWidth(const std::string_view &string, long nFontNum = 0, float fScale = 1.f, long scrWidth = 0) override;
     long StringWidth(const char *string, long nFontNum = 0, float fScale = 1.f, long scrWidth = 0) override;
     long CharWidth(utf8::u8_char, long nFontNum = 0, float fScale = 1.f, long scrWidth = 0) override;
     long CharHeight(long fontID) override;

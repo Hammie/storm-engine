@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <d3d9.h>
 #include <d3dx9.h>
+#include <string_view>
 
 #include "entity.h"
 #include "matrix.h"
@@ -127,6 +128,8 @@ class VDX9RENDER : public SERVICE
     virtual long Print(long nFontNum, uint32_t color, long x, long y, const char *format, ...) = 0;
     virtual long ExtPrint(long nFontNum, uint32_t foreColor, uint32_t backColor, int wAlignment, bool bShadow,
                           float fScale, long scrWidth, long scrHeight, long x, long y, const char *format, ...) = 0;
+    virtual int32_t StringWidth(const std::string_view &string, long nFontNum = 0, float fScale = 1.f,
+                                long scrWidth = 0) = 0;
     virtual long StringWidth(const char *string, long nFontNum = 0, float fScale = 1.f, long scrWidth = 0) = 0;
     virtual long CharWidth(utf8::u8_char ucVKey, long nFontNum = 0, float fScale = 1.f, long scrWidth = 0) = 0;
     virtual long CharHeight(long fontID) = 0;

@@ -2861,7 +2861,7 @@ long DX9RENDER::Print(long nFontNum, uint32_t color, long x, long y, const char 
     // UNGUARD
 }
 
-long DX9RENDER::StringWidth(const char *string, long nFontNum, float fScale, long scrWidth)
+int32_t DX9RENDER::StringWidth(const std::string_view& string, long nFontNum, float fScale, long scrWidth)
 {
     if (nFontNum < 0 || nFontNum >= nFontQuantity)
         return 0;
@@ -2881,6 +2881,15 @@ long DX9RENDER::StringWidth(const char *string, long nFontNum, float fScale, lon
     const long retVal = pFont->GetStringWidth(string);
     pFont->RestoreFontParameters();
     return retVal;
+}
+
+long DX9RENDER::StringWidth(const char *string, long nFontNum, float fScale, long scrWidth)
+{
+    if (string == nullptr)
+    {
+        return 0;
+    }
+    return StringWidth(std::string_view(string), nFontNum, fScale, scrWidth);
 }
 
 long DX9RENDER::CharWidth(utf8::u8_char ch, long nFontNum, float fScale, long scrWidth)

@@ -5,6 +5,8 @@
 #include "v_module_api.h"
 //#include "iimage.h"
 
+#include <string_view>
+
 #define USED_CODES 0x2070 // end of https://unicode-table.com/en/blocks/general-punctuation/
 #define MAX_SYMBOLS 512
 #define SYM_VERTEXS 6
@@ -85,6 +87,7 @@ class FONT
     long Printf(long x, long y, char *Text, ...);
     long Print(long x, long y, char *Text);
     long UpdateVertexBuffer(long x, long y, char *data_PTR, int utf8length);
+    int32_t GetStringWidth(const std::string_view& text);
     long GetStringWidth(const char *Text);
 
     long GetHeight()

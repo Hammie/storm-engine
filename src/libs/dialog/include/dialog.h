@@ -63,9 +63,9 @@ class DIALOG final : public Entity
         }
     }
 
-    static void AddToStringArrayLimitedByWidth(const char *pcSrcText, long nFontID, float fScale, long nLimitWidth,
+    static void AddToStringArrayLimitedByWidth(std::string_view, long nFontID, float fScale, long nLimitWidth,
                                                std::vector<std::string> &asOutTextList,
-                                               std::vector<long> *panPageIndices, long nPageSize);
+                                               std::vector<long> *panPageIndices, size_t nPageSize);
 
   private:
     void EmergencyExit();

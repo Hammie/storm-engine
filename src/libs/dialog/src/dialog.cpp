@@ -777,77 +777,53 @@ void DIALOG::GetPointFromIni(INIFILE *ini, const char *pcSection, const char *pc
     sscanf(param, "%f,%f", &fpoint.x, &fpoint.y);
 }
 
-void DIALOG::AddToStringArrayLimitedByWidth(const char *pcSrcText, long nFontID, float fScale, long nLimitWidth,
+void DIALOG::AddToStringArrayLimitedByWidth(std::string_view pcSrcText, long nFontID, float fScale, long nLimitWidth,
                                             std::vector<std::string> &asOutTextList, std::vector<long> *panPageIndices,
-                                            long nPageSize)
+                                            size_t nPageSize)
 {
-    if (!pcSrcText)
+    if (pcSrcText.empty())
         return;
     if (nLimitWidth < 20)
         nLimitWidth = 20;
-
-    long n = 0;
-    char param[1024];
-    long nCur = 0;
-    long nPrevIdx = 0;
-    if (panPageIndices && panPageIndices->size() > 0)
+    
+    size_t nPrevIdx = 0;
+    if (panPageIndices && !panPageIndices->empty())
         nPrevIdx = panPageIndices->back();
-    while (true)
+
+    size_t current_offset = 0;
+    std::string_view current_span = pcSrcText;
+    for (;;)
     {
-        if ((pcSrcText[nCur] == 0x20 && pcSrcText[nCur + 1] != 0) || pcSrcText[nCur] == 0) // space
+        const size_t next_space = current_span.find_first_of(' ', current_offset);
+        if (next_space != std::string_view::npos)
         {
-            // boal fix space at the end of the line
-            param[n] = 0;
-            const long nW = RenderService->StringWidth(param, nFontID, fScale);
-            if (nW < nLimitWidth && pcSrcText[nCur] != 0)
+            const std::string_view text_section = current_span.substr(0, next_space);
+            const long nW = RenderService->StringWidth(text_section, nFontID, fScale);
+            if (nW > nLimitWidth)
             {
-                // have not yet exceeded the width limit
-                param[n++] = 0x20;
+                const size_t last_space = text_section.find_last_of(' ');
+                asOutTextList.emplace_back(text_section.substr(0, last_space));
+                current_span = current_span.substr(last_space + 1u);
             }
             else
             {
-                if (nW > nLimitWidth)
-                {
-                    // find prev space;
-                    long nPrev = nCur;
-                    while (nPrev > 0 && pcSrcText[nPrev - 1] != 0x20)
-                        nPrev--;
-                    if (nPrev <= 0) // no spaces
-                    {
-                        // looking for the first character set in the range
-                        while (n > 0 && RenderService->StringWidth(param, nFontID, fScale) > nLimitWidth)
-                        {
-                            int dec = utf8::u8_dec(param + n);
-                            n -= dec;
-                            nCur -= dec;
-                            param[n] = 0;
-                        }
-                    }
-                    else
-                    {
-                        n -= nCur - nPrev;
-                        Assert(n > 0);
-                        param[n] = 0;
-                        nCur = nPrev;
-                    }
-                }
-                asOutTextList.push_back(param);
-                n = 0;
-
-                if (panPageIndices && asOutTextList.size() - nPrevIdx == nPageSize)
-                {
-                    nPrevIdx = asOutTextList.size();
-                    panPageIndices->push_back(nPrevIdx);
-                }
+                current_offset = next_space + 1;
             }
-            while (pcSrcText[nCur] == 0x20 && pcSrcText[nCur + 1] != 0)
-                nCur++; // boal fix
-            if (pcSrcText[nCur] == 0)
-                break;
         }
         else
         {
-            param[n++] = pcSrcText[nCur++];
+            asOutTextList.emplace_back(current_span);
+        }
+
+        if (panPageIndices && asOutTextList.size() - nPrevIdx == nPageSize)
+        {
+            nPrevIdx = asOutTextList.size();
+            panPageIndices->push_back(static_cast<long>(nPrevIdx));
+        }
+
+        if (next_space == std::string_view::npos)
+        {
+            break;
         }
     }
 }
