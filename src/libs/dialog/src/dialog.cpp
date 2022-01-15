@@ -70,14 +70,15 @@ void DIALOG::DlgTextDescribe::ChangeText(const char *pcText)
             memcpy(&pcTmp[n - i], "...", 4 * sizeof(char));
             i = n + 2;
             n++;
-            AddToStringArrayLimitedByWidth(pcTmp, nFontID, fScale, nWindowWidth, asText, &anPageEndIndex,
+            AddToStringArrayLimitedByWidth(pcTmp, nFontID, fScale, nWindowWidth, asText, RenderService, &anPageEndIndex,
                                            nShowQuantity);
             if (anPageEndIndex.size() == 0 || anPageEndIndex[anPageEndIndex.size() - 1] != asText.size())
                 anPageEndIndex.push_back(asText.size());
             delete[] pcTmp;
         }
     }
-    AddToStringArrayLimitedByWidth(&pcText[i], nFontID, fScale, nWindowWidth, asText, &anPageEndIndex, nShowQuantity);
+    AddToStringArrayLimitedByWidth(&pcText[i], nFontID, fScale, nWindowWidth, asText, RenderService, &anPageEndIndex,
+                                   nShowQuantity);
     //    if( anPageEndIndex.size()!=0 && anPageEndIndex[anPageEndIndex.size()-1]!=asText.size() )
     //        anPageEndIndex.Add( asText.size() );
     nStartIndex = 0;
@@ -202,7 +203,7 @@ void DIALOG::DlgLinkDescribe::ChangeText(ATTRIBUTES *pALinks)
                 nEditVarIndex = pA->GetAttributeAsDword("edit", 0);
                 nEditCharIndex = 0;
             }
-            AddToStringArrayLimitedByWidth(pA->GetThisAttr(), nFontID, fScale, nWindowWidth, asText, nullptr, 100);
+            AddToStringArrayLimitedByWidth(pA->GetThisAttr(), nFontID, fScale, nWindowWidth, asText, RenderService, nullptr, 100);
             anLineEndIndex.push_back(asText.size());
         }
     }
@@ -777,11 +778,13 @@ void DIALOG::GetPointFromIni(INIFILE *ini, const char *pcSection, const char *pc
     sscanf(param, "%f,%f", &fpoint.x, &fpoint.y);
 }
 
-void DIALOG::AddToStringArrayLimitedByWidth(std::string_view pcSrcText, long nFontID, float fScale, long nLimitWidth,
-                                            std::vector<std::string> &asOutTextList, std::vector<long> *panPageIndices,
+void DIALOG::AddToStringArrayLimitedByWidth(const std::string_view &text, long nFontID, float fScale,
+                                            long nLimitWidth,
+                                            std::vector<std::string> &asOutTextList,
+                                            VDX9RENDER *render_service, std::vector<long> *panPageIndices,
                                             size_t nPageSize)
 {
-    if (pcSrcText.empty())
+    if (text.empty())
         return;
     if (nLimitWidth < 20)
         nLimitWidth = 20;
@@ -791,14 +794,14 @@ void DIALOG::AddToStringArrayLimitedByWidth(std::string_view pcSrcText, long nFo
         nPrevIdx = panPageIndices->back();
 
     size_t current_offset = 0;
-    std::string_view current_span = pcSrcText;
+    std::string_view current_span = text;
     for (;;)
     {
         const size_t next_space = current_span.find_first_of(' ', current_offset);
         if (next_space != std::string_view::npos)
         {
             const std::string_view text_section = current_span.substr(0, next_space);
-            const long nW = RenderService->StringWidth(text_section, nFontID, fScale);
+            const long nW = render_service->StringWidth(text_section, nFontID, fScale);
             if (nW > nLimitWidth)
             {
                 const size_t last_space = text_section.find_last_of(' ');

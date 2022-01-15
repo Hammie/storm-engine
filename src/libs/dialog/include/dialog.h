@@ -63,8 +63,8 @@ class DIALOG final : public Entity
         }
     }
 
-    static void AddToStringArrayLimitedByWidth(std::string_view, long nFontID, float fScale, long nLimitWidth,
-                                               std::vector<std::string> &asOutTextList,
+    static void AddToStringArrayLimitedByWidth(const std::string_view &text, long nFontID, float fScale, long nLimitWidth,
+                                               std::vector<std::string> &asOutTextList, VDX9RENDER *render_service,
                                                std::vector<long> *panPageIndices, size_t nPageSize);
 
   private:
