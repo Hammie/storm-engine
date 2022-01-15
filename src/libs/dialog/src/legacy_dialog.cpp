@@ -12,6 +12,7 @@ VDX9RENDER *LegacyDialog::RenderService = nullptr;
 namespace
 {
 constexpr const uint32_t COLOR_NORMAL = 0xFFFFFFFF;
+constexpr const uint32_t COLOR_LINK_UNSELECTED = ARGB(255, 127, 127, 127);
 
 std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale scale, ScreenScale uvScale)
 {
@@ -77,12 +78,15 @@ bool LegacyDialog::Init()
     mainFont_ = RenderService->LoadFont(string_buffer.data());
     ini->ReadString("DIALOG", "namefont", string_buffer.data(), MAX_PATH, "DIALOG0");
     nameFont_ = RenderService->LoadFont(string_buffer.data());
+    ini->ReadString("DIALOG", "subfont", string_buffer.data(), MAX_PATH, "DIALOG0");
+    subFont_ = RenderService->LoadFont(string_buffer.data());
 
     ini.reset();
 
     interfaceTexture_ = RenderService->TextureCreate("dialog/dialog_vanilla.tga");
 
     spriteBuffer_ = CreateBack();
+    UpdateLinks();
 
     return true;
 }
@@ -92,16 +96,81 @@ void LegacyDialog::Realize(uint32_t delta_time)
     D3DVIEWPORT9 vp;
     RenderService->GetViewport(&vp);
 
+    CONTROL_STATE cs;
+    core.Controls->GetControlState("DlgUp", cs);
+    if (cs.state == CST_ACTIVATED && selectedLink_ > 0)
+    {
+        --selectedLink_;
+    }
+    core.Controls->GetControlState("DlgDown", cs);
+    if (cs.state == CST_ACTIVATED && selectedLink_ < links_.size() -1)
+    {
+        ++selectedLink_;
+    }
+    core.Controls->GetControlState("DlgAction", cs);
+    if (cs.state == CST_ACTIVATED)
+    {
+        ATTRIBUTES *links_attr = AttributesPointer->GetAttributeClass("Links");
+        if (links_attr)
+        {
+            ATTRIBUTES *selected_attr = links_attr->GetAttributeClass(selectedLink_);
+            if (selected_attr)
+            {
+                const char* go = selected_attr->GetAttribute("go");
+                AttributesPointer->SetAttribute("CurrentNode", go);
+                selectedLink_ = 0;
+                core.Event("DialogEvent");
+            }
+        }
+    }
+
     RenderService->TextureSet(0, interfaceTexture_);
     RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 12, 0, 6,
                               "texturedialogfon");
 
+    const auto fontScale = static_cast<float>(vp.Height) / 600.f;
+
     if (!chName_.empty())
     {
-        const auto scale = static_cast<float>(vp.Height) / 600.f;
-        RenderService->ExtPrint(nameFont_, COLOR_NORMAL, 0, PR_ALIGN_LEFT, true, scale, 0, 0,
+        RenderService->ExtPrint(nameFont_, COLOR_NORMAL, 0, PR_ALIGN_LEFT, true, fontScale, 0, 0,
                                 static_cast<int32_t>(screenScale_.x * 168), static_cast<int32_t>(screenScale_.y * 28),
                                 chName_.c_str());
+    }
+
+    
+    const int32_t line_height = static_cast<int32_t>(RenderService->CharHeight(mainFont_) * fontScale);
+
+    int32_t line_offset = 0;
+    int32_t offset = line_height * links_.size();
+    for (size_t i = 0; i < links_.size(); ++i)
+    {
+        const auto &link = links_[i];
+        RenderService->ExtPrint(subFont_, link.lineIndex == selectedLink_ ? COLOR_NORMAL : COLOR_LINK_UNSELECTED, 0, PR_ALIGN_LEFT,
+                                true, fontScale, 0, 0,
+                                static_cast<int32_t>(screenScale_.x * 35),
+                                static_cast<int32_t>(screenScale_.y * 450 - offset) + line_offset, link.text.c_str());
+        line_offset += line_height;
+    }
+
+    if (!dialogText_.empty())
+    {
+        const int32_t text_width_limit = static_cast<int32_t>(570.f * (vp.Width / 640.f));
+
+        std::vector<std::string> dialogTexts;
+        DIALOG::AddToStringArrayLimitedByWidth(dialogText_, mainFont_, fontScale, text_width_limit, dialogTexts,
+                                               RenderService, nullptr, 0);
+
+        line_offset = 0;
+        offset += line_height * dialogTexts.size();
+        for (const std::string& text : dialogTexts)
+        {
+            RenderService->ExtPrint(mainFont_, COLOR_NORMAL, 0, PR_ALIGN_LEFT, true, fontScale, 0, 0,
+                                    static_cast<int32_t>(screenScale_.x * 35),
+                                    static_cast<int32_t>(screenScale_.y * 450 - offset) + line_offset,
+                                    text.c_str());
+            line_offset += line_height;
+            
+        }
     }
 }
 
@@ -123,6 +192,9 @@ void LegacyDialog::ProcessStage(Stage stage, uint32_t delta)
 
 uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
 {
+    UpdateText();
+    UpdateLinks();
+
     return Entity::AttributeChanged(attributes);
 }
 
@@ -151,6 +223,44 @@ uint64_t LegacyDialog::ProcessMessage(MESSAGE &msg)
     }
 
     return 0;
+}
+
+void LegacyDialog::UpdateText()
+{
+    const char *text_attr = AttributesPointer->GetAttribute("Text");
+    if (text_attr)
+    {
+        dialogText_ = text_attr;
+    }
+}
+
+void LegacyDialog::UpdateLinks()
+{
+    links_.clear();
+    ATTRIBUTES *links_attr = AttributesPointer->GetAttributeClass("Links");
+    if (links_attr)
+    {
+        D3DVIEWPORT9 vp;
+        RenderService->GetViewport(&vp);
+
+        const auto fontScale = static_cast<float>(vp.Height) / 600.f;
+        const int32_t text_width_limit = static_cast<int32_t>(570.f * (vp.Width / 640.f));
+
+        const size_t number_of_links = links_attr->GetAttributesNum();
+        for (size_t i = 0; i < number_of_links; ++i)
+        {
+            const std::string_view link_text = links_attr->GetAttribute(i);
+
+            std::vector<std::string> link_texts;
+            DIALOG::AddToStringArrayLimitedByWidth(link_text, subFont_, fontScale, text_width_limit, link_texts,
+                                                   RenderService, nullptr, 0);
+
+            for (const auto &text : link_texts)
+            {
+                links_.emplace_back(text, static_cast<int32_t>(i));
+            }
+        }
+    }
 }
 
 SpriteBuffer LegacyDialog::CreateBack()

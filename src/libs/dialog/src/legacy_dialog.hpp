@@ -40,15 +40,29 @@ public:
     uint64_t ProcessMessage(MESSAGE &msg) override;
 
 private:
+    void UpdateText();
+    void UpdateLinks();
+
     SpriteBuffer CreateBack();
 
     bool forceEmergencyClose_ = false;
     std::string selectedLinkName_;
 
     std::string chName_;
+    std::string dialogText_;
+
+    struct LinkEntry
+    {
+        std::string text;
+        int32_t lineIndex = 0;
+    };
+    std::vector<LinkEntry> links_;
+
+    int32_t selectedLink_ = 0;
 
     int32_t mainFont_{};
     int32_t nameFont_{};
+    int32_t subFont_{};
 
     int32_t interfaceTexture_{};
 
