@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - develop
+      - coas-remastered
+      - feature/**
     paths-ignore:
       - 'docs/**'
       - 'tools/**'
@@ -11,7 +13,6 @@ on:
   pull_request:
     branches:
       - develop
-      - feature/**
     paths-ignore:
       - 'docs/**'
       - 'tools/**'
