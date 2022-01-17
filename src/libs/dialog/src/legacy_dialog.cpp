@@ -13,6 +13,7 @@ namespace
 {
 constexpr const uint32_t COLOR_NORMAL = 0xFFFFFFFF;
 constexpr const uint32_t COLOR_LINK_UNSELECTED = ARGB(255, 127, 127, 127);
+constexpr const size_t DIALOG_MAX_LINES = 5;
 
 std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale scale, ScreenScale uvScale)
 {
@@ -103,7 +104,7 @@ void LegacyDialog::Realize(uint32_t delta_time)
         --selectedLink_;
     }
     core.Controls->GetControlState("DlgDown", cs);
-    if (cs.state == CST_ACTIVATED && selectedLink_ < links_.size() -1)
+    if (cs.state == CST_ACTIVATED && selectedLink_ < links_.size() - 1)
     {
         ++selectedLink_;
     }
@@ -125,7 +126,7 @@ void LegacyDialog::Realize(uint32_t delta_time)
     }
 
     RenderService->TextureSet(0, interfaceTexture_);
-    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 12, 0, 6,
+    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 40, 0, 20,
                               "texturedialogfon");
 
     const auto fontScale = static_cast<float>(vp.Height) / 600.f;
@@ -141,10 +142,10 @@ void LegacyDialog::Realize(uint32_t delta_time)
     const int32_t line_height = static_cast<int32_t>(RenderService->CharHeight(mainFont_) * fontScale);
 
     int32_t line_offset = 0;
-    int32_t offset = line_height * links_.size();
-    for (size_t i = 0; i < links_.size(); ++i)
+    int32_t offset = line_height * formattedLinks_.size();
+    for (size_t i = 0; i < formattedLinks_.size(); ++i)
     {
-        const auto &link = links_[i];
+        const auto &link = formattedLinks_[i];
         RenderService->ExtPrint(subFont_, link.lineIndex == selectedLink_ ? COLOR_NORMAL : COLOR_LINK_UNSELECTED, 0, PR_ALIGN_LEFT,
                                 true, fontScale, 0, 0,
                                 static_cast<int32_t>(screenScale_.x * 35),
@@ -237,6 +238,7 @@ void LegacyDialog::UpdateText()
 void LegacyDialog::UpdateLinks()
 {
     links_.clear();
+    formattedLinks_.clear();
     ATTRIBUTES *links_attr = AttributesPointer->GetAttributeClass("Links");
     if (links_attr)
     {
@@ -250,6 +252,7 @@ void LegacyDialog::UpdateLinks()
         for (size_t i = 0; i < number_of_links; ++i)
         {
             const std::string_view link_text = links_attr->GetAttribute(i);
+            links_.emplace_back(link_text);
 
             std::vector<std::string> link_texts;
             DIALOG::AddToStringArrayLimitedByWidth(link_text, subFont_, fontScale, text_width_limit, link_texts,
@@ -257,7 +260,7 @@ void LegacyDialog::UpdateLinks()
 
             for (const auto &text : link_texts)
             {
-                links_.emplace_back(text, static_cast<int32_t>(i));
+                formattedLinks_.emplace_back(text, static_cast<int32_t>(i));
             }
         }
     }
@@ -277,8 +280,24 @@ SpriteBuffer LegacyDialog::CreateBack()
         {
             .uv = {209, 189, 1023, 255},
             .position = {-39, 451, 678, 518},
-        }
+        },
+        // Static vertices 2
+        {
+            .uv = {904, 91, 1023, 103},
+            .position = {29, 25, 147, 37},
+        },
+        {
+            .uv = {904, 105, 1023, 116},
+            .position = {29, 173, 146, 185},
+        },
     };
+
+    for (size_t i = 0; i < MAX_LINES; ++i)
+    {
+        sprites.push_back(Sprite{{209, 155, 1023, 186},
+                                 {-39, static_cast<float>(479 - 67 + 39 - (26 * (i + 1))), 639 + 39,
+                                  static_cast<float>(479 - 67 + 39 - (26 * i))}});
+    }
 
     const size_t squareCount = sprites.size();
 

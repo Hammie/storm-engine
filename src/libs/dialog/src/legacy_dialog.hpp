@@ -56,7 +56,8 @@ private:
         std::string text;
         int32_t lineIndex = 0;
     };
-    std::vector<LinkEntry> links_;
+    std::vector<std::string> links_;
+    std::vector<LinkEntry> formattedLinks_;
 
     int32_t selectedLink_ = 0;
 
