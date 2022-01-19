@@ -126,7 +126,7 @@ void LegacyDialog::Realize(uint32_t delta_time)
     }
 
     RenderService->TextureSet(0, interfaceTexture_);
-    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 40, 0, 20,
+    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 44, 0, 22,
                               "texturedialogfon");
 
     const auto fontScale = static_cast<float>(vp.Height) / 600.f;
@@ -298,6 +298,10 @@ SpriteBuffer LegacyDialog::CreateBack()
                                  {-39, static_cast<float>(479 - 67 + 39 - (26 * (i + 1))), 639 + 39,
                                   static_cast<float>(479 - 67 + 39 - (26 * i))}});
     }
+
+    sprites.push_back(Sprite{{209, 119, 1023, 156},
+                             {-39, static_cast<float>(479 - 67 + 39 - (26 * (MAX_LINES + 1))), 639 + 39,
+                              static_cast<float>(479 - 67 + 39 - (26 * MAX_LINES))}});
 
     const size_t squareCount = sprites.size();
 

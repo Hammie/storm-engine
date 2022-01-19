@@ -797,16 +797,36 @@ void DIALOG::AddToStringArrayLimitedByWidth(const std::string_view &text, long n
     std::string_view current_span = text;
     for (;;)
     {
-        const size_t next_space = current_span.find_first_of(' ', current_offset);
+        const size_t next_space = current_span.find_first_of(" \\", current_offset);
+
         if (next_space != std::string_view::npos)
         {
             const std::string_view text_section = current_span.substr(0, next_space);
             const long nW = render_service->StringWidth(text_section, nFontID, fScale);
             if (nW > nLimitWidth)
             {
-                const size_t last_space = text_section.find_last_of(' ');
+                const size_t last_space = text_section.find_last_of(" \\");
                 asOutTextList.emplace_back(text_section.substr(0, last_space));
-                current_span = current_span.substr(last_space + 1u);
+
+                if (current_span[last_space] == '\\' && current_span.size() > last_space + 1 &&
+                    current_span[last_space + 1] == 'n')
+                {
+                    current_span = current_span.substr(last_space);
+                    current_offset = 0;
+                }
+                else
+                {
+                    current_span = current_span.substr(last_space + 1u);
+                    current_offset = 0;
+                }
+
+            }
+            else if (current_span[next_space] == '\\' && current_span.size() > next_space + 1 &&
+                     current_span[next_space + 1] == 'n')
+            {
+                asOutTextList.emplace_back(text_section.substr(0, next_space));
+                current_span = current_span.substr(next_space + 2u);
+                current_offset = 0;
             }
             else
             {
