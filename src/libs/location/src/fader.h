@@ -54,7 +54,7 @@ class Fader : public Entity
   private:
     VDX9RENDER *rs;
     IDirect3DSurface9 *renderTarget;
-    IDirect3DSurface9 *surface;
+    IDirect3DTexture9 *textureBase;
 
     bool isWork;
     bool haveFrame;
@@ -66,15 +66,28 @@ class Fader : public Entity
     float alpha;
     float w, h;
 
+    struct
+    {
+        float x, y, z, rhw;
+        float u, v;
+    } drawbuf_base[6];
+
+    struct
+    {
+        float x, y, z, rhw;
+        uint32_t color;
+        float u, v;
+    } drawbuf_back[6], drawbuf_front[6];
+
     bool eventStart;
     bool eventEnd;
-    long deleteMe;
+    int32_t deleteMe;
 
-    long textureID;
-    long textureBackID;
-    long tipsID;
+    int32_t textureID;
+    int32_t textureBackID;
+    int32_t tipsID;
 
   public:
-    static long numberOfTips;
-    static long currentTips;
+    static int32_t numberOfTips;
+    static int32_t currentTips;
 };

@@ -9,8 +9,10 @@
 //============================================================================================
 
 #include "world_map.h"
-#include "shared/messages.h"
 
+#include <chrono>
+
+#include "shared/messages.h"
 #include "core.h"
 
 #include "wdm_camera_std_ctrl.h"
@@ -40,7 +42,7 @@ CREATE_CLASS(WorldMap)
 
 #define WDM_MAX_STORMS 4
 
-long WorldMap::month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+int32_t WorldMap::month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // ============================================================================================
 // Construction, destruction
@@ -48,6 +50,10 @@ long WorldMap::month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 WorldMap::WorldMap() : rs{}, aDate{}
 {
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    using std::chrono::system_clock;
+
     Assert(!wdmObjects);
     new WdmObjects();
     firstFreeObject = 0;
@@ -55,12 +61,12 @@ WorldMap::WorldMap() : rs{}, aDate{}
     firstPrObject = -1;
     firstMrObject = -1;
     firstLrObject = -1;
-    for (long i = 0; i < WDMAP_MAXOBJECTS; i++)
+    for (int32_t i = 0; i < WDMAP_MAXOBJECTS; i++)
         object[i].next = i + 1;
     object[WDMAP_MAXOBJECTS - 1].next = -1;
     wdmObjects->wm = this;
     camera = nullptr;
-    srand(GetTickCount());
+    srand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
     encTime = 0.0f;
     aStorm = nullptr;
     aEncounter = nullptr;
@@ -81,13 +87,13 @@ WorldMap::~WorldMap()
         AttributesPointer->SetAttribute("WindData", wdmObjects->GetWindSaveString(bufForSave));
     }
     // leave the encounter parameters intact
-    for (long i = 0; i < wdmObjects->ships.size(); i++)
+    for (int32_t i = 0; i < wdmObjects->ships.size(); i++)
     {
         if (wdmObjects->ships[i] == wdmObjects->playerShip)
             continue;
         static_cast<WdmEnemyShip *>(wdmObjects->ships[i])->SetSaveAttribute(nullptr);
     }
-    for (long i = 0; i < wdmObjects->storms.size(); i++)
+    for (int32_t i = 0; i < wdmObjects->storms.size(); i++)
     {
         wdmObjects->storms[i]->SetSaveAttribute(nullptr);
     }
@@ -220,7 +226,7 @@ bool WorldMap::Init()
             AttributesPointer->GetAttributeAsFloat("stormBrnDistMax", wdmObjects->stormBrnDistMax);
         wdmObjects->stormZone = AttributesPointer->GetAttributeAsFloat("stormZone", wdmObjects->stormZone);
         auto *const s = AttributesPointer->GetAttribute("debug");
-        wdmObjects->isDebug = s && (_stricmp(s, "true") == 0);
+        wdmObjects->isDebug = s && (storm::iEquals(s, "true"));
         saveData = AttributesPointer->CreateSubAClass(AttributesPointer, "encounters");
         wdmObjects->resizeRatio = AttributesPointer->GetAttributeAsFloat("resizeRatio", wdmObjects->resizeRatio);
     }
@@ -266,9 +272,9 @@ bool WorldMap::Init()
     }
     if (aDate)
     {
-        const long sec = aDate->GetAttributeAsDword("sec", 1);
-        const long min = aDate->GetAttributeAsDword("min", 1);
-        hour = static_cast<float>(aDate->GetAttributeAsDword("hour", static_cast<long>(hour)));
+        const int32_t sec = aDate->GetAttributeAsDword("sec", 1);
+        const int32_t min = aDate->GetAttributeAsDword("min", 1);
+        hour = static_cast<float>(aDate->GetAttributeAsDword("hour", static_cast<int32_t>(hour)));
         hour += (min + sec / 60.0f) / 60.0f;
         day = aDate->GetAttributeAsDword("day", day);
         mon = aDate->GetAttributeAsDword("month", mon);
@@ -311,7 +317,7 @@ bool WorldMap::Init()
                 saveData->DeleteAttributeClassX(a);
                 continue;
             }
-            if (_stricmp(type, "Merchant") == 0 && modelName && modelName[0])
+            if (storm::iEquals(type, "Merchant") && modelName && modelName[0])
             {
                 if (!CreateMerchantShip(modelName, nullptr, nullptr, 1.0f, -1.0f, a))
                 {
@@ -319,7 +325,7 @@ bool WorldMap::Init()
                 }
                 continue;
             }
-            if (_stricmp(type, "Follow") == 0 && modelName && modelName[0])
+            if (storm::iEquals(type, "Follow") && modelName && modelName[0])
             {
                 if (!CreateFollowShip(modelName, 1.0f, -1.0f, a))
                 {
@@ -327,7 +333,7 @@ bool WorldMap::Init()
                 }
                 continue;
             }
-            if (_stricmp(type, "Warring") == 0 && modelName && modelName[0])
+            if (storm::iEquals(type, "Warring") && modelName && modelName[0])
             {
                 auto *const attacked = a->GetAttribute("attacked");
                 if (attacked)
@@ -353,11 +359,11 @@ bool WorldMap::Init()
                 }
                 continue;
             }
-            if (_stricmp(type, "Attacked") == 0)
+            if (storm::iEquals(type, "Attacked"))
             {
                 continue;
             }
-            if (_stricmp(type, "Storm") == 0)
+            if (storm::iEquals(type, "Storm"))
             {
                 const auto isTornado = (a->GetAttributeAsDword("isTornado", 0) != 0);
                 if (!CreateStorm(isTornado, -1.0f, a))
@@ -428,11 +434,11 @@ void WorldMap::Realize(uint32_t delta_time)
     if (hour < 0.0f)
         hour = 0.0f;
     hour += dltTime * timeScale;
-    auto days = static_cast<long>(hour / 24.0f);
+    auto days = static_cast<int32_t>(hour / 24.0f);
     hour = (hour / 24.0f - days) * 24.0f;
-    const auto dtHour = static_cast<long>(hour);
-    const auto dtMin = static_cast<long>((hour - dtHour) * 60.0f);
-    const auto dtSec = static_cast<long>(((hour - dtHour) * 60.0f - dtMin) * 60.0f);
+    const auto dtHour = static_cast<int32_t>(hour);
+    const auto dtMin = static_cast<int32_t>((hour - dtHour) * 60.0f);
+    const auto dtSec = static_cast<int32_t>(((hour - dtHour) * 60.0f - dtMin) * 60.0f);
     aDate->SetAttributeUseDword("sec", dtSec);
     aDate->SetAttributeUseDword("min", dtMin);
     aDate->SetAttributeUseDword("hour", dtHour);
@@ -639,20 +645,20 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
     float x, z, ay;
     if (!apnt || !AttributesPointer)
         return 0;
-    if (_stricmp(apnt->GetThisName(), "deleteUpdate") == 0)
+    if (storm::iEquals(apnt->GetThisName(), "deleteUpdate"))
     {
-        for (long i = 0; i < wdmObjects->ships.size(); i++)
+        for (int32_t i = 0; i < wdmObjects->ships.size(); i++)
         {
             if (wdmObjects->ships[i] == wdmObjects->playerShip)
                 continue;
             static_cast<WdmEnemyShip *>(wdmObjects->ships[i])->DeleteUpdate();
         }
-        for (long i = 0; i < wdmObjects->storms.size(); i++)
+        for (int32_t i = 0; i < wdmObjects->storms.size(); i++)
         {
             wdmObjects->storms[i]->DeleteUpdate();
         }
     }
-    else if (_stricmp(apnt->GetThisName(), "playerShipUpdate") == 0)
+    else if (storm::iEquals(apnt->GetThisName(), "playerShipUpdate"))
     {
         if (wdmObjects->playerShip)
         {
@@ -663,12 +669,12 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
             AttributesPointer->SetAttributeUseFloat("playerShipAY", ay);
         }
     }
-    else if (_stricmp(apnt->GetThisName(), "cur") == 0)
+    else if (storm::iEquals(apnt->GetThisName(), "cur"))
     {
         auto *pa = apnt->GetParent();
         if (pa == aStorm)
         {
-            const auto cur = static_cast<long>(pa->GetAttributeAsDword("cur"));
+            const auto cur = static_cast<int32_t>(pa->GetAttributeAsDword("cur"));
             if (cur >= 0 && cur < wdmObjects->storms.size())
             {
                 Assert(wdmObjects->storms[cur]);
@@ -684,10 +690,10 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
         }
         else if (pa == aEncounter)
         {
-            const auto cur = static_cast<long>(pa->GetAttributeAsDword("cur"));
+            const auto cur = static_cast<int32_t>(pa->GetAttributeAsDword("cur"));
             // Determine the encounter index
-            long i = 0;
-            for (long enc = 0; i < wdmObjects->ships.size(); i++)
+            int32_t i = 0;
+            for (int32_t enc = 0; i < wdmObjects->ships.size(); i++)
             {
                 if (wdmObjects->ships[i] == wdmObjects->playerShip)
                     continue;
@@ -713,7 +719,7 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
                 if (es->attack)
                 {
                     Assert(es->attack != es);
-                    long i, j = 0;
+                    int32_t i, j = 0;
                     for (i = 0; i < wdmObjects->ships.size(); i++)
                     {
                         if (wdmObjects->ships[i] == wdmObjects->playerShip)
@@ -737,19 +743,19 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
             }
         }
     }
-    else if (_stricmp(apnt->GetThisName(), "updateinfo") == 0)
+    else if (storm::iEquals(apnt->GetThisName(), "updateinfo"))
     {
         auto *pa = apnt->GetParent();
         if (pa == aInfo)
         {
-            pa->SetAttributeUseDword("playerInStorm", static_cast<long>(wdmObjects->playarInStorm));
+            pa->SetAttributeUseDword("playerInStorm", static_cast<int32_t>(wdmObjects->playarInStorm));
         }
     }
     else
     {
         for (auto *pa = apnt; pa; pa = pa->GetParent())
         {
-            if (_stricmp(pa->GetThisName(), "labels") == 0)
+            if (storm::iEquals(pa->GetThisName(), "labels"))
             {
                 wdmObjects->islands->SetIslandsData(AttributesPointer, true);
                 return 0;
@@ -764,7 +770,7 @@ uint32_t WorldMap::AttributeChanged(ATTRIBUTES *apnt)
 // ============================================================================================
 
 // Add object
-WdmRenderObject *WorldMap::AddObject(WdmRenderObject *obj, long level)
+WdmRenderObject *WorldMap::AddObject(WdmRenderObject *obj, int32_t level)
 {
     if (!obj)
         return nullptr;
@@ -774,7 +780,7 @@ WdmRenderObject *WorldMap::AddObject(WdmRenderObject *obj, long level)
 }
 
 // Add object to render list before reflection
-void WorldMap::AddPObject(WdmRenderObject *obj, long level)
+void WorldMap::AddPObject(WdmRenderObject *obj, int32_t level)
 {
     if (!obj)
         return;
@@ -783,20 +789,20 @@ void WorldMap::AddPObject(WdmRenderObject *obj, long level)
 }
 
 // Add object to reflection render list
-void WorldMap::AddMObject(WdmRenderObject *obj, long level)
+void WorldMap::AddMObject(WdmRenderObject *obj, int32_t level)
 {
     if (!obj)
         return;
-    const long i = GetObject(firstMrObject, level);
+    const int32_t i = GetObject(firstMrObject, level);
     object[i].ro = obj;
 }
 
 // Add object to render list after reflection
-void WorldMap::AddLObject(WdmRenderObject *obj, long level)
+void WorldMap::AddLObject(WdmRenderObject *obj, int32_t level)
 {
     if (!obj)
         return;
-    const long i = GetObject(firstLrObject, level);
+    const int32_t i = GetObject(firstLrObject, level);
     object[i].ro = obj;
 }
 
@@ -806,14 +812,14 @@ void WorldMap::DeleteObject(WdmRenderObject *obj)
     if (!obj)
         return;
     // go through all the lists, deleting the entry about the object
-    for (long i = firstObject, j; i >= 0;)
+    for (int32_t i = firstObject, j; i >= 0;)
     {
         j = i;
         i = object[i].next;
         if (object[j].ro == obj)
             FreeObject(firstObject, j);
     }
-    for (long i = firstPrObject, j; i >= 0;)
+    for (int32_t i = firstPrObject, j; i >= 0;)
     {
         j = i;
         i = object[i].next;
@@ -821,14 +827,14 @@ void WorldMap::DeleteObject(WdmRenderObject *obj)
             FreeObject(firstPrObject, j);
     }
 
-    for (long i = firstMrObject, j; i >= 0;)
+    for (int32_t i = firstMrObject, j; i >= 0;)
     {
         j = i;
         i = object[i].next;
         if (object[j].ro == obj)
             FreeObject(firstMrObject, j);
     }
-    for (long i = firstLrObject, j; i >= 0;)
+    for (int32_t i = firstLrObject, j; i >= 0;)
     {
         j = i;
         i = object[i].next;
@@ -845,10 +851,10 @@ void WorldMap::DeleteObject(WdmRenderObject *obj)
 // Objects management
 
 // Include a record about an object in the list with the required level
-long WorldMap::GetObject(long &first, long level)
+int32_t WorldMap::GetObject(int32_t &first, int32_t level)
 {
     Assert(firstFreeObject >= 0);
-    const long i = firstFreeObject;
+    const int32_t i = firstFreeObject;
     firstFreeObject = object[firstFreeObject].next;
     object[i].ro = nullptr;
     object[i].level = level;
@@ -858,7 +864,7 @@ long WorldMap::GetObject(long &first, long level)
     {
         if (level >= object[first].level)
         {
-            long j;
+            int32_t j;
             for (j = first; object[j].next >= 0 && level >= object[object[j].next].level; j = object[j].next)
                 ;
             object[i].prev = j;
@@ -879,7 +885,7 @@ long WorldMap::GetObject(long &first, long level)
 }
 
 // Exclude entry from the list
-void WorldMap::FreeObject(long &first, long i)
+void WorldMap::FreeObject(int32_t &first, int32_t i)
 {
     Assert(i >= 0.0f && i < WDMAP_MAXOBJECTS);
     object[i].ro = nullptr;
@@ -899,7 +905,7 @@ void WorldMap::FreeObject(long &first, long i)
 
 // Initialize the model and add it to the required render lists
 WdmRenderObject *WorldMap::CreateModel(WdmRenderModel *rm, const char *modelName, bool pr, bool mr, bool lr,
-                                       long objectLevel, long drawLevel)
+                                       int32_t objectLevel, int32_t drawLevel)
 {
     if (!modelName || !modelName[0])
     {
@@ -1088,7 +1094,7 @@ bool WorldMap::CreateFollowShip(const char *modelName, float kSpeed, float time,
     VDATA *isSkipEnable = core.Event("WorldMap_IsSkipEnable");
     if (isSkipEnable)
     {
-        long skipEnable = 0;
+        int32_t skipEnable = 0;
         if (isSkipEnable->Get(skipEnable))
         {
             static_cast<WdmEnemyShip *>(ship)->canSkip = skipEnable != 0;
@@ -1212,14 +1218,14 @@ void WorldMap::ResetScriptInterfaces() const
 void WorldMap::ReleaseEncounters()
 {
     // leave the encounter parameters intact
-    for (long i = 0; i < wdmObjects->ships.size(); i++)
+    for (int32_t i = 0; i < wdmObjects->ships.size(); i++)
     {
         if (wdmObjects->ships[i] == wdmObjects->playerShip)
             continue;
         static_cast<WdmEnemyShip *>(wdmObjects->ships[i])->SetSaveAttribute(nullptr);
         wdmObjects->ships[i]->killMe = true;
     }
-    for (long i = 0; i < wdmObjects->storms.size(); i++)
+    for (int32_t i = 0; i < wdmObjects->storms.size(); i++)
     {
         wdmObjects->storms[i]->SetSaveAttribute(nullptr);
         wdmObjects->storms[i]->killMe = true;
@@ -1234,7 +1240,7 @@ ATTRIBUTES *WorldMap::GetEncSaveData(const char *type, const char *retName)
     // Generating the name of the attribute
     encCounter++;
     char atrName[64];
-    long i;
+    int32_t i;
     for (i = 0; i < 1000000; i++, encCounter++)
     {
         sprintf_s(atrName, "enc_%u", encCounter);

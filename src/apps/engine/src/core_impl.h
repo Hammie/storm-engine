@@ -42,30 +42,8 @@ class CoreImpl : public Core
     void ReleaseServices();
     void ProcessEngineIniFile();
 
-    bool bAppActive{};
-    bool Memory_Leak_flag; // true if core detected memory leak
-    bool Root_flag;
-    bool Exit_flag;   // true if the program closing
-    bool Initialized; // initialized flag (false at startup or after Reset())
-    bool bEngineIniProcessed;
-    HWND App_Hwnd;             // application handle
-    char gstring[_MAX_PATH]{}; // general purpose string
-    bool State_loading;
-    bool bEnableTimeScale{};
-
-    SERVICES_LIST Services_List; // list for subsequent calls RunStart/RunEnd service functions
-
-    HINSTANCE hInstance{};
-
-    char *State_file_name;
-
-    TIMER Timer;
-
-    COMPILER *Compiler;
-
     void ProcessControls();
 
-    float fTimeScale;
 
     void DumpEntitiesInfo();
     void EraseEntities();
@@ -74,7 +52,7 @@ class CoreImpl : public Core
     void AppState(bool state);
     uint32_t MakeHashValue(const char *string);
     VMA *FindVMA(const char *class_name);
-    VMA *FindVMA(long hash);
+    VMA *FindVMA(int32_t hash);
     //------------------------------------------------------------------------------------------------
     // API functions : (virtual API)
 
@@ -117,16 +95,16 @@ class CoreImpl : public Core
     // return current fps
     uint32_t EngineFps() override;
     // set fixed delta time mode, (-1) - off
-    void SetDeltaTime(long delta_time) override;
+    void SetDeltaTime(int32_t delta_time) override;
     uint32_t GetDeltaTime() override;
     uint32_t GetRDeltaTime() override;
     //
     VDATA *Event(const char *Event_name, const char *Format = nullptr, ...) override;
     uint32_t PostEvent(const char *Event_name, uint32_t post_time, const char *Format, ...) override;
 
-    void *GetSaveData(const char *file_name, long &data_size) override;
+    void *GetSaveData(const char *file_name, int32_t &data_size) override;
 
-    bool SetSaveData(const char *file_name, void *data_ptr, long data_size) override;
+    bool SetSaveData(const char *file_name, void *data_ptr, int32_t data_size) override;
 
     uint32_t SetScriptFunction(IFUNCINFO *pFuncInfo) override;
 
@@ -142,12 +120,41 @@ class CoreImpl : public Core
 
     void collectCrashInfo() const;
 
+    [[nodiscard]] bool initialized() const
+    {
+        return Initialized;
+    }
+
+    TIMER Timer;
+
+    COMPILER *Compiler;
+
+    bool Exit_flag; // true if the program closing
+
   private:
     void loadCompatibilitySettings(INIFILE &inifile);
 
     storm::ENGINE_VERSION targetVersion_ = storm::ENGINE_VERSION::LATEST;
 
     bool stopFrameProcessing_ = false;
+
+    bool bAppActive{};
+    bool Memory_Leak_flag; // true if core detected memory leak
+    bool Root_flag;
+    bool Initialized; // initialized flag (false at startup or after Reset())
+    bool bEngineIniProcessed;
+    HWND App_Hwnd;             // application handle
+    char gstring[MAX_PATH]{}; // general purpose string
+    bool State_loading;
+    bool bEnableTimeScale{};
+
+    SERVICES_LIST Services_List; // list for subsequent calls RunStart/RunEnd service functions
+
+    HINSTANCE hInstance{};
+
+    char *State_file_name;
+
+    float fTimeScale;
 };
 
 inline CoreImpl core_internal;

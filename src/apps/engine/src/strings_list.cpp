@@ -1,6 +1,9 @@
 #include "strings_list.h"
+
 #include <cstring>
 #include <stdexcept>
+
+#include "storm/string_compare.hpp"
 
 STRINGS_LIST::STRINGS_LIST()
 {
@@ -75,7 +78,7 @@ void STRINGS_LIST::Release()
     if (Strings <= 0 || String_Table_PTR == nullptr)
         return;
     for (n = 0; n < Strings; n++)
-        delete String_Table_PTR[n];
+        delete[] String_Table_PTR[n];
     free(String_Table_PTR);
     List_size = 0;
     Strings = 0;
@@ -101,7 +104,7 @@ uint32_t STRINGS_LIST::GetStringCode(const char *_char_PTR)
       if(hash == *((DWORD *)String_Table_PTR[Cache[n]]))
       {
         //return Cache[n];
-        if(_stricmp(String_Table_PTR[Cache[n]] + used_data_size + sizeof(DWORD),_char_PTR) == 0) return Cache[n];
+        if(storm::iEquals(String_Table_PTR[Cache[n]] + used_data_size + sizeof(DWORD),_char_PTR)) return Cache[n];
       }
     }*/
 
@@ -109,7 +112,7 @@ uint32_t STRINGS_LIST::GetStringCode(const char *_char_PTR)
     {
         if (hash == *((uint32_t *)String_Table_PTR[n]))
         {
-            if (_stricmp(String_Table_PTR[n] + used_data_size + sizeof(uint32_t), _char_PTR) == 0)
+            if (storm::iEquals(String_Table_PTR[n] + used_data_size + sizeof(uint32_t), _char_PTR))
             {
                 // CacheString(n);
                 return n;
@@ -125,12 +128,12 @@ uint32_t STRINGS_LIST::GetStringCode(const char *_char_PTR)
       {
         if(Cache[n] == INVALID_ORDINAL_NUMBER) break;
         if(Cache[n] >= Strings) throw std::runtime_error(cache error);
-        if(_stricmp(String_Table_PTR[Cache[n]] + used_data_size + sizeof(DWORD),_char_PTR) == 0) return Cache[n];
+        if(storm::iEquals(String_Table_PTR[Cache[n]] + used_data_size + sizeof(DWORD),_char_PTR)) return Cache[n];
       }
 
       for(n = 0; n < Strings; n++)
       {
-        if(_stricmp(String_Table_PTR[n] + used_data_size + sizeof(DWORD),_char_PTR) == 0)
+        if(storm::iEquals(String_Table_PTR[n] + used_data_size + sizeof(DWORD),_char_PTR))
         {
           CacheString(n);
           return n;
@@ -178,7 +181,7 @@ void STRINGS_LIST::DeleteString(uint32_t code)
     uint32_t n;
     if (code >= Strings || String_Table_PTR == nullptr)
         return;
-    delete String_Table_PTR[code];
+    delete[] String_Table_PTR[code];
     if (code == (Strings - 1))
     {
         Strings--;
@@ -204,8 +207,8 @@ uint32_t STRINGS_LIST::MakeHashValue(const char *string)
         if ('A' <= v && v <= 'Z')
             v += 'a' - 'A';
 
-        hval = (hval << 4) + static_cast<unsigned long>(v);
-        const uint32_t g = hval & (static_cast<unsigned long>(0xf) << (32 - 4));
+        hval = (hval << 4) + static_cast<uint32_t>(v);
+        const uint32_t g = hval & (static_cast<uint32_t>(0xf) << (32 - 4));
         if (g != 0)
         {
             hval ^= g >> (32 - 8);

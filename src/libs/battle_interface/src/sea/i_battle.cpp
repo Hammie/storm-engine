@@ -318,7 +318,7 @@ uint64_t BATTLE_INTERFACE::ProcessMessage(MESSAGE &message)
 
     case MSG_BATTLE_LAND_MAKE_COMMAND: {
         const std::string &param = message.String();
-        if (_stricmp(param.c_str(), "cancel") == 0)
+        if (storm::iEquals(param, "cancel"))
         {
             if (m_pShipIcon)
                 m_pShipIcon->ExecuteCommand(BIShipIcon::Command_cancel);
@@ -335,7 +335,7 @@ void BATTLE_INTERFACE::CheckSeaState()
     if (main_sd == nullptr)
         return;
 
-    long nReloadTargetIndex = -1;
+    int32_t nReloadTargetIndex = -1;
     auto sqrRadius = core.Entity_GetAttributeAsFloat(BIUtils::idBattleInterface, "boardRadius", 0.f);
     sqrRadius *= sqrRadius;
     auto minReloadRadius = sqrRadius;
@@ -398,7 +398,7 @@ void BATTLE_INTERFACE::EnableMessageIcons(VDATA *pvdat)
     m_pMessageIcons->SetShowMsg(true);
 
     ATTRIBUTES * pAttr[4];
-    long pLeft[4];
+    int32_t pLeft[4];
 
     int nCommandos = 0;
 

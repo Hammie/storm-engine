@@ -38,7 +38,7 @@ CharactersGroups::CharactersGroups()
 
 CharactersGroups::~CharactersGroups()
 {
-    for (long i = 0; i < maxGroups; i++)
+    for (int32_t i = 0; i < maxGroups; i++)
     {
         if (groups[i])
         {
@@ -95,7 +95,7 @@ void CharactersGroups::String::operator=(const char *str)
     }
 }
 
-bool CharactersGroups::String::Cmp(const char *str, long l, long h) const
+bool CharactersGroups::String::Cmp(const char *str, int32_t l, int32_t h) const
 {
     if (!name || !name[0])
     {
@@ -107,17 +107,17 @@ bool CharactersGroups::String::Cmp(const char *str, long l, long h) const
         return false;
     if (len != l)
         return false;
-    return _stricmp(name, str) == 0;
+    return storm::iEquals(name, str);
 }
 
-long CharactersGroups::String::GetHash(const char *str)
+int32_t CharactersGroups::String::GetHash(const char *str)
 {
     if (!str)
         return 0;
     return LocatorArray::CalcHashString(str);
 }
 
-long CharactersGroups::String::GetLen(const char *str)
+int32_t CharactersGroups::String::GetLen(const char *str)
 {
     if (!str)
         return 0;
@@ -149,10 +149,10 @@ void CharactersGroups::Execute(uint32_t delta_time)
     auto playerAlarm = 0.0f;
     auto playerActive = false;
     auto isDeactivate = false;
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         auto *const rel = groups[i]->relations;
-        for (long j = 0; j <= i; j++)
+        for (int32_t j = 0; j <= i; j++)
         {
             rel[j].alarm -= dltTime * rel[j].alarmdown;
             if (rel[j].alarm < 0.0f)
@@ -328,7 +328,7 @@ bool CharactersGroups::AddEnemyTarget(Character *chr, Character *enemy, float ma
     if (r.actState != rs_enemy)
         return false;
     // Looking among added
-    for (long i = 0; i < chr->numTargets; i++)
+    for (int32_t i = 0; i < chr->numTargets; i++)
     {
         if (enemy == EntityManager::GetEntityPointer(chr->grpTargets[i].chr))
         {
@@ -339,7 +339,7 @@ bool CharactersGroups::AddEnemyTarget(Character *chr, Character *enemy, float ma
     if (chr->numTargets >= sizeof(chr->grpTargets) / sizeof(Character::GrpTarget))
         return false;
     // Add a new target
-    Assert(_stricmp(chr->group, enemy->group) != 0);
+    Assert(!storm::iEquals(chr->group, enemy->group));
     auto &trg = chr->grpTargets[chr->numTargets++];
     trg.chr = enemy->GetId();
     trg.time = 0.0f;
@@ -372,7 +372,7 @@ bool CharactersGroups::RemoveInvalidTargets(Character *chr, Character *check)
         return false;
     }
     auto isValidate = false;
-    for (long i = 0; i < chr->numTargets;)
+    for (int32_t i = 0; i < chr->numTargets;)
     {
         auto isDelete = true;
         auto &trg = chr->grpTargets[i];
@@ -408,117 +408,117 @@ uint64_t CharactersGroups::ProcessMessage(MESSAGE &message)
     const std::string &cmd = message.String();
     if (cmd.empty())
         return 0;
-    if (_stricmp(cmd.c_str(), "VldTrg") == 0)
+    if (storm::iEquals(cmd, "VldTrg"))
     {
         return MsgIsValidateTarget(message);
     }
-    if (_stricmp(cmd.c_str(), "GetTrg") == 0)
+    if (storm::iEquals(cmd, "GetTrg"))
     {
         return MsgGetOptimalTarget(message);
     }
-    if (_stricmp(cmd.c_str(), "IsEnemy") == 0)
+    if (storm::iEquals(cmd, "IsEnemy"))
     {
         return MsgIsEnemy(message);
     }
-    if (_stricmp(cmd.c_str(), "MoveChr") == 0)
+    if (storm::iEquals(cmd, "MoveChr"))
     {
         return MoveCharacterToGroup(message);
     }
-    if (_stricmp(cmd.c_str(), "Attack") == 0)
+    if (storm::iEquals(cmd, "Attack"))
     {
         MsgAttack(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "AddTarget") == 0)
+    if (storm::iEquals(cmd, "AddTarget"))
     {
         MsgAddTarget(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "UpdChrTrg") == 0)
+    if (storm::iEquals(cmd, "UpdChrTrg"))
     {
         MsgUpdChrTrg(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "RegistryGroup") == 0)
+    if (storm::iEquals(cmd, "RegistryGroup"))
     {
         MsgRegistryGroup(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "ReleaseGroup") == 0)
+    if (storm::iEquals(cmd, "ReleaseGroup"))
     {
         MsgReleaseGroup(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "SetRelation") == 0)
+    if (storm::iEquals(cmd, "SetRelation"))
     {
         MsgSetRelation(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "SetAlarmReaction") == 0)
+    if (storm::iEquals(cmd, "SetAlarmReaction"))
     {
         MsgSetAlarmReaction(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "SetGroupLook") == 0)
+    if (storm::iEquals(cmd, "SetGroupLook"))
     {
         return MsgSetGroupLook(message);
     }
-    if (_stricmp(cmd.c_str(), "SetGroupHear") == 0)
+    if (storm::iEquals(cmd, "SetGroupHear"))
     {
         return MsgSetGroupHear(message);
     }
-    if (_stricmp(cmd.c_str(), "SetGroupSay") == 0)
+    if (storm::iEquals(cmd, "SetGroupSay"))
     {
         return MsgSetGroupSay(message);
     }
-    if (_stricmp(cmd.c_str(), "SetGroupPriority") == 0)
+    if (storm::iEquals(cmd, "SetGroupPriority"))
     {
         return MsgSetGroupPriority(message);
     }
-    if (_stricmp(cmd.c_str(), "UnloadCharacter") == 0)
+    if (storm::iEquals(cmd, "UnloadCharacter"))
     {
         UnloadCharacter(message);
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "ResetWaveTime") == 0)
+    if (storm::iEquals(cmd, "ResetWaveTime"))
     {
         waveTime = 1000.0f;
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "SetAlarm") == 0)
+    if (storm::iEquals(cmd, "SetAlarm"))
     {
         return MsgSetAlarm(message);
     }
-    if (_stricmp(cmd.c_str(), "SetAlarmDown") == 0)
+    if (storm::iEquals(cmd, "SetAlarmDown"))
     {
         return MsgSetAlarmDown(message);
     }
-    if (_stricmp(cmd.c_str(), "ClearAllTargets") == 0)
+    if (storm::iEquals(cmd, "ClearAllTargets"))
     {
         ClearAllTargets();
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "SaveData") == 0)
+    if (storm::iEquals(cmd, "SaveData"))
     {
         SaveData();
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "LoadDataRelations") == 0)
+    if (storm::iEquals(cmd, "LoadDataRelations"))
     {
         LoadDataRelations();
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "RestoreStates") == 0)
+    if (storm::iEquals(cmd, "RestoreStates"))
     {
         RestoreStates();
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "DeleteEmptyGroups") == 0)
+    if (storm::iEquals(cmd, "DeleteEmptyGroups"))
     {
         DeleteEmptyGroups();
         return 1;
     }
-    if (_stricmp(cmd.c_str(), "DumpRelations") == 0)
+    if (storm::iEquals(cmd, "DumpRelations"))
     {
         DumpRelations();
         return 1;
@@ -563,7 +563,7 @@ bool CharactersGroups::MsgGetOptimalTarget(MESSAGE &message) const
         return false;
     if (c->numTargets <= 0)
         return false;
-    long s = 0;
+    int32_t s = 0;
     if (c->numTargets > 1)
     {
         CVECTOR pos, p;
@@ -573,7 +573,7 @@ bool CharactersGroups::MsgGetOptimalTarget(MESSAGE &message) const
         // choose the optimal goal
         float value;
         s = -1;
-        for (long i = 0; i < c->numTargets; i++)
+        for (int32_t i = 0; i < c->numTargets; i++)
         {
             // Character pointer
             auto *nc = static_cast<NPCharacter *>(EntityManager::GetEntityPointer(c->grpTargets[i].chr));
@@ -582,8 +582,8 @@ bool CharactersGroups::MsgGetOptimalTarget(MESSAGE &message) const
             if (!nc->IsSetBlade())
                 continue;
             // collect the number of characters fighting with this guy
-            long n = 0;
-            for (long j = 0; j < numChr; j++)
+            int32_t n = 0;
+            for (int32_t j = 0; j < numChr; j++)
             {
                 if (cEx[j].c == nc || cEx[j].c == c)
                     continue;
@@ -619,11 +619,11 @@ bool CharactersGroups::MsgGetOptimalTarget(MESSAGE &message) const
     // if(!c->IsSetBlade()) return false;
     if (c->AttributesPointer)
     {
-        vd->Set(static_cast<long>(c->AttributesPointer->GetAttributeAsDword("index", -1)));
+        vd->Set(static_cast<int32_t>(c->AttributesPointer->GetAttributeAsDword("index", -1)));
     }
     else
     {
-        vd->Set(static_cast<long>(-1));
+        vd->Set(-1);
     }
     return true;
 }
@@ -657,7 +657,7 @@ void CharactersGroups::MsgAttack(MESSAGE &message)
     if (r.isActive)
         r.curState = r.actState;
     // Establish a hostile relationship among all victim-friendly groups
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         if (gHit == groups[i])
             continue;
@@ -741,7 +741,7 @@ void CharactersGroups::MsgReleaseGroup(MESSAGE &message)
 }
 
 // Register a group
-long CharactersGroups::RegistryGroup(const char *groupName)
+int32_t CharactersGroups::RegistryGroup(const char *groupName)
 {
     const auto idxgrp = FindGroupIndex(groupName);
     if (idxgrp >= 0)
@@ -768,7 +768,7 @@ long CharactersGroups::RegistryGroup(const char *groupName)
     {
         // Relationship table
         grp->relations = new Relation[numGroups];
-        for (long i = 0; i < numGroups - 1; i++)
+        for (int32_t i = 0; i < numGroups - 1; i++)
         {
             grp->relations[i].alarm = CGS_START_ALARM;
             grp->relations[i].alarmdown = CGS_ALARMDOWN;
@@ -810,7 +810,7 @@ void CharactersGroups::ReleaseGroup(const char *groupName)
         delete oldGroup->relations;
     delete oldGroup;
 
-    for (long othergrp = idxgrp + 1; othergrp < numGroups - 1;
+    for (int32_t othergrp = idxgrp + 1; othergrp < numGroups - 1;
          ++othergrp) // restore relations of other groups taking into account the shift
         groups[othergrp]->relations[idxgrp] = groups[idxgrp]->relations[othergrp];
 
@@ -959,7 +959,7 @@ void CharactersGroups::MsgSetRelation(MESSAGE &message)
     const std::string &buf = message.String();
     auto actState = rs_enemy;
     auto relState = rs_neitral;
-    if (_stricmp(buf.c_str(), "friend") == 0)
+    if (storm::iEquals(buf, "friend"))
     {
         r.curState = rs_friend;
         actState = rs_enemy;
@@ -970,7 +970,7 @@ void CharactersGroups::MsgSetRelation(MESSAGE &message)
         r.alarmmax = CGS_ALARMMAX;
         r.isActive = false;
     }
-    else if (_stricmp(buf.c_str(), "neitral") == 0)
+    else if (storm::iEquals(buf, "neitral"))
     {
         r.curState = rs_neitral;
         actState = rs_enemy;
@@ -980,7 +980,7 @@ void CharactersGroups::MsgSetRelation(MESSAGE &message)
         r.alarmmin = CGS_ALARMMIN;
         r.alarmmax = CGS_ALARMMAX;
     }
-    else if (_stricmp(buf.c_str(), "enemy") == 0)
+    else if (storm::iEquals(buf, "enemy"))
     {
         r.curState = rs_enemy;
         actState = rs_enemy;
@@ -1007,20 +1007,20 @@ void CharactersGroups::MsgSetAlarmReaction(MESSAGE &message)
     const std::string &act = message.String();
     const std::string &rel = message.String();
     auto actState = rs_enemy;
-    if (_stricmp(act.c_str(), "neitral") == 0)
+    if (storm::iEquals(act, "neitral"))
     {
         actState = rs_neitral;
     }
-    else if (_stricmp(act.c_str(), "friend") == 0)
+    else if (storm::iEquals(act, "friend"))
     {
         actState = rs_friend;
     }
     auto relState = rs_neitral;
-    if (_stricmp(rel.c_str(), "enemy") == 0)
+    if (storm::iEquals(rel, "enemy"))
     {
         relState = rs_enemy;
     }
-    else if (_stricmp(rel.c_str(), "friend") == 0)
+    else if (storm::iEquals(rel, "friend"))
     {
         relState = rs_friend;
     }
@@ -1035,7 +1035,7 @@ void CharactersGroups::RemoveCharacterFromAllGroups(entid_t chr)
 {
     auto *const ch = chr ? static_cast<Character *>(EntityManager::GetEntityPointer(chr)) : nullptr;
     // Remove the character from the previous group
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         auto *g = groups[i];
         auto &cid = g->c;
@@ -1056,7 +1056,7 @@ void CharactersGroups::RemoveCharacterFromAllGroups(entid_t chr)
 // Delete all empty groups
 void CharactersGroups::DeleteEmptyGroups()
 {
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         Group *g = groups[i];
 
@@ -1099,7 +1099,7 @@ CharactersGroups::Group *CharactersGroups::FindGroup(const char *name)
 }
 
 // Find a group by name
-long CharactersGroups::FindGroupIndex(const char *name)
+int32_t CharactersGroups::FindGroupIndex(const char *name)
 {
     if (!name)
         return -1;
@@ -1107,7 +1107,7 @@ long CharactersGroups::FindGroupIndex(const char *name)
     const auto h = String::GetHash(name);
 
     // looking among registered
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         if (groups[i]->name.Cmp(name, l, h))
             return i;
@@ -1144,7 +1144,7 @@ CharactersGroups::Relation &CharactersGroups::FindRelation(const char *name1, co
 }
 
 // Find group relationship
-CharactersGroups::Relation &CharactersGroups::FindRelation(long g1, long g2, bool *selfgroup)
+CharactersGroups::Relation &CharactersGroups::FindRelation(int32_t g1, int32_t g2, bool *selfgroup)
 {
     Assert(g1 >= 0 && g1 < numGroups);
     Assert(g2 >= 0 && g2 < numGroups);
@@ -1158,13 +1158,13 @@ CharactersGroups::Relation &CharactersGroups::FindRelation(long g1, long g2, boo
 }
 
 // Get character group index
-long CharactersGroups::GetCharacterGroup(Character *c)
+int32_t CharactersGroups::GetCharacterGroup(Character *c)
 {
     if (!c)
         return -1;
     if (c->groupID >= 0 && c->groupID < numGroups)
     {
-        if (_stricmp(c->group, groups[c->groupID]->name) == 0)
+        if (storm::iEquals(c->group, groups[c->groupID]->name.name))
         {
             return c->groupID;
         }
@@ -1197,9 +1197,9 @@ void CharactersGroups::SaveData()
         AttributesPointer->DeleteAttributeClassX(saveData);
     saveData = AttributesPointer->CreateSubAClass(AttributesPointer, "savedata");
     // Maintaining group relationships
-    for (long i = 0, cnt = 0; i < numGroups; i++)
+    for (int32_t i = 0, cnt = 0; i < numGroups; i++)
     {
-        for (long j = 0; j < i; j++)
+        for (int32_t j = 0; j < i; j++)
         {
             // Relationship section
             char buf[16];
@@ -1248,8 +1248,8 @@ void CharactersGroups::LoadDataRelations()
     auto *saveData = AttributesPointer->FindAClass(AttributesPointer, "savedata");
     if (!saveData)
         return;
-    const long numG = saveData->GetAttributesNum();
-    for (long i = 0; i < numG; i++)
+    const int32_t numG = saveData->GetAttributesNum();
+    for (int32_t i = 0; i < numG; i++)
     {
         auto *grp = saveData->GetAttributeClass(i);
         // Registering the first group
@@ -1280,9 +1280,9 @@ void CharactersGroups::LoadDataRelations()
         r.alarmmin = grp->GetAttributeAsFloat("alarmmin", r.alarmmin);
         r.alarmmax = grp->GetAttributeAsFloat("alarmmax", r.alarmmax);
         r.isActive = grp->GetAttributeAsDword("isactive", r.isActive) != 0;
-        long curState = grp->GetAttributeAsDword("curState", r.curState);
-        long actState = grp->GetAttributeAsDword("actState", r.actState);
-        long relState = grp->GetAttributeAsDword("relState", r.relState);
+        int32_t curState = grp->GetAttributeAsDword("curState", r.curState);
+        int32_t actState = grp->GetAttributeAsDword("actState", r.actState);
+        int32_t relState = grp->GetAttributeAsDword("relState", r.relState);
         if (curState <= rs_beginvalue || curState >= rs_endvalue)
         {
             core.Trace("CharactersGroups::LoadDataRelations -> invalide curState value, set this neitral");
@@ -1307,9 +1307,9 @@ void CharactersGroups::LoadDataRelations()
 // Establish relationships for active groups
 void CharactersGroups::RestoreStates()
 {
-    for (long i = 0, cnt = 0; i < numGroups; i++)
+    for (int32_t i = 0, cnt = 0; i < numGroups; i++)
     {
-        for (long j = 0; j < i; j++)
+        for (int32_t j = 0; j < i; j++)
         {
             auto &r = FindRelation(i, j);
             const auto oldState = r.isActive;
@@ -1335,9 +1335,9 @@ void CharactersGroups::RestoreStates()
 void CharactersGroups::DumpRelations()
 {
     // Maintaining group relationships
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
-        for (long j = 0; j < i; j++)
+        for (int32_t j = 0; j < i; j++)
         {
             core.Trace("\"%s\" <-> \"%s\"", groups[i]->name.name, groups[j]->name.name);
             // keep the relationship
@@ -1355,7 +1355,7 @@ void CharactersGroups::DumpRelations()
     }
     core.Trace("Groups info:");
     core.Trace("");
-    for (long i = 0; i < numGroups; i++)
+    for (int32_t i = 0; i < numGroups; i++)
     {
         core.Trace("name: \"%s\"", groups[i]->name.name);
         core.Trace("    look: %f", groups[i]->look);

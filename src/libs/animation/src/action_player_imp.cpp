@@ -10,6 +10,8 @@
 
 #include "animation_imp.h"
 
+#include "storm/string_compare.hpp"
+
 // ============================================================================================
 // Construction, destruction
 // ============================================================================================
@@ -36,7 +38,7 @@ ActionPlayerImp::~ActionPlayerImp()
 }
 
 // Set pointer to animation manager
-void ActionPlayerImp::SetAnimation(AnimationImp *animation, long index)
+void ActionPlayerImp::SetAnimation(AnimationImp *animation, int32_t index)
 {
     Assert(!ani);
     ani = animation;
@@ -50,7 +52,7 @@ void ActionPlayerImp::SetAnimation(AnimationImp *animation, long index)
 // Set current action
 bool ActionPlayerImp::SetAction(const char *actionName)
 {
-    if (actionName && action && _stricmp(action->GetName(), actionName) == 0)
+    if (actionName && action && storm::iEquals(action->GetName(), actionName))
         return true;
     action = nullptr;
     isPlay = isPause = false;
@@ -214,7 +216,7 @@ float ActionPlayerImp::GetDefSpeed() const
 }
 
 // Get the duration of an action in milliseconds
-long ActionPlayerImp::GetFrames() const
+int32_t ActionPlayerImp::GetFrames() const
 {
     if (action)
         return action->GetFrames();
@@ -252,7 +254,7 @@ const char *ActionPlayerImp::GetData(const char *dataName) const
 //--------------------------------------------------------------------------------------------
 
 // Take a step in time
-void ActionPlayerImp::Execute(long dltTime)
+void ActionPlayerImp::Execute(int32_t dltTime)
 {
     kBlendTimer = 1.0f;
     if (!action || !isPlay || isPause || anitype == at_static)
@@ -327,7 +329,7 @@ void ActionPlayerImp::CopyState(ActionPlayerImp &from)
     // loop
     isLoop = from.isLoop;
     // A mask for past events
-    for (long i = 0; i < ACTIONPLAYEREVENTFLAGS; i++)
+    for (int32_t i = 0; i < ACTIONPLAYEREVENTFLAGS; i++)
         eventsMask[i] = from.eventsMask[i];
     // Coefficient of blending
     kBlend = from.kBlend;
@@ -349,7 +351,7 @@ void ActionPlayerImp::MoveNormal(float dlt)
         if (isLoop)
         {
             ResetEventsMask();
-            position -= static_cast<float>(static_cast<long>(position));
+            position -= static_cast<float>(static_cast<int32_t>(position));
             ani->ApeStart(playerIndex);
         }
         else
@@ -366,7 +368,7 @@ void ActionPlayerImp::MoveReverse(float dlt)
         if (isLoop)
         {
             ResetEventsMask();
-            position -= static_cast<long>(position) - 1.0f;
+            position -= static_cast<int32_t>(position) - 1.0f;
             ani->ApeStart(playerIndex);
         }
         else
@@ -383,7 +385,7 @@ void ActionPlayerImp::MovePingpong(float dlt)
         if (position >= 1.0f)
         {
             // change direction
-            position = 1.0f - (position - static_cast<float>(static_cast<long>(position)));
+            position = 1.0f - (position - static_cast<float>(static_cast<int32_t>(position)));
             dir = false;
             ani->ApeChange(playerIndex);
         }
@@ -399,7 +401,7 @@ void ActionPlayerImp::MovePingpong(float dlt)
             {
                 // change direction
                 ResetEventsMask();
-                position = -(position - static_cast<long>(position));
+                position = -(position - static_cast<int32_t>(position));
                 dir = true;
                 ani->ApeStart(playerIndex);
             }
@@ -419,7 +421,7 @@ void ActionPlayerImp::MoveRPingpong(float dlt)
         {
             ResetEventsMask();
             // change direction
-            position = -(position - static_cast<long>(position));
+            position = -(position - static_cast<int32_t>(position));
             dir = true;
             ani->ApeChange(playerIndex);
         }
@@ -435,7 +437,7 @@ void ActionPlayerImp::MoveRPingpong(float dlt)
             {
                 ResetEventsMask();
                 // change direction
-                position = 1.0f - (position - static_cast<float>(static_cast<long>(position)));
+                position = 1.0f - (position - static_cast<float>(static_cast<int32_t>(position)));
                 dir = false;
                 ani->ApeStart(playerIndex);
             }
@@ -451,9 +453,9 @@ void ActionPlayerImp::CheckEvents()
     if (!action)
         return;
     const auto num = action->GetNumEvents();
-    for (long i = 0; i < num; i++)
+    for (int32_t i = 0; i < num; i++)
     {
-        const long mask = 1 << (i & 31);
+        const int32_t mask = 1 << (i & 31);
         if (eventsMask[i >> 5] & mask)
             continue;
         if (action->CheckEvent(i, position, dir))
@@ -468,6 +470,6 @@ void ActionPlayerImp::CheckEvents()
 // Clearing the flags of the events that have occurred
 void ActionPlayerImp::ResetEventsMask()
 {
-    for (long i = 0; i < ACTIONPLAYEREVENTFLAGS; i++)
+    for (int32_t i = 0; i < ACTIONPLAYEREVENTFLAGS; i++)
         eventsMask[i] = 0;
 }

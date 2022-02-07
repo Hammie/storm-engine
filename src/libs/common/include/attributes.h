@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "storm_assert.h"
+#include "storm/string_compare.hpp"
 
 class VSTRING_CODEC
 {
@@ -14,7 +15,7 @@ class VSTRING_CODEC
     virtual ~VSTRING_CODEC(){};
     virtual uint32_t GetNum() = 0;
     virtual uint32_t Convert(const char *pString) = 0;
-    virtual uint32_t Convert(const char *pString, long iLen) = 0;
+    virtual uint32_t Convert(const char *pString, int32_t iLen) = 0;
     virtual const char *Convert(uint32_t code) = 0;
 
     virtual void VariableChanged() = 0;
@@ -93,7 +94,7 @@ class ATTRIBUTES
     {
         if (!str || !str[0])
             return false;
-        return _stricmp(pVStringCodec->Convert(nNameCode), str) == 0;
+        return storm::iEquals(pVStringCodec->Convert(nNameCode), str);
     }
 
     auto GetThisName() const
@@ -156,7 +157,7 @@ class ATTRIBUTES
     ATTRIBUTES *GetAttributeClass(const char *name)
     {
         for (const auto &attribute : pAttributes)
-            if (_stricmp(name, attribute->GetThisName()) == 0)
+            if (storm::iEquals(name, attribute->GetThisName()))
                 return attribute;
         return nullptr;
     }
@@ -187,7 +188,7 @@ class ATTRIBUTES
         if (name == nullptr)
             return nullptr;
         for (const auto &attribute : pAttributes)
-            if (_stricmp(name, attribute->GetThisName()) == 0)
+            if (storm::iEquals(name, attribute->GetThisName()))
                 return attribute->Attribute;
         return nullptr;
     }
@@ -248,11 +249,11 @@ class ATTRIBUTES
 
     auto SetAttributeUseDword(const char *name, uint32_t val)
     {
-        char buffer[128];
-        _ultoa_s(val, buffer, 10);
+        std::string buffer;
+        buffer = std::to_string(val);
         if (name)
-            return SetAttribute(name, buffer) != 0;
-        SetValue(buffer);
+            return SetAttribute(name, buffer.c_str()) != 0;
+        SetValue(buffer.c_str());
         return true;
     }
 
@@ -490,7 +491,7 @@ class ATTRIBUTES
         nNameCode = n;
     }
 
-    /*void Dump(ATTRIBUTES *pA, long level)
+    /*void Dump(ATTRIBUTES *pA, int32_t level)
     {
         char buffer[128];
         if (pA == nullptr)

@@ -23,8 +23,8 @@ KEY_NODE::KEY_NODE()
 
 KEY_NODE::~KEY_NODE()
 {
-    delete key_name;
-    delete key_val;
+    delete[] key_name;
+    delete[] key_val;
     // if(l_PTR) delete l_PTR;
     // if(r_PTR) delete r_PTR;
 }
@@ -33,7 +33,7 @@ void KEY_NODE::SetName(const char *name)
 {
     if (name == nullptr)
         return;
-    delete key_name;
+    delete[] key_name;
     key_name = nullptr;
     name_size = strlen(name) + 1;
 
@@ -47,7 +47,7 @@ void KEY_NODE::SetValue(const char *value)
 {
     if (value == nullptr)
         return;
-    delete key_val;
+    delete[] key_val;
     key_val = nullptr;
     val_size = strlen(value) + 1;
 
@@ -161,12 +161,12 @@ SECTION::~SECTION()
         Root->Deattach(&Root, &Top);
         delete old_root;
     }
-    delete Name;
+    delete[] Name;
 }
 
 void SECTION::SetName(const char *name)
 {
-    delete Name;
+    delete[] Name;
     if (name == nullptr)
     {
         Name = nullptr;
@@ -230,7 +230,7 @@ KEY_NODE *SECTION::FindKey(KEY_NODE *from, const char *key_name, const char *key
         const auto flags = node->SetFlags(0);
         if (flags & KNF_KEY)
         {
-            if (_stricmp(key_name, node->GetName()) == 0)
+            if (storm::iEquals(key_name, node->GetName()))
             {
                 if (key_value == nullptr)
                     return node;
@@ -238,7 +238,7 @@ KEY_NODE *SECTION::FindKey(KEY_NODE *from, const char *key_name, const char *key
                 auto *const char_PTR = node->GetValue();
                 if (char_PTR != nullptr)
                 {
-                    if (_stricmp(key_value, char_PTR) == 0)
+                    if (storm::iEquals(key_value, char_PTR))
                         return node;
                 }
             }
@@ -343,7 +343,7 @@ void IFS::DecReference()
     Reference--;
 }
 
-long IFS::GetReference()
+int32_t IFS::GetReference()
 {
     return Reference;
 }
@@ -409,17 +409,17 @@ bool IFS::LoadFile(const char *_file_name)
     return true;
 }
 
-void IFS::Format(char *file_data, long file_size)
+void IFS::Format(char *file_data, int32_t file_size)
 {
-    long n, z;
-    long backcount;
-    long forecount;
+    int32_t n, z;
+    int32_t backcount;
+    int32_t forecount;
 
     auto *Current_Section = new SECTION;
     Current_Section->Add(&SectionRoot, &SectionTop);
 
     char *data_PTR = nullptr;
-    long lines = 0;
+    int32_t lines = 0;
 
     // terminate each line by zero symbol
     for (n = 0; n < file_size; n++)
@@ -432,7 +432,7 @@ void IFS::Format(char *file_data, long file_size)
         }
     }
 
-    long offset = 0;
+    int32_t offset = 0;
     for (data_PTR = file_data; data_PTR < file_data + file_size; data_PTR += offset)
     {
         while (data_PTR < file_data + file_size && *data_PTR == '\0')
@@ -447,7 +447,7 @@ void IFS::Format(char *file_data, long file_size)
         {
         }
 
-        for (long i = 0; data_PTR[i]; i++)
+        for (int32_t i = 0; data_PTR[i]; i++)
         {
             if (VoidSym(data_PTR[i]))
                 continue; // skip void syms
@@ -709,7 +709,7 @@ SECTION *IFS::FindSection(const char *section_name)
             return nullptr;
         }
         if (node->GetName() != nullptr)
-            if (_stricmp(section_name, node->GetName()) == 0)
+            if (storm::iEquals(section_name, node->GetName()))
                 return node;
         node = node->GetRightNode();
     }
@@ -730,7 +730,7 @@ SECTION *IFS::FindSection(const char *section_name, SECTION *snode)
             // if node exist and name is correct return ok
             if (section_name != nullptr)
             {
-                if (_stricmp(section_name, node->GetName()) == 0)
+                if (storm::iEquals(section_name, node->GetName()))
                     return node;
             }
             else
@@ -754,7 +754,7 @@ SECTION *IFS::FindSection(const char *section_name, SECTION *snode)
                 return node;
         }
         if (node->GetName() != nullptr)
-            if (_stricmp(section_name, node->GetName()) == 0)
+            if (storm::iEquals(section_name, node->GetName()))
                 return node;
         node = node->GetRightNode();
     }
@@ -891,7 +891,7 @@ bool IFS::ReadStringNext(SEARCH_DATA *sd, const char *section_name, const char *
         if (start == true)
         {
             // if(CompareStrings(node->GetName(),key_name) == 0)
-            if (_stricmp(node->GetName(), key_name) == 0)
+            if (storm::iEquals(node->GetName(), key_name))
             {
                 if (buffer == nullptr)
                     throw std::runtime_error("zero buffer");
@@ -923,22 +923,22 @@ bool IFS::ReadStringNext(SEARCH_DATA *sd, const char *section_name, const char *
     return false;
 }
 
-long IFS::GetLong(SEARCH_DATA *sd, const char *section_name, const char *key_name)
+int32_t IFS::GetInt(SEARCH_DATA *sd, const char *section_name, const char *key_name)
 {
     char buffer[256];
     ReadString(sd, section_name, key_name, buffer, sizeof(buffer));
-    return static_cast<long>(atoll(buffer));
+    return static_cast<int32_t>(atoll(buffer));
 }
 
-long IFS::GetLong(SEARCH_DATA *sd, const char *section_name, const char *key_name, long def_val)
+int32_t IFS::GetInt(SEARCH_DATA *sd, const char *section_name, const char *key_name, int32_t def_val)
 {
     char buffer[256];
     if (ReadString(sd, section_name, key_name, buffer, sizeof(buffer), ""))
-        return static_cast<long>(atoll(buffer));
+        return static_cast<int32_t>(atoll(buffer));
     return def_val;
 }
 
-bool IFS::GetLongNext(SEARCH_DATA *sd, const char *section_name, const char *key_name, long *val)
+bool IFS::GetIntNext(SEARCH_DATA *sd, const char *section_name, const char *key_name, int32_t *val)
 {
     char buffer[256];
     if (ReadStringNext(sd, section_name, key_name, buffer, sizeof(buffer)))
@@ -1039,10 +1039,10 @@ void IFS::WriteString(const char *section_name, const char *key_name, const char
     AddString(section_name, key_name, string);
 }
 
-void IFS::WriteLong(const char *section_name, const char *key_name, long value)
+void IFS::WriteLong(const char *section_name, const char *key_name, int32_t value)
 {
     char buffer[256];
-    _ltoa(value, buffer, 10);
+    sprintf(buffer, "%d", value);
     WriteString(section_name, key_name, buffer);
 }
 
@@ -1074,7 +1074,7 @@ uint32_t IFS::CompareStrings(const char *s1, const char *s2)
     return 1;
 }
 
-bool IFS::GetSectionName(char *section_name_buffer, long buffer_size)
+bool IFS::GetSectionName(char *section_name_buffer, int32_t buffer_size)
 {
     if (SectionRoot == nullptr)
         return false;
@@ -1085,7 +1085,7 @@ bool IFS::GetSectionName(char *section_name_buffer, long buffer_size)
 
     if (section_name_buffer == nullptr)
         throw std::runtime_error("zero buffer");
-    const long len = strlen(node->GetName());
+    const int32_t len = strlen(node->GetName());
     if (len > buffer_size)
         throw std::runtime_error("buffer too small");
     strcpy_s(section_name_buffer, buffer_size, node->GetName());
@@ -1093,7 +1093,7 @@ bool IFS::GetSectionName(char *section_name_buffer, long buffer_size)
     return true;
 }
 
-bool IFS::GetSectionNameNext(char *section_name_buffer, long buffer_size)
+bool IFS::GetSectionNameNext(char *section_name_buffer, int32_t buffer_size)
 {
     if (SectionRoot == nullptr)
         return false;
@@ -1110,7 +1110,7 @@ bool IFS::GetSectionNameNext(char *section_name_buffer, long buffer_size)
                 SectionSNode = nullptr;
                 return false;
             }
-            const long len = strlen(node->GetName());
+            const int32_t len = strlen(node->GetName());
             if (len > buffer_size)
                 throw std::runtime_error("buffer too small");
             strcpy_s(section_name_buffer, buffer_size, node->GetName());

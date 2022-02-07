@@ -22,7 +22,7 @@ void S_DEFTAB::Release()
     uint32_t n;
     for (n = 0; n < Def_num; n++)
     {
-        delete pTable[n].name;
+        delete[] pTable[n].name;
         if (pTable[n].deftype == STRING)
         {
             if (pTable[n].data4b != 0)
@@ -67,7 +67,7 @@ uint32_t S_DEFTAB::AddDef(DEFINFO &di)
     for (n = 0; n < Def_num; n++)
     {
         if (pTable[n].hash == hash)
-            if (_stricmp(pTable[n].name, di.name) == 0)
+            if (storm::iEquals(pTable[n].name, di.name))
             {
                 // define with such name already registred,
                 if (pTable[n].segment_id == INVALID_SEGMENT_ID)
@@ -121,8 +121,8 @@ uint32_t S_DEFTAB::MakeHashValue(const char *string)
         auto v = *string++;
         if ('A' <= v && v <= 'Z')
             v += 'a' - 'A'; // case independent
-        hval = (hval << 4) + static_cast<unsigned long>(v);
-        const uint32_t g = hval & (static_cast<unsigned long>(0xf) << (32 - 4));
+        hval = (hval << 4) + static_cast<uint32_t>(v);
+        const uint32_t g = hval & (static_cast<uint32_t>(0xf) << (32 - 4));
         if (g != 0)
         {
             hval ^= g >> (32 - 8);
@@ -162,7 +162,7 @@ uint32_t S_DEFTAB::FindDef(const char *def_name)
     {
         const auto ni = HashLine[hash_index].pElements[n];
         if (pTable[ni].hash == hash) // return n;
-            if (_stricmp(pTable[ni].name, def_name) == 0)
+            if (storm::iEquals(pTable[ni].name, def_name))
                 return ni;
     }
     return INVALID_DEF_CODE;

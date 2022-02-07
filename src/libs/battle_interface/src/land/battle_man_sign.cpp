@@ -18,10 +18,11 @@ BIManSign::BIManSign(entid_t BIEntityID, VDX9RENDER *pRS)
     m_nBackTextureID = -1;
     m_nManStateTextureID = -1;
     m_nGunChargeTextureID = -1;
+    m_nGunReloadTextureID = -1;
     m_nBackSquareQ = 0;
     m_nManStateSquareQ = 0;
     m_nGunChargeSquareQ = 0;
-
+    m_nGunReloadSquareQ = 0;
     m_nMaxSquareQ = 0;
     m_nSquareQ = 0;
 
@@ -33,14 +34,14 @@ BIManSign::BIManSign(entid_t BIEntityID, VDX9RENDER *pRS)
 
     m_nCurrentManIndex = 0;
 
-    for (long n = 0; n < MAX_MAN_QUANTITY; n++)
+    for (int32_t n = 0; n < MAX_MAN_QUANTITY; n++)
         m_Man[n].nTexture = -1;
 
     m_bIsAlarmOn = false;
     m_nAlarmTextureID = -1;
-    m_fAlarmTime = 0.f;
-    m_fAlarmUpSpeed = 1.f;
-    m_fAlarmDownSpeed = 1.f;
+    m_fAlarmTime = 0.0f;
+    m_fAlarmUpSpeed = 1.0f;
+    m_fAlarmDownSpeed = 1.0f;
 }
 
 BIManSign::~BIManSign()
@@ -75,16 +76,25 @@ void BIManSign::Draw()
 
     if (m_nVBufID != -1 && m_nIBufID != -1)
     {
-        long nStartV = 0;
-        const long nStartI = 0;
+        int32_t nStartV = 0;
+        const int32_t nStartI = 0;
 
-        for (long n = 0; n < m_nManQuantity; n++)
+        for (int32_t n = 0; n < m_nManQuantity; n++)
         {
             m_pRS->TextureSet(0, m_Man[n].nTexture);
             m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, 4, nStartI, 2,
                               "battle_colorRectangle");
             nStartV += 4;
         }
+
+        //
+        if (m_nGunReloadSquareQ > 0)
+        {
+            m_pRS->TextureSet(0, m_nGunReloadTextureID);
+            m_pRS->DrawBuffer(m_nVBufID, sizeof(BI_COLOR_VERTEX), m_nIBufID, nStartV, m_nGunReloadSquareQ * 4, nStartI,
+                              m_nGunReloadSquareQ * 2, "battle_tex_col_Rectangle");
+        }
+        nStartV += m_nGunReloadSquareQ * 4;
 
         //
         if (m_nBackSquareQ > 0)
@@ -128,7 +138,7 @@ void BIManSign::Draw()
 
 void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
 {
-    long n;
+    int32_t n;
     float fTmp;
     const char *pcTmp;
     char param[256];
@@ -176,6 +186,11 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
     FILLPOINT(m_pntManPicIconSize, 64, 64);
 
     m_nCommandListVerticalOffset = -48;
+
+    m_nGunReloadTextureID = -1;
+    FULLRECT(m_rGunReloadUV);
+    ZERROPOINT(m_pntGunReloadOffset);
+    FILLPOINT(m_pntGunReloadIconSize, 0, 0);
 
     for (n = 0; n < MAX_MAN_QUANTITY; n++)
     {
@@ -267,7 +282,22 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
                 m_aChargeProgress.push_back(BIUtils::GetFromStr_Float(pcTmp, 0.f));
             } while (pcTmp[0]);
         }
-
+        pcTmp = pA->GetAttribute("gunreloadtexturename");
+        if (pcTmp)
+             m_nGunReloadTextureID = m_pRS->TextureCreate(pcTmp);
+        m_dwGunReloadColor = pA->GetAttributeAsDword("gunreloadcolor", m_dwGunReloadColor);
+        pcTmp = pA->GetAttribute("gunreloadUV");
+        if (pcTmp)
+            sscanf(pcTmp, "%f,%f,%f,%f", &m_rGunReloadUV.left, &m_rGunReloadUV.top, &m_rGunReloadUV.right, &m_rGunReloadUV.bottom);
+        pcTmp = pA->GetAttribute("gunreloadoffset");
+        if (pcTmp)
+            sscanf(pcTmp, "%f,%f", &m_pntGunReloadOffset.x, &m_pntGunReloadOffset.y);
+        pcTmp = pA->GetAttribute("gunreloadiconsize");
+        if (pcTmp)
+            sscanf(pcTmp, "%f,%f", &m_pntGunReloadIconSize.x, &m_pntGunReloadIconSize.y);
+        m_dwGunReloadBackColor = pA->GetAttributeAsDword("gunreloadbackcolor", m_dwGunReloadBackColor);
+            
+        
         m_dwManFaceColor = pA->GetAttributeAsDword("manfacecolor", m_dwManFaceColor);
         pcTmp = pA->GetAttribute("manfaceoffset");
         if (pcTmp)
@@ -290,7 +320,7 @@ void BIManSign::Init(ATTRIBUTES *pRoot, ATTRIBUTES *pA)
     m_bMakeUpdate = true;
 }
 
-size_t BIManSign::AddTexture(const char *pcTextureName, long nCols, long nRows) const
+size_t BIManSign::AddTexture(const char *pcTextureName, int32_t nCols, int32_t nRows) const
 {
     if (m_pCommandList)
         return m_pCommandList->AddTexture(pcTextureName, nCols, nRows);
@@ -350,7 +380,7 @@ void BIManSign::MakeControl()
         ExecuteCommand(BI_MSG_COMMAND_DEACTIVATE);
 }
 
-void BIManSign::ExecuteCommand(long command)
+void BIManSign::ExecuteCommand(int32_t command)
 {
     switch (command)
     {
@@ -409,11 +439,12 @@ void BIManSign::Release()
     m_nBackSquareQ = 0;
     m_nManStateSquareQ = 0;
     m_nGunChargeSquareQ = 0;
+    m_nGunReloadSquareQ = 0;
 }
 
-long BIManSign::CalculateManQuantity()
+int32_t BIManSign::CalculateManQuantity()
 {
-    long n;
+    int32_t n;
 
     // reset all
     m_nManQuantity = 0;
@@ -426,6 +457,7 @@ long BIManSign::CalculateManQuantity()
         m_Man[n].bAlarm = false;
         m_Man[n].nShootMax = 4;
         m_Man[n].nShootCurrent = 0;
+        m_Man[n].fGunProgress = 0.0f;
     }
 
     auto *pAttr = m_pARoot ? m_pARoot->GetAttributeClass("data") : nullptr;
@@ -447,16 +479,18 @@ long BIManSign::CalculateManQuantity()
     return m_nManQuantity;
 }
 
-void BIManSign::UpdateBuffers(long nShipQ)
+void BIManSign::UpdateBuffers(int32_t nShipQ)
 {
     m_nBackSquareQ = nShipQ;
     m_nManStateSquareQ = nShipQ * 2;
     m_nGunChargeSquareQ = nShipQ * 2;
+    m_nGunReloadSquareQ = nShipQ;
     const auto nManSquareQ = nShipQ;
-    const long nAlarmSquareQ = (m_bIsAlarmOn && (nShipQ > 0)) ? 1 : 0;
+    const int32_t nAlarmSquareQ = (m_bIsAlarmOn && (nShipQ > 0)) ? 1 : 0;
 
     const auto nMaxSquareQ =
-        BIUtils::GetMaxFromFourLong(m_nBackSquareQ, m_nManStateSquareQ, m_nGunChargeSquareQ, nManSquareQ);
+        std::max({m_nBackSquareQ, m_nManStateSquareQ, m_nGunChargeSquareQ, m_nGunReloadSquareQ, nManSquareQ});
+
     if (m_nMaxSquareQ != nMaxSquareQ)
     {
         m_nMaxSquareQ = nMaxSquareQ;
@@ -466,14 +500,15 @@ void BIManSign::UpdateBuffers(long nShipQ)
         FillIndexBuffer();
     }
 
-    if ((m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + nManSquareQ + nAlarmSquareQ) != m_nSquareQ)
+    if ((m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + m_nGunReloadSquareQ + nManSquareQ +
+         nAlarmSquareQ) != m_nSquareQ)
     {
-        m_nSquareQ = m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + nManSquareQ + nAlarmSquareQ;
+        m_nSquareQ =
+            m_nBackSquareQ + m_nManStateSquareQ + m_nGunChargeSquareQ + m_nGunReloadSquareQ + nManSquareQ + nAlarmSquareQ;
         VERTEX_BUFFER_RELEASE(m_pRS, m_nVBufID);
         m_nVBufID = m_pRS->CreateVertexBuffer(BI_COLOR_VERTEX_FORMAT, m_nSquareQ * 4 * sizeof(BI_COLOR_VERTEX),
                                               D3DUSAGE_WRITEONLY);
     }
-    // FillVertexBuffer();
 }
 
 void BIManSign::FillIndexBuffer() const
@@ -483,7 +518,7 @@ void BIManSign::FillIndexBuffer() const
     auto *pI = static_cast<uint16_t *>(m_pRS->LockIndexBuffer(m_nIBufID));
     if (pI)
     {
-        for (long n = 0; n < m_nMaxSquareQ; n++)
+        for (int32_t n = 0; n < m_nMaxSquareQ; n++)
         {
             pI[n * 6 + 0] = static_cast<uint16_t>(n * 4 + 0);
             pI[n * 6 + 1] = static_cast<uint16_t>(n * 4 + 1);
@@ -499,18 +534,26 @@ void BIManSign::FillIndexBuffer() const
 
 void BIManSign::FillVertexBuffer()
 {
-    long n;
+    int32_t n;
     if (m_nVBufID < 0)
         return;
     auto *pV = static_cast<BI_COLOR_VERTEX *>(m_pRS->LockVertexBuffer(m_nVBufID));
     if (pV)
     {
-        long vn = 0;
+        int32_t vn = 0;
 
         // face
         for (n = 0; n < m_nManQuantity; n++)
             vn += WriteSquareToVBuff(&pV[vn], m_Man[n].rUV, m_dwManFaceColor, m_Man[n].pntPos + m_pntManPicOffset,
                                      m_pntManPicIconSize);
+
+        // Gun reload status
+        for (n = 0; n < m_nManQuantity; n++)
+        {
+            vn += WriteSquareToVBuffWithProgress(&pV[vn], m_rGunReloadUV, m_dwGunReloadBackColor,
+                                                 m_Man[n].pntPos + m_pntGunReloadOffset, m_pntGunReloadIconSize, 0.f,
+                                                 0.f, 0.f, GetProgressGunReloadBar(n));
+        }
 
         // back icon
         for (n = 0; n < m_nManQuantity; n++)
@@ -551,14 +594,14 @@ void BIManSign::FillVertexBuffer()
     }
 }
 
-long BIManSign::WriteSquareToVBuff(BI_COLOR_VERTEX *pv, const FRECT &uv, uint32_t color, const BIFPOINT &center,
+int32_t BIManSign::WriteSquareToVBuff(BI_COLOR_VERTEX *pv, const FRECT &uv, uint32_t color, const BIFPOINT &center,
                                    const FPOINT &size)
 {
     if (!pv)
         return 0;
 
-    const auto fLeft = static_cast<float>(center.x - size.x / 2);
-    const auto fTop = static_cast<float>(center.y - size.y / 2);
+    const auto fLeft = center.x - size.x / 2;
+    const auto fTop = center.y - size.y / 2;
     const auto fRight = fLeft + size.x;
     const auto fBottom = fTop + size.y;
 
@@ -597,15 +640,15 @@ long BIManSign::WriteSquareToVBuff(BI_COLOR_VERTEX *pv, const FRECT &uv, uint32_
     return 4;
 }
 
-long BIManSign::WriteSquareToVBuffWithProgress(BI_COLOR_VERTEX *pv, const FRECT &uv, uint32_t color,
+int32_t BIManSign::WriteSquareToVBuffWithProgress(BI_COLOR_VERTEX *pv, const FRECT &uv, uint32_t color,
                                                const BIFPOINT &center, const FPOINT &size, float fClampUp,
                                                float fClampDown, float fClampLeft, float fClampRight)
 {
     if (!pv)
         return 0;
 
-    auto fLeft = static_cast<float>(center.x - size.x / 2);
-    auto fTop = static_cast<float>(center.y - size.y / 2);
+    auto fLeft = center.x - size.x / 2;
+    auto fTop = center.y - size.y / 2;
     auto fRight = fLeft + size.x;
     auto fBottom = fTop + size.y;
 
@@ -660,56 +703,63 @@ void BIManSign::UpdateCommandList() const
         m_pCommandList->Update(GetCurrentCommandTopLine(), GetCurrentCommandCharacterIndex(), GetCurrentCommandMode());
 }
 
-long BIManSign::GetCurrentCommandTopLine() const
+int32_t BIManSign::GetCurrentCommandTopLine() const
 {
     auto n = m_nCurrentManIndex;
     if (n < 0 || n >= m_nManQuantity)
         n = 0;
-    return static_cast<long>(m_Man[n].pntPos.y) + m_nCommandListVerticalOffset;
+    return static_cast<int32_t>(m_Man[n].pntPos.y) + m_nCommandListVerticalOffset;
 }
 
-long BIManSign::GetCurrentCommandCharacterIndex() const
+int32_t BIManSign::GetCurrentCommandCharacterIndex() const
 {
     auto n = m_nCurrentManIndex;
     if (n < 0 || n >= m_nManQuantity)
         n = 0;
-    return static_cast<long>(m_Man[n].nCharacterIndex);
+    return m_Man[n].nCharacterIndex;
 }
 
-long BIManSign::GetCurrentCommandMode() const
+int32_t BIManSign::GetCurrentCommandMode() const
 {
     return m_nCommandMode;
 }
 
-float BIManSign::GetProgressManHP(long nIdx) const
+float BIManSign::GetProgressManHP(int32_t nIdx) const
 {
     if (nIdx < 0 || nIdx >= m_nManQuantity)
         return 1.f;
     return 1.f - m_Man[nIdx].fHealth;
 }
 
-float BIManSign::GetProgressManEnergy(long nIdx) const
+float BIManSign::GetProgressManEnergy(int32_t nIdx) const
 {
     if (nIdx < 0 || nIdx >= m_nManQuantity)
         return 1.f;
     return 1.f - m_Man[nIdx].fEnergy;
 }
 
-float BIManSign::GetProgressGunChargeMax(long nIdx)
+float BIManSign::GetProgressGunChargeMax(int32_t nIdx)
 {
     if (nIdx < 0 || nIdx >= m_nManQuantity)
         return 1.f;
     return 1.f - GetGunProgressByIndex(m_Man[nIdx].nShootMax);
 }
 
-float BIManSign::GetProgressGunCharge(long nIdx)
+float BIManSign::GetProgressGunCharge(int32_t nIdx)
 {
     if (nIdx < 0 || nIdx >= m_nManQuantity)
         return 1.f;
     return 1.f - GetGunProgressByIndex(m_Man[nIdx].nShootCurrent);
 }
 
-float BIManSign::GetGunProgressByIndex(long nIdx)
+float BIManSign::GetProgressGunReloadBar(int32_t nIdx)
+{
+    if (nIdx < 0 || nIdx >= m_nManQuantity)
+        return 1.0f;
+    return 1.0f - m_Man[nIdx].fGunProgress;
+}
+
+float BIManSign::GetGunProgressByIndex(int32_t nIdx)
 {
     if (nIdx < 0 || nIdx >= m_aChargeProgress.size())
         return 0.f;
@@ -727,7 +777,7 @@ void BIManSign::CheckDataChange()
         return;
 
     char attrname[64];
-    for (long n = 0; n < MAX_MAN_QUANTITY; n++)
+    for (int32_t n = 0; n < MAX_MAN_QUANTITY; n++)
     {
         if (m_Man[n].nSlotIndex < 0)
             continue;
@@ -747,6 +797,8 @@ void BIManSign::CheckDataChange()
         if (LongACompare(pA, "shootCur", m_Man[n].nShootCurrent))
             m_bMakeVertexFill = true;
         if (FRectACompare(pA, "uv", m_Man[n].rUV))
+            m_bMakeVertexFill = true;
+        if (FloatACompare(pA, "gunprogress", m_Man[n].fGunProgress))
             m_bMakeVertexFill = true;
         if (StringACompare(pA, "texture", m_Man[n].sTexture))
         {

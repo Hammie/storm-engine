@@ -17,6 +17,7 @@
 #include "strings_list.h"
 #include "token.h"
 #include "logging.hpp"
+#include "script_cache.h"
 
 #include "storm/ringbuffer_stack.hpp"
 
@@ -25,7 +26,7 @@
 
 struct SEGMENT_DESC
 {
-    const char *name;
+    std::string name;
     uint32_t offset;
     uint32_t size;
     uint32_t id;
@@ -105,8 +106,8 @@ class COMPILER : public VIRTUAL_COMPILER
     }
 
     char *LoadFile(const char *file_name, uint32_t &file_size, bool bFullPath = false);
-    // char *    AppendProgram(char * base_program, long base_program_size, char * append_program, long
-    // append_program_size, long& new_program_size);
+    // char *    AppendProgram(char * base_program, int32_t base_program_size, char * append_program, int32_t
+    // append_program_size, int32_t& new_program_size);
     bool AppendProgram(char *&pBase_program, uint32_t &Base_program_size, const char *pAppend_program,
                        uint32_t &Append_program_size, bool bAddLinefeed);
     void Trace(const char *data_PTR, ...);
@@ -125,7 +126,7 @@ class COMPILER : public VIRTUAL_COMPILER
     void SetProgramDirectory(const char *dir_name);
     VDATA *ProcessEvent(const char *event_name, MESSAGE message);
     VDATA *ProcessEvent(const char *event_name);
-    void SetEventHandler(const char *event_name, const char *func_name, long flag, bool bStatic = false);
+    void SetEventHandler(const char *event_name, const char *func_name, int32_t flag, bool bStatic = false);
     void DelEventHandler(const char *event_name, const char *func_name);
 
     bool Completed()
@@ -133,7 +134,6 @@ class COMPILER : public VIRTUAL_COMPILER
         return bCompleted;
     }
 
-    char *GetName();
     void ExitProgram();
     void ClearEvents();
 
@@ -201,7 +201,7 @@ class COMPILER : public VIRTUAL_COMPILER
     void UpdateOffsets(SEGMENT_DESC &Segment, STRINGS_LIST &list, uint32_t offset, const char *sname = nullptr);
     S_TOKEN_TYPE DetectUnknown(uint32_t &code);
 
-    void DumpAttributes(ATTRIBUTES *pA, long level);
+    void DumpAttributes(ATTRIBUTES *pA, int32_t level);
 
     bool IsIntFuncVarArgsNum(uint32_t code);
     uint32_t GetInternalFunctionArgumentsNum(uint32_t code);
@@ -239,8 +239,8 @@ class COMPILER : public VIRTUAL_COMPILER
     // bool SetSaveData(const char * file_name, const char * save_data);
     // bool GetSaveData(const char * file_name, DATA * pV);
 
-    bool SetSaveData(const char *file_name, void *save_data, long data_size);
-    void *GetSaveData(const char *file_name, long &data_size);
+    bool SetSaveData(const char *file_name, void *save_data, int32_t data_size);
+    void *GetSaveData(const char *file_name, int32_t &data_size);
 
     void AddRuntimeEvent();
 
@@ -267,6 +267,26 @@ class COMPILER : public VIRTUAL_COMPILER
     void PrintoutUsage();
 
 private:
+    [[nodiscard]] std::filesystem::path GetSegmentCachePath(const SEGMENT_DESC &segment) const;
+
+    bool LoadSegmentFromCache(SEGMENT_DESC &segment);
+    bool LoadFilesFromCache(storm::script_cache::Reader &reader, SEGMENT_DESC &segment);
+    void LoadDefinesFromCache(storm::script_cache::Reader &reader, SEGMENT_DESC &segment);
+    void LoadVariablesFromCache(storm::script_cache::Reader &reader, SEGMENT_DESC &segment);
+    void LoadFunctionsFromCache(storm::script_cache::Reader &reader, SEGMENT_DESC &segment);
+    void LoadScriptLibrariesFromCache(storm::script_cache::Reader &reader);
+    void LoadEventHandlersFromCache(storm::script_cache::Reader &reader);
+    void LoadByteCodeFromCache(storm::script_cache::Reader &reader, SEGMENT_DESC &segment);
+
+    void SaveSegmentToCache(const SEGMENT_DESC &segment);
+    void SaveFilesToCache(storm::script_cache::Writer &writer);
+    void SaveDefinesToCache(storm::script_cache::Writer &writer);
+    void SaveVariablesToCache(storm::script_cache::Writer &writer);
+    void SaveFunctionsToCache(storm::script_cache::Writer &writer);
+    void SaveScriptLibrariesToCache(storm::script_cache::Writer &writer);
+    void SaveEventHandlersToCache(storm::script_cache::Writer &writer);
+    void SaveByteCodeToCache(storm::script_cache::Writer &writer, const SEGMENT_DESC &segment);
+
     COMPILER_STAGE CompilerStage;
     STRINGS_LIST LabelTable;
     // STRINGS_LIST EventTable;
@@ -343,4 +363,8 @@ private:
     // NB: pointers are safe as long as we pop elements before they expire
     static constexpr size_t CALLSTACK_SIZE = 64U;
     storm::ringbuffer_stack<std::tuple<const char *, size_t, const char *>, CALLSTACK_SIZE> callStack_;
+
+    // attempt to read/write script cache?
+    bool use_script_cache_;
+    storm::ScriptCache script_cache_;
 };

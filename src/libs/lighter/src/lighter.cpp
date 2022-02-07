@@ -39,11 +39,11 @@ bool Lighter::Init()
     auto ini = fio->OpenIniFile("resource\\ini\\loclighter.ini");
     if (!ini)
         return false;
-    const auto isLoading = ini->GetLong(nullptr, "loading", 0);
-    autoTrace = ini->GetLong(nullptr, "autotrace", 0) != 0;
-    autoSmooth = ini->GetLong(nullptr, "autosmooth", 0) != 0;
-    window.isSmallSlider = ini->GetLong(nullptr, "smallslider", 0) != 0;
-    geometry.useColor = ini->GetLong(nullptr, "usecolor", 0) != 0;
+    const auto isLoading = ini->GetInt(nullptr, "loading", 0);
+    autoTrace = ini->GetInt(nullptr, "autotrace", 0) != 0;
+    autoSmooth = ini->GetInt(nullptr, "autosmooth", 0) != 0;
+    window.isSmallSlider = ini->GetInt(nullptr, "smallslider", 0) != 0;
+    geometry.useColor = ini->GetInt(nullptr, "usecolor", 0) != 0;
     if (!isLoading)
         return false;
     // DX9 render
@@ -180,25 +180,25 @@ void Lighter::Realize(uint32_t delta_time)
 uint64_t Lighter::ProcessMessage(MESSAGE &message)
 {
     const std::string &command = message.String();
-    if (_stricmp(command.c_str(), "AddModel") == 0)
+    if (storm::iEquals(command, "AddModel"))
     {
         // Adding the model
         MsgAddModel(message);
         return true;
     }
-    if (_stricmp(command.c_str(), "ModelsPath") == 0)
+    if (storm::iEquals(command, "ModelsPath"))
     {
         // Adding the model
         MsgModelsPath(message);
         return true;
     }
-    if (_stricmp(command.c_str(), "LightPath") == 0)
+    if (storm::iEquals(command, "LightPath"))
     {
         // Adding the model
         MsgLightPath(message);
         return true;
     }
-    if (_stricmp(command.c_str(), "AddLight") == 0)
+    if (storm::iEquals(command, "AddLight"))
     {
         // Adding the model
         MsgAddLight(message);

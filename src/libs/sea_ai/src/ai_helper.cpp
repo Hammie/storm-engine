@@ -94,7 +94,7 @@ void AIHelper::CalculateRelations()
                 auto *pData =
                     core.Event(GET_RELATION_EVENT, "ll", GetIndex(aMainCharacters[y]), GetIndex(aMainCharacters[x]));
                 Assert(pData);
-                *GetRelation(y, x) = static_cast<uint32_t>(pData->GetLong());
+                *GetRelation(y, x) = static_cast<uint32_t>(pData->GetInt());
             }
             else
             {
@@ -169,11 +169,11 @@ void AIHelper::Print(float x, float y, float fScale, const char *pFormat, ...)
 
     va_list args;
     va_start(args, pFormat);
-    _vsnprintf_s(cBuffer, sizeof(cBuffer), pFormat, args);
+    vsnprintf(cBuffer, sizeof(cBuffer), pFormat, args);
     va_end(args);
 
-    pRS->ExtPrint(FONT_DEFAULT, 0xFFFFFFFF, 0x00000000, PR_ALIGN_CENTER, false, fScale, 0, 0, static_cast<long>(x),
-                  static_cast<long>(y), cBuffer);
+    pRS->ExtPrint(FONT_DEFAULT, 0xFFFFFFFF, 0x00000000, PR_ALIGN_CENTER, false, fScale, 0, 0, static_cast<int32_t>(x),
+                  static_cast<int32_t>(y), cBuffer);
 }
 
 void AIHelper::Print3D(CVECTOR vPos, float dy, float fScale, const char *pFormat, ...)
@@ -197,11 +197,11 @@ void AIHelper::Print3D(CVECTOR vPos, float dy, float fScale, const char *pFormat
 
     va_list args;
     va_start(args, pFormat);
-    _vsnprintf_s(Buff_4k, sizeof(Buff_4k), pFormat, args);
+    vsnprintf(Buff_4k, sizeof(Buff_4k), pFormat, args);
     va_end(args);
 
-    pRS->ExtPrint(FONT_DEFAULT, 0xFFFFFFFF, 0x00000000, PR_ALIGN_CENTER, false, fScale, 0, 0, static_cast<long>(vPos.x),
-                  static_cast<long>(vPos.y + dy), Buff_4k);
+    pRS->ExtPrint(FONT_DEFAULT, 0xFFFFFFFF, 0x00000000, PR_ALIGN_CENTER, false, fScale, 0, 0, static_cast<int32_t>(vPos.x),
+                  static_cast<int32_t>(vPos.y + dy), Buff_4k);
 }
 
 void AIHelper::Save(CSaveLoad *pSL)
@@ -213,12 +213,12 @@ void AIHelper::Save(CSaveLoad *pSL)
     pSL->SaveAPointer("seacameras", pASeaCameras);
 
     pSL->SaveDword(aCharacters.size());
-    for (uint32_t i = 0; i < aCharacters.size(); i++)
-        pSL->SaveAPointer("character", aCharacters[i]);
+    for (auto &aCharacter : aCharacters)
+        pSL->SaveAPointer("character", aCharacter);
 
     pSL->SaveDword(aMainCharacters.size());
-    for (uint32_t i = 0; i < aMainCharacters.size(); i++)
-        pSL->SaveAPointer("character", aMainCharacters[i]);
+    for (auto &aMainCharacter : aMainCharacters)
+        pSL->SaveAPointer("character", aMainCharacter);
 }
 
 void AIHelper::Load(CSaveLoad *pSL)

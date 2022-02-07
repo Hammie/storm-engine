@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <cstdint>
+#include <cstddef>
 
 enum S_TOKEN_TYPE
 {
@@ -160,11 +161,11 @@ class TOKEN
 {
     THLINE KeywordsHash[TOKENHASHTABLE_SIZE];
     S_TOKEN_TYPE eTokenType;
-    ptrdiff_t TokenDataBufferSize;
-    long Lines_in_token;
+    std::ptrdiff_t TokenDataBufferSize;
+    int32_t Lines_in_token;
     char *pTokenData;
-    ptrdiff_t ProgramSteps[PROGRAM_STEPS_CACHE];
-    long ProgramStepsNum;
+    std::ptrdiff_t ProgramSteps[PROGRAM_STEPS_CACHE];
+    int32_t ProgramStepsNum;
     char *Program;
     char *ProgramBase;
     uint32_t dwKeywordsNum;
@@ -182,16 +183,16 @@ class TOKEN
     {
         return ProgramBase;
     };
-    ptrdiff_t GetProgramOffset();
+    std::ptrdiff_t GetProgramOffset();
 
     S_TOKEN_TYPE Get(bool bKeepData = false);
     S_TOKEN_TYPE ProcessToken(char *&pointer, bool bKeepData = false);
     S_TOKEN_TYPE GetType();
     void CacheToken(const char *pointer);
     bool StepBack();
-    long SetTokenData(const char *pointer, bool bKeepControlSymbols = false);
-    ptrdiff_t SetNTokenData(const char *pointer, ptrdiff_t Data_size);
-    long StopArgument(const char *pointer, bool bKeepControlSymbols = false);
+    int32_t SetTokenData(const char *pointer, bool bKeepControlSymbols = false);
+    std::ptrdiff_t SetNTokenData(const char *pointer, std::ptrdiff_t Data_size);
+    int32_t StopArgument(const char *pointer, bool bKeepControlSymbols = false);
     void StartArgument(char *&pointer, bool bKeepControlSymbols = false);
     const char *GetTypeName(S_TOKEN_TYPE code);
     const char *GetTypeName();
@@ -199,7 +200,7 @@ class TOKEN
     bool Is(S_TOKEN_TYPE ttype);
     bool IsNumber(const char *pointer);
     bool IsFloatNumber(const char *pointer);
-    long TokenLines();
+    int32_t TokenLines();
     void LowCase();
 
     S_TOKEN_TYPE FormatGet();

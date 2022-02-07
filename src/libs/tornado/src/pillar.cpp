@@ -10,7 +10,7 @@
 
 #include "pillar.h"
 
-#include <ctime>
+#include <chrono>
 
 #include "c_vector.h"
 #include "storm_assert.h"
@@ -31,9 +31,13 @@
 
 Pillar::Pillar()
 {
-    srand(time(nullptr));
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    using std::chrono::system_clock;
+
+    srand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
     // Sections
-    long i;
+    int32_t i;
     for (i = 0; i < TRND_NUMSEC; i++)
     {
         auto kHeight = i / static_cast<float>(TRND_NUMSEC - 1);
@@ -100,7 +104,7 @@ void Pillar::Update(float dltTime)
     phaseZ3 += dltTime * (0.28f + 0.2f * sinf(phaseZ1));
     if (phaseZ3 > 2.0f * TRND_PI)
         phaseZ3 -= 2.0f * TRND_PI;
-    for (long i = 0; i < TRND_NUMSEC; i++)
+    for (int32_t i = 0; i < TRND_NUMSEC; i++)
     {
         const auto kHeight = i / static_cast<float>(TRND_NUMSEC - 1);
         section[i].x = GetX(kHeight * TRND_HEIGHT);
@@ -110,7 +114,7 @@ void Pillar::Update(float dltTime)
 
 void Pillar::FillVertexBuffer(Vertex *buffer)
 {
-    for (long i = 0; i < TRND_NUMSEC; i++)
+    for (int32_t i = 0; i < TRND_NUMSEC; i++)
     {
         auto &s = section[i];
         for (uint16_t j = 0; j < TRND_SEGMENTS; j++, buffer++)
@@ -118,7 +122,7 @@ void Pillar::FillVertexBuffer(Vertex *buffer)
             buffer->x = s.x + s.radius * segment[j].x;
             buffer->y = s.y;
             buffer->z = s.z + s.radius * segment[j].z;
-            const auto alpha = static_cast<long>(s.alpha * galpha * 0.2f);
+            const auto alpha = static_cast<int32_t>(s.alpha * galpha * 0.2f);
             buffer->color = (alpha << 24) | 0x32323f;
         }
     }
@@ -127,7 +131,7 @@ void Pillar::FillVertexBuffer(Vertex *buffer)
 void Pillar::FillIndexBuffer(uint16_t *buffer)
 {
     // By sections
-    for (long i = 0; i < TRND_NUMSEC - 1; i++)
+    for (int32_t i = 0; i < TRND_NUMSEC - 1; i++)
     {
         const auto base = static_cast<uint16_t>(i * TRND_SEGMENTS);
         auto *const buf = buffer + base * 2 * 3;
@@ -141,7 +145,7 @@ void Pillar::FillIndexBuffer(uint16_t *buffer)
             buf[j * 6 + 3] = base + j1;
             buf[j * 6 + 4] = base + j1 + TRND_SEGMENTS;
             buf[j * 6 + 5] = base + j + TRND_SEGMENTS;
-            for (long t = 0; t < 6; t++)
+            for (int32_t t = 0; t < 6; t++)
             {
                 Assert(buf[j * 6 + t] < GetNumVerteces());
             }
@@ -149,14 +153,14 @@ void Pillar::FillIndexBuffer(uint16_t *buffer)
     }
 }
 
-long Pillar::GetNumVerteces()
+int32_t Pillar::GetNumVerteces()
 {
-    const long num = TRND_NUMSEC * TRND_SEGMENTS;
+    const int32_t num = TRND_NUMSEC * TRND_SEGMENTS;
     Assert(num < 65535);
     return num;
 }
 
-long Pillar::GetNumTriangles()
+int32_t Pillar::GetNumTriangles()
 {
     return (TRND_NUMSEC - 1) * TRND_SEGMENTS * 2;
 }

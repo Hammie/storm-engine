@@ -61,7 +61,6 @@ NPCharacter::NPCharacter() : taskstack{}
     defencePrbBlock = 0.9f;
     defencePrbParry = 0.1f;
     isRecoilEnable = true;
-    stunChance = 100;
     // Shooting
     fireCur = 0.0f;
     isFireEnable = true;
@@ -91,7 +90,7 @@ bool NPCharacter::PostInit()
 {
     charactersGroups = EntityManager::GetEntityId("CharactersGroups");
     float tmp;
-    long tmpBool;
+    int32_t tmpBool;
     VDATA *vd;
     // Attack parameters
     vd = core.Event("NPC_Event_GetAttackActive", "i", GetId());
@@ -145,12 +144,10 @@ bool NPCharacter::PostInit()
     if (vd && vd->Get(tmpBool))
         isFireEnable = tmpBool != 0;
     vd = core.Event("NPC_Event_StunChance", "i", GetId());
-    if (core.GetTargetEngineVersion() >= storm::ENGINE_VERSION::TO_EACH_HIS_OWN)
-    {
-        auto tmpLong = stunChance;
-        if (vd && vd->Get(tmpLong))
-            stunChance = tmpLong;
-    }
+    int32_t tmpInt;
+    if (vd && vd->Get(tmpInt))
+        stunChance = tmpInt;
+
     // Parameter normalization
     if (attackCur < 0.0f)
         attackCur = 0.0f;
@@ -180,7 +177,7 @@ bool NPCharacter::PostInit()
     return true;
 }
 
-uint32_t NPCharacter::ChlProcessMessage(long messageID, MESSAGE &message)
+uint32_t NPCharacter::ChlProcessMessage(int32_t messageID, MESSAGE &message)
 {
     char buf[128];
     switch (messageID)
@@ -306,7 +303,7 @@ void NPCharacter::Update(float dltTime)
         if (isDebugEx)
             location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, -2, 1.0f, 0xffffff, 0.5f, "isJump = %s",
                             isJump ? "true" : "false");
-        long line = 4;
+        int32_t line = 4;
         if (isDebugEx && command.cmd == aicmd_gotopoint)
             location->Print(curPos + CVECTOR(0.0f, height, 0.0f), rad, line++, 1.0f, 0xffffff, 0.5f,
                             "goto(%.2f, %.2f, %.2f)", command.pnt.x, command.pnt.y, command.pnt.z);
@@ -315,7 +312,7 @@ void NPCharacter::Update(float dltTime)
             auto *atr = AttributesPointer->FindAClass(AttributesPointer, "chr_ai.tmpl");
             if (atr)
             {
-                for (long i = atr->GetAttributesNum() - 1; i >= 0; i--)
+                for (int32_t i = atr->GetAttributesNum() - 1; i >= 0; i--)
                 {
                     fid = atr->GetAttributeName(i);
                     id = atr->GetAttribute(i);
@@ -331,7 +328,7 @@ void NPCharacter::Update(float dltTime)
             atr = AttributesPointer->FindAClass(AttributesPointer, "chr_ai.type");
             if (atr)
             {
-                for (long i = atr->GetAttributesNum() - 1; i >= 0; i--)
+                for (int32_t i = atr->GetAttributesNum() - 1; i >= 0; i--)
                 {
                     fid = atr->GetAttributeName(i);
                     id = atr->GetAttribute(i);
@@ -391,7 +388,7 @@ void NPCharacter::SetEscapeTask(Character *c)
 
     SetFightMode(false);
     SetRunMode(true);
-    for (long i = 0; i < 32; i++)
+    for (int32_t i = 0; i < 32; i++)
     {
         CMatrix mRot;
         mRot.BuildRotateY(static_cast<float>(i / 32.0f) * PIm2);
@@ -606,7 +603,7 @@ void NPCharacter::UpdateFightCharacter(float dltTime)
     bool bCurrentActionIsFire = false;
     if (fgtCurType == fgt_none && priorityAction.name && shot.name)
     {
-        if (_stricmp(priorityAction.name, shot.name) == 0)
+        if (storm::iEquals(priorityAction.name, shot.name))
         {
             bCurrentActionIsFire = true;
         }
@@ -663,7 +660,7 @@ void NPCharacter::UpdateFightCharacter(float dltTime)
 
             SetFightMode(false);
             SetRunMode(true);
-            for (long i = 1; i < 9; i++)
+            for (int32_t i = 1; i < 9; i++)
             {
                 CMatrix mRot;
                 mRot.BuildRotateY(static_cast<float>(i / 9.0f) * PIm2);
@@ -733,7 +730,7 @@ void NPCharacter::UpdateFightCharacter(float dltTime)
                             const float _ay = ay;
                             ay = ang;
                             float kdst;
-                            Character *target = FindGunTarget(kdst, false, true);
+                            Character *target = FindGunTarget(kdst, CheckShotOnlyEnemyTest(), true);
                             // Character * target = FindGunTarget(kdst, true);
                             ay = _ay;
                             // if((target == c) || (target && bTryAnyTarget))
@@ -767,7 +764,7 @@ void NPCharacter::UpdateFightCharacter(float dltTime)
     SetExCharacter(c);
     if (fgtCurType == fgt_none && priorityAction.name && shot.name)
     {
-        if (_stricmp(priorityAction.name, shot.name) == 0)
+        if (storm::iEquals(priorityAction.name, shot.name))
         {
             float kdst;
             auto target = static_cast<NPCharacter *>(FindGunTarget(kdst, true));
@@ -845,7 +842,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
     if (!(wishAttact | wishDefence))
         return;
     // get the target selection mode for the attack
-    long isAdaptive = true;
+    int32_t isAdaptive = true;
     VDATA *vd = core.Event("NPC_Event_AdaptiveTargetSelect", "i", GetId());
     if (vd)
         vd->Get(isAdaptive);
@@ -865,7 +862,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
     if (fndCharacter.empty())
         return;
     // our group
-    const long grpIndex = chrGroup->FindGroupIndex(group);
+    const int32_t grpIndex = chrGroup->FindGroupIndex(group);
     // Enemy table
     auto enemies = std::vector<EnemyState>();
     // Our direction
@@ -894,7 +891,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
         }
         // if(!chr->isFight) continue;
         // Belligerent group
-        const long grp = chrGroup->FindGroupIndex(chr->group);
+        const int32_t grp = chrGroup->FindGroupIndex(chr->group);
         if (grp < 0 || grpIndex < 0)
             return;
         // The attitude of his group to our
@@ -943,7 +940,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
     if (wishAttact)
     {
         float kSel;
-        long counter = 0;
+        int32_t counter = 0;
         Character *enemy = nullptr;
         for (size_t i = 0; i < enemies.size(); i++)
         {
@@ -973,7 +970,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
         return;
     // decide whether need to defend ourselves
     bool isBreakAttack = false;
-    long attacked = 0;
+    int32_t attacked = 0;
     static const float attackAng = cosf(0.5f * CHARACTER_ATTACK_ANG * (3.1415926535f / 180.0f));
     for (size_t i = 0; i < enemies.size(); i++)
     {
@@ -1051,7 +1048,7 @@ void NPCharacter::DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy)
 }
 
 // Combat behavior - attack
-void NPCharacter::DoFightAttack(Character *enemy, long enemyCounter, bool wishDefence)
+void NPCharacter::DoFightAttack(Character *enemy, int32_t enemyCounter, bool wishDefence)
 {
     wantToAttack = false;
     // enemy - whom to beat
@@ -1063,7 +1060,7 @@ void NPCharacter::DoFightAttack(Character *enemy, long enemyCounter, bool wishDe
         FightAction action;
     };
     AttackAction attack[5];
-    long count = 0;
+    int32_t count = 0;
     if (attackPrbFast > 0.0f)
     {
         attack[count].prb = attackPrbFast;
@@ -1098,7 +1095,7 @@ void NPCharacter::DoFightAttack(Character *enemy, long enemyCounter, bool wishDe
         count++;
     }
     float max = 0.0f;
-    for (long i = 0; i < count; i++)
+    for (int32_t i = 0; i < count; i++)
     {
         max += attack[i].prb;
     }
@@ -1106,7 +1103,7 @@ void NPCharacter::DoFightAttack(Character *enemy, long enemyCounter, bool wishDe
         return;
     const float r = rand() * (max / RAND_MAX);
     float p = 0.0f;
-    long i;
+    int32_t i;
     for (i = 0; i < count; i++)
     {
         p += attack[i].prb;
@@ -1299,10 +1296,10 @@ NPCharacter::NPCTask NPCharacter::GetTaskID(const char *taskName)
 {
     if (!taskName || !taskName[0])
         return npct_unknow;
-    for (long i = 0; i < npct_max; i++)
+    for (int32_t i = 0; i < npct_max; i++)
     {
         const char *task = GetTaskName(static_cast<NPCTask>(i));
-        if (_stricmp(task, taskName) == 0)
+        if (storm::iEquals(task, taskName))
             return static_cast<NPCTask>(i);
     }
     return npct_unknow;

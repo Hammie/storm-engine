@@ -1,10 +1,10 @@
 #include "file_service.h"
 #include "core_impl.h"
 #include "storm_assert.h"
+#include "storm/string_compare.hpp"
 
 #include <SDL2/SDL.h>
 #include <exception>
-#include <storm/string_compare.hpp>
 #include <string>
 
 #define COMMENT ';'
@@ -95,7 +95,15 @@ bool FILE_SERVICE::_ReadFile(std::fstream &fileS, void *s, std::streamsize count
 bool FILE_SERVICE::_FileOrDirectoryExists(const char *p)
 {
     std::filesystem::path path = std::filesystem::u8path(p);
-    return std::filesystem::exists(path);
+    auto ec = std::error_code{};
+    bool result = std::filesystem::exists(path, ec);
+    if (ec)
+    {
+        spdlog::error("Failed to to check if {} exists: {}", p, ec.message());
+        return false;
+    }
+
+    return result;
 }
 
 std::vector<std::string> FILE_SERVICE::_GetPathsOrFilenamesByMask(const char *sourcePath, const char *mask,
@@ -246,7 +254,7 @@ std::unique_ptr<INIFILE> FILE_SERVICE::OpenIniFile(const char *file_name)
     {
         if (OpenFiles[n] == nullptr || OpenFiles[n]->GetFileName() == nullptr)
             continue;
-        if (_stricmp(OpenFiles[n]->GetFileName(), file_name) == 0)
+        if (storm::iEquals(OpenFiles[n]->GetFileName(), file_name))
         {
             OpenFiles[n]->IncReference();
 
@@ -378,8 +386,8 @@ void INIFILE_T::WriteString(const char *section_name, const char *key_name, cons
     ifs_PTR->WriteString(section_name, key_name, string);
 }
 
-// write long value of key in pointed section if section and key exist, throw EXS object otherwise
-void INIFILE_T::WriteLong(const char *section_name, const char *key_name, long value)
+// write int32_t value of key in pointed section if section and key exist, throw EXS object otherwise
+void INIFILE_T::WriteLong(const char *section_name, const char *key_name, int32_t value)
 {
     ifs_PTR->WriteLong(section_name, key_name, value);
 }
@@ -410,16 +418,16 @@ bool INIFILE_T::ReadStringNext(const char *section_name, const char *key_name, c
     return ifs_PTR->ReadStringNext(&Search, section_name, key_name, buffer, buffer_size);
 }
 
-// return long value of key in pointed section if section and key exist, throw EXS object otherwise
-long INIFILE_T::GetLong(const char *section_name, const char *key_name)
+// return int32_t value of key in pointed section if section and key exist, throw EXS object otherwise
+int32_t INIFILE_T::GetInt(const char *section_name, const char *key_name)
 {
-    return ifs_PTR->GetLong(&Search, section_name, key_name);
+    return ifs_PTR->GetInt(&Search, section_name, key_name);
 }
 
-// return long value of key in pointed section if section and key exist, if not - return def_value
-long INIFILE_T::GetLong(const char *section_name, const char *key_name, long def_val)
+// return int32_t value of key in pointed section if section and key exist, if not - return def_value
+int32_t INIFILE_T::GetInt(const char *section_name, const char *key_name, int32_t def_val)
 {
-    return ifs_PTR->GetLong(&Search, section_name, key_name, def_val);
+    return ifs_PTR->GetInt(&Search, section_name, key_name, def_val);
 }
 
 // return double value of key in pointed section if section and key exist, throw EXS object otherwise
@@ -434,9 +442,9 @@ double INIFILE_T::GetDouble(const char *section_name, const char *key_name, doub
     return ifs_PTR->GetDouble(&Search, section_name, key_name, def_val);
 }
 
-bool INIFILE_T::GetLongNext(const char *section_name, const char *key_name, long *val)
+bool INIFILE_T::GetIntNext(const char *section_name, const char *key_name, int32_t *val)
 {
-    return ifs_PTR->GetLongNext(&Search, section_name, key_name, val);
+    return ifs_PTR->GetIntNext(&Search, section_name, key_name, val);
 }
 
 bool INIFILE_T::GetDoubleNext(const char *section_name, const char *key_name, double *val)
@@ -481,12 +489,12 @@ void INIFILE_T::DeleteSection(const char *section_name)
     ifs_PTR->DeleteSection(section_name);
 }
 
-bool INIFILE_T::GetSectionName(char *section_name_buffer, long buffer_size)
+bool INIFILE_T::GetSectionName(char *section_name_buffer, int32_t buffer_size)
 {
     return ifs_PTR->GetSectionName(section_name_buffer, buffer_size);
 }
 
-bool INIFILE_T::GetSectionNameNext(char *section_name_buffer, long buffer_size)
+bool INIFILE_T::GetSectionNameNext(char *section_name_buffer, int32_t buffer_size)
 {
     return ifs_PTR->GetSectionNameNext(section_name_buffer, buffer_size);
 }

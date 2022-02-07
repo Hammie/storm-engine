@@ -258,7 +258,7 @@ int CXI_BUTTON::CommandExecute(int wActCode)
     return -1;
 }
 
-bool CXI_BUTTON::IsClick(int buttonID, long xPos, long yPos)
+bool CXI_BUTTON::IsClick(int buttonID, int32_t xPos, int32_t yPos)
 {
     if (xPos >= m_rect.left && xPos <= m_rect.right && yPos >= m_rect.top && yPos <= m_rect.bottom && m_bClickable &&
         m_bSelected && m_bUse)
@@ -294,7 +294,7 @@ void CXI_BUTTON::SetUsing(bool bUsing)
     nPressedDelay = 0;
 }
 
-uint32_t CXI_BUTTON::MessageProc(long msgcode, MESSAGE &message)
+uint32_t CXI_BUTTON::MessageProc(int32_t msgcode, MESSAGE &message)
 {
     switch (msgcode)
     {
@@ -320,7 +320,7 @@ uint32_t CXI_BUTTON::MessageProc(long msgcode, MESSAGE &message)
         if (len == 1)
             break;
 
-        if (m_sGroupName == nullptr || _stricmp(m_sGroupName, param.c_str()) != 0)
+        if (m_sGroupName == nullptr || !storm::iEquals(m_sGroupName, param))
         {
             PICTURE_TEXTURE_RELEASE(pPictureService, m_sGroupName, m_idTex);
             STORM_DELETE(m_sGroupName);

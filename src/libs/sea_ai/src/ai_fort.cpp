@@ -14,8 +14,8 @@ AIFort::AIFort()
 AIFort::~AIFort()
 {
     pAIFort = nullptr;
-    for (uint32_t i = 0; i < aForts.size(); i++)
-        STORM_DELETE(aForts[i]);
+    for (auto &aFort : aForts)
+        STORM_DELETE(aFort);
 }
 
 bool AIFort::Init()
@@ -90,17 +90,17 @@ void AIFort::Execute(uint32_t Delta_Time)
                 auto fMinDistance = 1e10f;
                 auto vCPos = pC->GetPos();
                 const auto fMaxFireDistance = AICannon::CalcMaxFireDistance(vCPos.y, fSpeedV0, 0.35f); // FIX-ME
-                for (uint32_t j = 0; j < AIShip::AIShips.size(); j++)
-                    if (!AIShip::AIShips[j]->isDead() &&
-                        Helper.isEnemy(pF->GetACharacter(), AIShip::AIShips[j]->GetACharacter()))
+                for (auto &j : AIShip::AIShips)
+                    if (!j->isDead() &&
+                        Helper.isEnemy(pF->GetACharacter(), j->GetACharacter()))
                     {
-                        const auto fDistance = AIShip::AIShips[j]->GetDistance(vCPos);
+                        const auto fDistance = j->GetDistance(vCPos);
                         if (fDistance > fMaxFireDistance)
                             continue;
                         if (fDistance < fMinDistance)
                         {
                             fMinDistance = fDistance;
-                            pFireAIShip = AIShip::AIShips[j];
+                            pFireAIShip = j;
                         }
                     }
                 if (pFireAIShip)
@@ -141,7 +141,7 @@ void AIFort::Realize(uint32_t Delta_Time)
       CMatrix mI; mI.SetIdentity();
       AIHelper::pRS->SetTransform(D3DTS_WORLD, mI);
 
-      long iNumCannons = 0;
+      int32_t iNumCannons = 0;
       for (uint32_t k=0; k<aForts.size(); k++)
       {
         AI_FORT    * pF = aForts[k];
@@ -230,7 +230,7 @@ bool AIFort::AddFort(ATTRIBUTES *pIslandAP, ATTRIBUTES *pFortLabelAP, ATTRIBUTES
     return true;
 }
 
-void AIFort::AddFortHit(long iCharacterIndex, CVECTOR &vHitPos)
+void AIFort::AddFortHit(int32_t iCharacterIndex, CVECTOR &vHitPos)
 {
     uint32_t i, j, iMax;
     for (i = 0; i < aForts.size(); i++)
@@ -265,10 +265,10 @@ void AIFort::AddFortHit(long iCharacterIndex, CVECTOR &vHitPos)
 
 AIFort::AI_FORT *AIFort::FindFort(entid_t eidModel)
 {
-    for (long i = 0; i < aForts.size(); i++)
+    for (auto &aFort : aForts)
     {
-        if (EntityManager::GetEntityPointer(aForts[i]->GetModelEID()) == EntityManager::GetEntityPointer(eidModel))
-            return aForts[i];
+        if (EntityManager::GetEntityPointer(aFort->GetModelEID()) == EntityManager::GetEntityPointer(eidModel))
+            return aFort;
     }
     return nullptr;
 }
@@ -276,7 +276,7 @@ AIFort::AI_FORT *AIFort::FindFort(entid_t eidModel)
 uint64_t AIFort::ProcessMessage(MESSAGE &message)
 {
     CVECTOR vHit;
-    long iCharacterIndex;
+    int32_t iCharacterIndex;
     entid_t eidFortModel, eidBlot;
     ATTRIBUTES *pFortAPLabel, *pCharacter, *pIslandAP;
     AI_FORT *pFort = nullptr;
@@ -346,24 +346,24 @@ bool AIFort::ScanFortForCannons(AI_FORT *pFort, char *pModelsDir, char *pLocator
     while (pNode = pModel->GetNode(dwIdx))
     {
         pNode->geo->GetInfo(info);
-        for (long i = 0; i < info.nlabels; i++)
+        for (int32_t i = 0; i < info.nlabels; i++)
         {
             pNode->geo->GetLabel(i, label);
             AICannon *pCannon = nullptr;
 
-            if (_strnicmp(label.name, "cannon", 6) == 0 && pFort->dwCannonType != -1)
+            if (storm::iEquals(label.name, "cannon", 6) && pFort->dwCannonType != -1)
             {
                 pFort->aCannons.push_back(AICannon{});
                 pCannon = &pFort->aCannons.back();
                 // pCannon = &pFort->aCannons[pFort->aCannons.Add()];
             }
-            if (_strnicmp(label.name, "culverin", 8) == 0 && pFort->dwCulverinType != -1)
+            if (storm::iEquals(label.name, "culverin", 8) && pFort->dwCulverinType != -1)
             {
                 pFort->aCulverins.push_back(AICannon{});
                 pCannon = &pFort->aCulverins.back();
                 // pCannon = &pFort->aCulverins[pFort->aCulverins.Add()];
             }
-            if (_strnicmp(label.name, "mortar", 6) == 0 && pFort->dwMortarType != -1)
+            if (storm::iEquals(label.name, "mortar", 6) && pFort->dwMortarType != -1)
             {
                 pFort->aMortars.push_back(AICannon{});
                 pCannon = &pFort->aMortars.back();
@@ -431,7 +431,7 @@ float AIFort::Trace(const CVECTOR &vSrc, const CVECTOR &vDst)
     return fBestRes;
 }
 
-float AIFort::Cannon_Trace(long iBallOwner, const CVECTOR &vSrc, const CVECTOR &vDst)
+float AIFort::Cannon_Trace(int32_t iBallOwner, const CVECTOR &vSrc, const CVECTOR &vDst)
 {
     float fBestRes = 2.0;
     for (uint32_t i = 0; i < GetNumForts(); i++)
@@ -491,15 +491,15 @@ CVECTOR AIFort::AI_FORT::GetAttackPoint(VAI_INNEROBJ *pObj)
 void AIFort::Save(CSaveLoad *pSL)
 {
     pSL->SaveFloat(fMinCannonDamageDistance);
-    for (uint32_t i = 0; i < aForts.size(); i++)
-        aForts[i]->Save(pSL);
+    for (auto &aFort : aForts)
+        aFort->Save(pSL);
 }
 
 void AIFort::Load(CSaveLoad *pSL)
 {
     fMinCannonDamageDistance = pSL->LoadFloat();
-    for (uint32_t i = 0; i < aForts.size(); i++)
-        aForts[i]->Load(pSL, GetId());
+    for (auto &aFort : aForts)
+        aFort->Load(pSL, GetId());
 }
 
 void AIFort::AI_FORT::Save(CSaveLoad *pSL)
@@ -553,6 +553,6 @@ void AIFort::AI_FORT::Load(CSaveLoad *pSL, entid_t eid)
 
 void AIFort::Fire(const CVECTOR &vPos)
 {
-    for (long i = 0; i < aForts.size(); i++)
-        pShipsLights->AddDynamicLights(&aForts[i]->tmpObject, vPos);
+    for (auto &aFort : aForts)
+        pShipsLights->AddDynamicLights(&aFort->tmpObject, vPos);
 }

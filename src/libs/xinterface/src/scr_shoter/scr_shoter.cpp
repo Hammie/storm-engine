@@ -251,7 +251,7 @@ uint64_t SCRSHOTER::ProcessMessage(MESSAGE &message)
         const std::string &param2 = message.String();
         pvdat = message.ScriptVariablePointer();
 
-        long pRetTex = AddSaveTexture(param.c_str(), param2.c_str());
+        int32_t pRetTex = AddSaveTexture(param.c_str(), param2.c_str());
         auto *const strDat = FindSaveData(param2.c_str());
         if (pvdat)
             if (!strDat)
@@ -274,14 +274,14 @@ uint64_t SCRSHOTER::ProcessMessage(MESSAGE &message)
     return 0;
 }
 
-long SCRSHOTER::FindSaveTexture(const char *fileName) const
+int32_t SCRSHOTER::FindSaveTexture(const char *fileName) const
 {
     if (!fileName)
         return -1;
     auto *ps = m_list;
     while (ps)
     {
-        if (ps->fileName && _stricmp(fileName, ps->fileName) == 0)
+        if (ps->fileName && storm::iEquals(fileName, ps->fileName))
             return ps->textureId;
         ps = ps->next;
     }
@@ -295,21 +295,21 @@ char *SCRSHOTER::FindSaveData(const char *fileName) const
     SAVETEXTURES *ps = m_list;
     while (ps)
     {
-        if (ps->fileName && _stricmp(fileName, ps->fileName) == 0)
+        if (ps->fileName && storm::iEquals(fileName, ps->fileName))
             return ps->dataString;
         ps = ps->next;
     }
     return nullptr;
 }
 
-long SCRSHOTER::AddSaveTexture(const char *dirName, const char *fileName)
+int32_t SCRSHOTER::AddSaveTexture(const char *dirName, const char *fileName)
 {
     if (fileName == nullptr)
         return -1;
-    long rval = FindSaveTexture(fileName);
+    int32_t rval = FindSaveTexture(fileName);
     if (rval != -1)
         return rval;
-    if (_stricmp(fileName, "newsave") == 0)
+    if (storm::iEquals(fileName, "newsave"))
         return textureIndex_;
     auto *ps = new SAVETEXTURES;
     if (ps == nullptr)
@@ -343,7 +343,7 @@ void SCRSHOTER::DelSaveTexture(const char *fileName)
     SAVETEXTURES *ps = m_list;
     while (ps)
     {
-        if (ps->fileName && _stricmp(fileName, ps->fileName) == 0)
+        if (ps->fileName && storm::iEquals(fileName, ps->fileName))
         {
             if (oldps)
                 oldps->next = ps->next;
@@ -361,18 +361,18 @@ void SCRSHOTER::DelSaveTexture(const char *fileName)
     }
 }
 
-long SCRSHOTER::GetTexFromSave(char *fileName, char **pDatStr) const
+int32_t SCRSHOTER::GetTexFromSave(char *fileName, char **pDatStr) const
 {
     HRESULT hr = D3D_OK;
     D3DLOCKED_RECT outRect;
-    long textureId = -1;
+    int32_t textureId = -1;
     *pDatStr = nullptr; //~!~
 
-    long datSize = 0;
+    int32_t datSize = 0;
     char *pdat = nullptr;
     pdat = static_cast<char *>(core.GetSaveData(fileName, datSize));
-    long startIdx = 0;
-    long texSize = 0;
+    int32_t startIdx = 0;
+    int32_t texSize = 0;
     if (pdat != nullptr && datSize > sizeof(SAVE_DATA_HANDLE))
     {
         startIdx = ((SAVE_DATA_HANDLE *)pdat)->StringDataSize + sizeof(SAVE_DATA_HANDLE);

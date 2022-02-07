@@ -74,7 +74,7 @@ class NPCharacter : public AICharacter
 
     bool PostInit() override;
 
-    uint32_t ChlProcessMessage(long messageID, MESSAGE &message) override;
+    uint32_t ChlProcessMessage(int32_t messageID, MESSAGE &message) override;
     void Move(float dltTime) override;
     void Update(float dltTime) override;
 
@@ -112,7 +112,7 @@ class NPCharacter : public AICharacter
     // Combat behavior - idle
     void DoFightActionAnalysisNone(float dltTime, NPCharacter *enemy);
     // Combat behavior - attack
-    void DoFightAttack(Character *enemy, long enemyCounter, bool wishDefence);
+    void DoFightAttack(Character *enemy, int32_t enemyCounter, bool wishDefence);
     // Combat behavior - block, parry
     void DoFightBlock(bool needParry = false);
 
@@ -158,9 +158,10 @@ class NPCharacter : public AICharacter
   protected:
     Task task;           // The task to be performed
     NPCTask lastSetTask; // Last task set
+
   private:
     Task taskstack[16]; // Task stack
-    long stackPointer;  // Stack pointer
+    int32_t stackPointer;  // Stack pointer
 
     // Groups object
     entid_t charactersGroups;

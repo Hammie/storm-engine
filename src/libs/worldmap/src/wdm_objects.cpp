@@ -9,6 +9,9 @@
 //============================================================================================
 
 #include "wdm_objects.h"
+
+#include <chrono>
+
 #include "defines.h"
 #include "geometry.h"
 
@@ -22,8 +25,12 @@ WdmObjects *wdmObjects = nullptr;
 
 WdmObjects::WdmObjects()
 {
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    using std::chrono::system_clock;
+
     Assert(!wdmObjects);
-    srand(GetTickCount());
+    srand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
     wdmObjects = this;
     wm = nullptr;
     rs = nullptr;
@@ -38,7 +45,7 @@ WdmObjects::WdmObjects()
     playarInStorm = false;
     worldSizeX = 2000.0f;
     worldSizeZ = 2000.0f;
-    for (long i = 0; i < sizeof(entryModels) / sizeof(entryModels[0]); i++)
+    for (int32_t i = 0; i < sizeof(entryModels) / sizeof(entryModels[0]); i++)
     {
         entryModels[i] = -1;
     }
@@ -49,7 +56,7 @@ WdmObjects::WdmObjects()
 WdmObjects::~WdmObjects()
 {
     wdmObjects = nullptr;
-    for (long i = 0; i < models.size(); i++)
+    for (int32_t i = 0; i < models.size(); i++)
     {
         delete models[i].geo;
     }
@@ -138,12 +145,12 @@ GEOS *WdmObjects::CreateGeometry(const char *path)
         return nullptr;
     // Looking among added
     const uint32_t hash = TOREMOVE::HashNoCase(path);
-    long i = hash & (sizeof(entryModels) / sizeof(entryModels[0]) - 1);
+    int32_t i = hash & (sizeof(entryModels) / sizeof(entryModels[0]) - 1);
     for (i = entryModels[i]; i >= 0; i = models[i].next)
     {
         if (models[i].hash == hash)
         {
-            if (_stricmp(models[i].path.c_str(), path) == 0)
+            if (storm::iEquals(models[i].path, path))
             {
                 return models[i].geo;
             }
@@ -162,7 +169,7 @@ GEOS *WdmObjects::CreateGeometry(const char *path)
     // m.next = -1;
     // m.geo = geo;
     models.push_back(Model{geo, path, hash, -1});
-    long index = hash & (sizeof(entryModels) / sizeof(entryModels[0]) - 1);
+    int32_t index = hash & (sizeof(entryModels) / sizeof(entryModels[0]) - 1);
     if (entryModels[index] < 0)
     {
         entryModels[index] = i;
@@ -193,7 +200,7 @@ void WdmObjects::DrawCircle(const CVECTOR &pos, float radius, uint32_t color) co
 
 void WdmObjects::DrawCircle(CMatrix &mtx, float radius, uint32_t color) const
 {
-    for (long i = 0; i < 64; i++)
+    for (int32_t i = 0; i < 64; i++)
     {
         vertex[i].v.x = radius * sinf(2.0f * WdmObjects_myPI * i / 63);
         vertex[i].v.y = 0.0f;
@@ -217,8 +224,8 @@ void WdmObjects::DrawVector(const CVECTOR &start, const CVECTOR &end, uint32_t c
     const auto p = 0.9f * len;
     const auto r = 0.03f * len;
 
-    long t = 0;
-    for (long i = 0, imax = 8; i < imax; i++)
+    int32_t t = 0;
+    for (int32_t i = 0, imax = 8; i < imax; i++)
     {
         const auto y1 = r * sinf(2.0f * WdmObjects_myPI * i / static_cast<float>(imax));
         const auto x1 = r * cosf(2.0f * WdmObjects_myPI * i / static_cast<float>(imax));
@@ -382,10 +389,10 @@ void WdmObjects::UpdateWind(float dltTime)
     windField.Step(dltTime);
 
     /*
-    const long size = 64;
-    for(long z = 0; z < size; z++)
+    const int32_t size = 64;
+    for(int32_t z = 0; z < size; z++)
     {
-      for(long x = 0; x < size; x++)
+      for(int32_t x = 0; x < size; x++)
       {
         float px = worldSizeX*(x/(float)size - 0.5f);
         float pz = worldSizeZ*(z/(float)size - 0.5f);
@@ -401,13 +408,13 @@ void WdmObjects::UpdateWind(float dltTime)
 const char *WdmObjects::GetWindSaveString(std::string &windData)
 {
     windData = "v02_";
-    const long size = sizeof(windField);
+    const int32_t size = sizeof(windField);
     AddDataToString(windData, static_cast<uint8_t>(size >> 0));
     AddDataToString(windData, static_cast<uint8_t>(size >> 8));
     AddDataToString(windData, static_cast<uint8_t>(size >> 16));
     AddDataToString(windData, static_cast<uint8_t>(size >> 24));
     const auto *buf = (const uint8_t *)&windField;
-    for (long i = 0; i < size; i++)
+    for (int32_t i = 0; i < size; i++)
     {
         AddDataToString(windData, buf[i]);
     }
@@ -428,8 +435,8 @@ void WdmObjects::SetWindSaveString(const char *str)
         return;
     }
     str += 4;
-    const long size = sizeof(windField);
-    long testSize = 0;
+    const int32_t size = sizeof(windField);
+    int32_t testSize = 0;
     testSize |= static_cast<uint32_t>(GetDataFromString(str)) << 0;
     testSize |= static_cast<uint32_t>(GetDataFromString(str)) << 8;
     testSize |= static_cast<uint32_t>(GetDataFromString(str)) << 16;
@@ -440,7 +447,7 @@ void WdmObjects::SetWindSaveString(const char *str)
         return;
     }
     auto *buf = (uint8_t *)&windField;
-    for (long i = 0; i < size; i++)
+    for (int32_t i = 0; i < size; i++)
     {
         const auto data = GetDataFromString(str);
         if (data < 0)
@@ -461,10 +468,10 @@ void WdmObjects::AddDataToString(std::string &str, uint8_t d)
 }
 
 // Get float from string
-long WdmObjects::GetDataFromString(const char *&cur)
+int32_t WdmObjects::GetDataFromString(const char *&cur)
 {
     uint32_t tmp = 0;
-    for (long cnt = 0; cnt < 2; cnt++)
+    for (int32_t cnt = 0; cnt < 2; cnt++)
     {
         if (!*cur)
             return -1;

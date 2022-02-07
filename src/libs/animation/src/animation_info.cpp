@@ -10,6 +10,8 @@
 
 #include "animation_info.h"
 
+#include "storm/string_compare.hpp"
+
 // ============================================================================================
 // Construction, destruction
 // ============================================================================================
@@ -32,7 +34,7 @@ AnimationInfo::~AnimationInfo()
 }
 
 // Create bones
-void AnimationInfo::CreateBones(long numbones)
+void AnimationInfo::CreateBones(int32_t numbones)
 {
     Assert(bone == nullptr || numBones == 0);
     Assert(numbones > 0 && numbones <= 256);
@@ -41,7 +43,7 @@ void AnimationInfo::CreateBones(long numbones)
 }
 
 // Create action
-ActionInfo *AnimationInfo::AddAction(const char *anctionName, long startframe, long endframe)
+ActionInfo *AnimationInfo::AddAction(const char *anctionName, int32_t startframe, int32_t endframe)
 {
     Assert(anctionName);
     // Looking for repetition
@@ -60,7 +62,7 @@ ActionInfo *AnimationInfo::AddAction(const char *anctionName, long startframe, l
 // Compare with current name
 bool AnimationInfo::operator==(const char *animationName)
 {
-    return _stricmp(animationName, name) == 0;
+    return storm::iEquals(animationName, name);
 }
 
 // Find action by name

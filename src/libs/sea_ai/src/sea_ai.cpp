@@ -15,8 +15,8 @@ SEA_AI::SEA_AI()
 
 SEA_AI::~SEA_AI()
 {
-    for (uint32_t i = 0; i < AIGroup::AIGroups.size(); i++)
-        STORM_DELETE(AIGroup::AIGroups[i]);
+    for (auto &i : AIGroup::AIGroups)
+        STORM_DELETE(i);
     AIGroup::AIGroups.clear();
     AIShip::AIShips.clear();
     Helper.Uninit();
@@ -45,9 +45,9 @@ void SEA_AI::Execute(uint32_t Delta_Time)
         bFirstInit = false;
     }
 
-    for (uint32_t i = 0; i < AIGroup::AIGroups.size(); i++)
+    for (auto &i : AIGroup::AIGroups)
     {
-        AIGroup::AIGroups[i]->Execute(fDeltaTime);
+        i->Execute(fDeltaTime);
     }
 
     RDTSC_E(dwRDTSC);
@@ -58,9 +58,9 @@ extern uint32_t dwTotal;
 void SEA_AI::Realize(uint32_t Delta_Time)
 {
     const auto fDeltaTime = 0.001f * static_cast<float>(Delta_Time);
-    for (uint32_t i = 0; i < AIGroup::AIGroups.size(); i++)
+    for (auto &i : AIGroup::AIGroups)
     {
-        AIGroup::AIGroups[i]->Realize(fDeltaTime);
+        i->Realize(fDeltaTime);
     }
     // core.Trace("%d",dwTotal);
     // AIHelper::pRS->Print(0,90,"%d",dwRDTSC);//dwTotal);
@@ -301,7 +301,7 @@ uint64_t SEA_AI::ProcessMessage(MESSAGE &message)
         auto *pACharacter1 = message.AttributePointer();
         auto *pACharacter2 = message.AttributePointer();
         auto *pVData = message.ScriptVariablePointer();
-        pVData->Set(static_cast<long>(Helper.GetRelationSafe(pACharacter1, pACharacter2)));
+        pVData->Set(static_cast<int32_t>(Helper.GetRelationSafe(pACharacter1, pACharacter2)));
     }
     break;
     case AI_MESSAGE_SET_COMPANION_ENEMY: {
@@ -364,8 +364,8 @@ void SEA_AI::Save(const char *pStr)
     AIBalls::pAIBalls->Save(&SL);
 
     SL.SaveDword(AIGroup::AIGroups.size());
-    for (uint32_t i = 0; i < AIGroup::AIGroups.size(); i++)
-        AIGroup::AIGroups[i]->Save(&SL);
+    for (auto &i : AIGroup::AIGroups)
+        i->Save(&SL);
 
     if (AIFort::pAIFort)
         AIFort::pAIFort->Save(&SL);
