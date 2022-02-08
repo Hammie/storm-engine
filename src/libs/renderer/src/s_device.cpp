@@ -2883,7 +2883,7 @@ int32_t DX9RENDER::StringWidth(const std::string_view& string, int32_t nFontNum,
     return retVal;
 }
 
-long DX9RENDER::StringWidth(const char *string, int32_t nFontNum, float fScale, int32_t scrWidth)
+int32_t DX9RENDER::StringWidth(const char *string, int32_t nFontNum, float fScale, int32_t scrWidth)
 {
     if (string == nullptr)
     {
@@ -2892,7 +2892,7 @@ long DX9RENDER::StringWidth(const char *string, int32_t nFontNum, float fScale, 
     return StringWidth(std::string_view(string), nFontNum, fScale, scrWidth);
 }
 
-long DX9RENDER::CharWidth(utf8::u8_char ch, long nFontNum, float fScale, int32_t scrWidth)
+int32_t DX9RENDER::CharWidth(utf8::u8_char ch, int32_t nFontNum, float fScale, int32_t scrWidth)
 {
     std::string str(ch.b, ch.l);
     return StringWidth(str.c_str(), nFontNum, fScale, scrWidth);

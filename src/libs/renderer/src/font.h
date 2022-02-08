@@ -83,10 +83,10 @@ class FONT
     void SetScale(float scale);
     void SetShadow(bool s);
     void SetCenter(bool c);
-    bool MakeLong(char **pDataPointer, long *result);
-    int32_t Printf(long x, long y, char *Text, ...);
-    int32_t Print(long x, long y, char *Text);
-    int32_t UpdateVertexBuffer(long x, long y, char *data_PTR, int utf8length);
+    bool MakeLong(char **pDataPointer, int32_t *result);
+    int32_t Printf(int32_t x, int32_t y, char *Text, ...);
+    int32_t Print(int32_t x, int32_t y, char *Text);
+    int32_t UpdateVertexBuffer(int32_t x, int32_t y, char *data_PTR, int utf8length);
     int32_t GetStringWidth(const std::string_view& text);
     int32_t GetStringWidth(const char *Text);
 

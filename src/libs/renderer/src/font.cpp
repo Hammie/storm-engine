@@ -256,14 +256,14 @@ int32_t FONT::GetStringWidth(const std::string_view& text)
     return static_cast<int32_t>(xoffset);
 }
 
-long FONT::GetStringWidth(const char *Text)
+int32_t FONT::GetStringWidth(const char *Text)
 {
     if (Text == nullptr)
         return 0;
     return GetStringWidth(std::string_view(Text));
 }
 
-long FONT::UpdateVertexBuffer(int32_t x, int32_t y, char *data_PTR, int utf8length)
+int32_t FONT::UpdateVertexBuffer(int32_t x, int32_t y, char *data_PTR, int utf8length)
 {
     int32_t s_num;
     int32_t n;
