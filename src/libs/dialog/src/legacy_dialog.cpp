@@ -16,6 +16,8 @@ constexpr const uint32_t COLOR_LINK_UNSELECTED = ARGB(255, 127, 127, 127);
 constexpr const size_t DIALOG_MAX_LINES = 8;
 constexpr const float DIVIDER_HEIGHT = 14;
 
+constexpr const char* DEFAULT_DIALOG_TEXTURE = "dialog/dialog.tga";
+
 std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale scale, ScreenScale uvScale)
 {
     return {
@@ -102,7 +104,12 @@ bool LegacyDialog::Init()
 
     ini.reset();
 
-    interfaceTexture_ = RenderService->TextureCreate("dialog/dialog_vanilla.tga");
+    const char* texture = this->AttributesPointer->GetAttribute("texture");
+    if (texture == nullptr) {
+        texture = DEFAULT_DIALOG_TEXTURE;
+    }
+    interfaceTexture_ = RenderService->TextureCreate(texture);
+
 
     spriteBuffer_ = CreateBack();
     updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
@@ -216,6 +223,11 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
 {
     UpdateText();
     UpdateLinks();
+
+    if (storm::iEquals(attributes->GetThisName(),"texture")) {
+        RenderService->TextureRelease(interfaceTexture_);
+        interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
+    }
 
     D3DVIEWPORT9 vp;
     RenderService->GetViewport(&vp);
