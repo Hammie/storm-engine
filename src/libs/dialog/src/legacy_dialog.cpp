@@ -13,7 +13,8 @@ namespace
 {
 constexpr const uint32_t COLOR_NORMAL = 0xFFFFFFFF;
 constexpr const uint32_t COLOR_LINK_UNSELECTED = ARGB(255, 127, 127, 127);
-constexpr const size_t DIALOG_MAX_LINES = 5;
+constexpr const size_t DIALOG_MAX_LINES = 8;
+constexpr const float DIVIDER_HEIGHT = 14;
 
 std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale scale, ScreenScale uvScale)
 {
@@ -44,7 +45,24 @@ std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale 
             .v{uvScale.y * sprite.uv.bottom}},
     };
 }
+
+void updateVertexBuffer(VDX9RENDER &renderService, SpriteBuffer &buffer, ScreenScale &screenScale,
+                        ScreenScale &textureScale, const std::vector<Sprite> &sprites)
+{
+    auto *pV = static_cast<XI_TEX_VERTEX *>(renderService.LockVertexBuffer(buffer.vertexBuffer));
+    size_t vi = 0;
+    for (const Sprite &sprite : sprites)
+    {
+        const auto &vertices = createSpriteMesh(sprite, screenScale, textureScale);
+        pV[vi++] = vertices[0];
+        pV[vi++] = vertices[1];
+        pV[vi++] = vertices[2];
+        pV[vi++] = vertices[3];
+    }
+    renderService.UnLockVertexBuffer(buffer.vertexBuffer);
 }
+
+} // namespace
 
 LegacyDialog::~LegacyDialog() noexcept
 {
@@ -87,6 +105,7 @@ bool LegacyDialog::Init()
     interfaceTexture_ = RenderService->TextureCreate("dialog/dialog_vanilla.tga");
 
     spriteBuffer_ = CreateBack();
+    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
     UpdateLinks();
 
     return true;
@@ -126,7 +145,14 @@ void LegacyDialog::Realize(uint32_t delta_time)
     }
 
     RenderService->TextureSet(0, interfaceTexture_);
-    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, 44, 0, 22,
+    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, sprites_.size() * 4, 0,
+                              (5 + textureLines_) * 2,
+                              "texturedialogfon");
+
+    const bool drawDivider = !formattedLinks_.empty();
+
+    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0,
+                              sprites_.size() * 4, (5 + DIALOG_MAX_LINES) * 6, drawDivider ? 4 : 2,
                               "texturedialogfon");
 
     const auto fontScale = static_cast<float>(vp.Height) / 600.f;
@@ -155,15 +181,10 @@ void LegacyDialog::Realize(uint32_t delta_time)
 
     if (!dialogText_.empty())
     {
-        const int32_t text_width_limit = static_cast<int32_t>(570.f * (vp.Width / 640.f));
-
-        std::vector<std::string> dialogTexts;
-        DIALOG::AddToStringArrayLimitedByWidth(dialogText_, mainFont_, fontScale, text_width_limit, dialogTexts,
-                                               RenderService, nullptr, 0);
-
         line_offset = 0;
-        offset += line_height * dialogTexts.size();
-        for (const std::string& text : dialogTexts)
+        offset += line_height * formattedDialogText_.size();
+        offset += drawDivider ? static_cast<int32_t>(DIVIDER_HEIGHT * screenScale_.y) : 0;
+        for (const std::string& text : formattedDialogText_)
         {
             RenderService->ExtPrint(mainFont_, COLOR_NORMAL, 0, PR_ALIGN_LEFT, true, fontScale, 0, 0,
                                     static_cast<int32_t>(screenScale_.x * 35),
@@ -195,6 +216,29 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
 {
     UpdateText();
     UpdateLinks();
+
+    D3DVIEWPORT9 vp;
+    RenderService->GetViewport(&vp);
+    const auto fontScale = static_cast<float>(vp.Height) / 600.f;
+    const auto screenScale = static_cast<float>(vp.Height) / 480.f;
+    const int32_t line_height = static_cast<int32_t>(fontScale * RenderService->CharHeight(mainFont_));
+    const size_t text_lines = formattedDialogText_.size() + formattedLinks_.size();
+    textureLines_ =
+        static_cast<size_t>(std::floor(static_cast<double>((5 + text_lines * line_height) / screenScale) / TILED_LINE_HEIGHT));
+
+    if (!formattedLinks_.empty()) {
+        textureLines_ += 1;
+    }
+
+    sprites_[5 + DIALOG_MAX_LINES].position.top = static_cast<float>(479-67+39 - (textureLines_ + 1) * TILED_LINE_HEIGHT);
+    sprites_[5 + DIALOG_MAX_LINES].position.bottom = static_cast<float>(479-67+39 - textureLines_ * TILED_LINE_HEIGHT);
+
+    sprites_[6 + DIALOG_MAX_LINES].position.bottom =
+        static_cast<float>(450 + (DIVIDER_HEIGHT / 2) - (formattedLinks_.size() * line_height / screenScale));
+    sprites_[6 + DIALOG_MAX_LINES].position.top = sprites_[6 + DIALOG_MAX_LINES].position.bottom - DIVIDER_HEIGHT;
+    
+
+    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
 
     return Entity::AttributeChanged(attributes);
 }
@@ -233,6 +277,18 @@ void LegacyDialog::UpdateText()
     {
         dialogText_ = text_attr;
     }
+    formattedDialogText_.clear();
+    if (!dialogText_.empty())
+    {
+        D3DVIEWPORT9 vp;
+        RenderService->GetViewport(&vp);
+        const auto fontScale = static_cast<float>(vp.Height) / 600.f;
+
+        const int32_t text_width_limit = static_cast<int32_t>(570.f * (vp.Width / 640.f));
+
+        DIALOG::AddToStringArrayLimitedByWidth(dialogText_, mainFont_, fontScale, text_width_limit, formattedDialogText_,
+                                               RenderService, nullptr, 0);
+    }
 }
 
 void LegacyDialog::UpdateLinks()
@@ -268,42 +324,44 @@ void LegacyDialog::UpdateLinks()
 
 SpriteBuffer LegacyDialog::CreateBack()
 {
-    std::vector<Sprite> sprites{
-        {
-            .uv = {0, 0, 208, 255},
-            .position = {-39, -39, 169, 216},
-        },
-        {
-            .uv = {208, 0, 757, 118},
-            .position = {169, -39, 678, 79},
-        },
-        {
-            .uv = {209, 189, 1023, 255},
-            .position = {-39, 451, 678, 518},
-        },
-        // Static vertices 2
-        {
-            .uv = {904, 91, 1023, 103},
-            .position = {29, 25, 147, 37},
-        },
-        {
-            .uv = {904, 105, 1023, 116},
-            .position = {29, 173, 146, 185},
-        },
-    };
+    sprites_.push_back({
+        .uv = {0, 0, 208, 255},
+        .position = {-39, -39, 169, 216},
+    });
+    sprites_.push_back({
+        .uv = {208, 0, 757, 118},
+        .position = {169, -39, 678, 79},
+    });
+    sprites_.push_back({
+        .uv = {209, 189, 1023, 255},
+        .position = {-39, 451, 678, 518},
+    });
+    // Static vertices 2
+    sprites_.push_back({
+        .uv = {904, 91, 1023, 103},
+        .position = {29, 25, 147, 37},
+    });
+    sprites_.push_back({
+        .uv = {904, 105, 1023, 116},
+        .position = {29, 173, 146, 185},
+    });
 
-    for (size_t i = 0; i < MAX_LINES; ++i)
+    for (size_t i = 0; i < DIALOG_MAX_LINES; ++i)
     {
-        sprites.push_back(Sprite{{209, 155, 1023, 186},
+        sprites_.push_back(Sprite{{209, 155, 1023, 186},
                                  {-39, static_cast<float>(479 - 67 + 39 - (26 * (i + 1))), 639 + 39,
                                   static_cast<float>(479 - 67 + 39 - (26 * i))}});
     }
 
-    sprites.push_back(Sprite{{209, 119, 1023, 156},
-                             {-39, static_cast<float>(479 - 67 + 39 - (26 * (MAX_LINES + 1))), 639 + 39,
-                              static_cast<float>(479 - 67 + 39 - (26 * MAX_LINES))}});
+    sprites_.push_back(Sprite{{209, 119, 1023, 156},
+                             {-39, static_cast<float>(479 - 67 + 39 - (26 * (DIALOG_MAX_LINES + 1))), 639 + 39,
+                              static_cast<float>(479 - 67 + 39 - (26 * DIALOG_MAX_LINES))}});
 
-    const size_t squareCount = sprites.size();
+    sprites_.push_back(Sprite{{209, 94, 602, 116},
+                             {35, static_cast<float>(479 - 67 + 39 - DIVIDER_HEIGHT), 605,
+                              static_cast<float>(479 - 67 + 39)}});
+
+    const size_t squareCount = sprites_.size();
 
     const size_t indexCount = 6 * squareCount;
     const size_t vertexCount = 4 * squareCount;
@@ -323,19 +381,6 @@ SpriteBuffer LegacyDialog::CreateBack()
         pI[n * 6 + 5] = static_cast<uint16_t>(n * 4 + 3);
     }
     RenderService->UnLockIndexBuffer(indexBuffer);
-
-    // float left, top, right, bottom;
-    auto *pV = static_cast<XI_TEX_VERTEX *>(RenderService->LockVertexBuffer(vertexBuffer));
-    size_t vi = 0;
-    for (const Sprite &sprite : sprites)
-    {
-        const auto &vertices = createSpriteMesh(sprite, screenScale_, textureScale_);
-        pV[vi++] = vertices[0];
-        pV[vi++] = vertices[1];
-        pV[vi++] = vertices[2];
-        pV[vi++] = vertices[3];
-    }
-    RenderService->UnLockVertexBuffer(vertexBuffer);
 
     return {indexBuffer, vertexBuffer};
 }

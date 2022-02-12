@@ -50,6 +50,7 @@ private:
 
     std::string chName_;
     std::string dialogText_;
+    std::vector<std::string> formattedDialogText_;
 
     struct LinkEntry
     {
@@ -58,6 +59,7 @@ private:
     };
     std::vector<std::string> links_;
     std::vector<LinkEntry> formattedLinks_;
+    std::vector<Sprite> sprites_;
 
     int32_t selectedLink_ = 0;
 
@@ -66,6 +68,8 @@ private:
     int32_t subFont_{};
 
     int32_t interfaceTexture_{};
+
+    size_t textureLines_{};
 
     SpriteBuffer spriteBuffer_{};
 
