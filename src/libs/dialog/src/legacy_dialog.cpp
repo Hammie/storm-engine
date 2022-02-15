@@ -4,6 +4,9 @@
 #include "core.h"
 #include "message.h"
 #include "v_module_api.h"
+#include "shared/messages.h"
+#include "model.h"
+#include "geometry.h"
 
 CREATE_CLASS(LegacyDialog)
 
@@ -162,6 +165,64 @@ void LegacyDialog::Realize(uint32_t delta_time)
                               sprites_.size() * 4, (5 + DIALOG_MAX_LINES) * 6, drawDivider ? 4 : 2,
                               "texturedialogfon");
 
+    // Draw head
+    if (headModel_) {
+        CMatrix mtx, view, prj;
+        uint32_t lightingState, zenableState;
+        RenderService->GetTransform(D3DTS_VIEW, view);
+        RenderService->GetTransform(D3DTS_PROJECTION, prj);
+        RenderService->GetRenderState(D3DRS_LIGHTING, &lightingState);
+        RenderService->GetRenderState(D3DRS_ZENABLE, &zenableState);
+
+        mtx.BuildViewMatrix(CVECTOR(0.0f, 0.0f, 0.0f), CVECTOR(0.0f, 0.0f, 1.0f), CVECTOR(0.0f, 1.0f, 0.0f));
+        RenderService->SetTransform(D3DTS_VIEW,(D3DXMATRIX*)&mtx);
+
+        mtx.BuildProjectionMatrix(PId2-1.49f, screenScale_.x * 116, screenScale_.y * 158, 1.0f, 10.0f);
+        RenderService->SetTransform(D3DTS_PROJECTION,(D3DXMATRIX*)&mtx);
+
+        D3DVIEWPORT9 headViewport{};
+        headViewport.X = static_cast<int32_t>(screenScale_.x * 31);
+        headViewport.Y = static_cast<int32_t>(screenScale_.y * 28);
+        headViewport.Width = static_cast<int32_t>(screenScale_.x * 115);
+        headViewport.Height = static_cast<int32_t>(screenScale_.y * 157);
+        headViewport.MinZ = 0.0f;
+        headViewport.MaxZ = 1.0f;
+
+        RenderService->SetViewport(&headViewport);
+        RenderService->Clear(0, 0, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+        RenderService->SetRenderState(D3DRS_LIGHTING, TRUE);
+        RenderService->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+
+        D3DLIGHT9 oldLight{};
+        BOOL oldLightEnabled = FALSE;
+        RenderService->GetLight(0, &oldLight);
+        RenderService->GetLightEnable(0, &oldLightEnabled);
+
+        D3DLIGHT9 headLight{};
+        headLight.Type = D3DLIGHT_DIRECTIONAL;
+        headLight.Diffuse.r = 1.f;
+        headLight.Diffuse.g = 1.f;
+        headLight.Diffuse.b = 1.f;
+        headLight.Diffuse.a = 1.f;
+        headLight.Direction.x = -1.f;
+        headLight.Direction.y = -1.f;
+        headLight.Direction.z = 2.f;
+
+        RenderService->SetLight(0, &headLight);
+        RenderService->LightEnable(0, TRUE);
+        const auto model = dynamic_cast<MODEL *>(EntityManager::GetEntityPointer(headModel_));
+        model->ProcessStage(Entity::Stage::realize, delta_time);
+
+        RenderService->SetLight(0, &oldLight);
+        RenderService->LightEnable(0, oldLightEnabled);
+        RenderService->SetTransform(D3DTS_VIEW,(D3DXMATRIX*)&view);
+        RenderService->SetTransform(D3DTS_PROJECTION,(D3DXMATRIX*)&prj);
+        RenderService->SetViewport(&vp);
+        RenderService->SetRenderState(D3DRS_LIGHTING, lightingState);
+        RenderService->SetRenderState(D3DRS_ZENABLE, zenableState);
+    }
+
+    // Draw text
     const auto fontScale = static_cast<float>(vp.Height) / 600.f;
 
     if (!chName_.empty())
@@ -228,29 +289,65 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
         RenderService->TextureRelease(interfaceTexture_);
         interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
     }
+    else if (storm::iEquals(attributes->GetThisName(),"headModel")) {
+        EntityManager::EraseEntity(headModel_);
 
-    D3DVIEWPORT9 vp;
-    RenderService->GetViewport(&vp);
-    const auto fontScale = static_cast<float>(vp.Height) / 600.f;
-    const auto screenScale = static_cast<float>(vp.Height) / 480.f;
-    const int32_t line_height = static_cast<int32_t>(fontScale * RenderService->CharHeight(mainFont_));
-    const size_t text_lines = formattedDialogText_.size() + formattedLinks_.size();
-    textureLines_ =
-        static_cast<size_t>(std::floor(static_cast<double>((5 + text_lines * line_height) / screenScale) / TILED_LINE_HEIGHT));
+        std::string headModel = fmt::format("Heads/{}", attributes->GetThisAttr());
 
-    if (!formattedLinks_.empty()) {
-        textureLines_ += 1;
+        headModel_ = EntityManager::CreateEntity("MODELR");
+
+        VGEOMETRY *gs = static_cast<VGEOMETRY *>(core.GetService("geometry"));
+        gs->SetTexturePath("characters\\");
+
+        core.Send_Message(headModel_, "ls", MSG_MODEL_LOAD_GEO, headModel.c_str());
+        core.Send_Message(headModel_, "ls", MSG_MODEL_LOAD_ANI, headModel.c_str());
+
+        const auto model = dynamic_cast<MODEL *>(EntityManager::GetEntityPointer(headModel_));
+
+        static CMatrix mtx;
+        mtx.BuildPosition(0.f, 0.025f, 0.f);
+
+        static CMatrix mtx2;
+        mtx2.m[0][0] = 1.0f;
+        mtx2.m[1][1] = 1.0f;
+        mtx2.m[2][2] = 1.0f;
+
+        static CMatrix mtx3;
+        mtx3.BuildMatrix(0.1f, PI - 0.1f, 0.0f);
+
+        static CMatrix mtx4;
+        mtx4.BuildPosition(0.f, 0.f, 4.f);
+
+        model->mtx = mtx * mtx2 * mtx3 * mtx4;
+
+        model->GetAnimation()->CopyPlayerState(0, 1);
+        model->GetAnimation()->Player(0).SetAction("dialog_all");
+        model->GetAnimation()->Player(0).Play();
+        model->GetAnimation()->Player(0).SetAutoStop(false);
     }
+    else {
+        D3DVIEWPORT9 vp;
+        RenderService->GetViewport(&vp);
+        const auto fontScale = static_cast<float>(vp.Height) / 600.f;
+        const auto screenScale = static_cast<float>(vp.Height) / 480.f;
+        const int32_t line_height = static_cast<int32_t>(fontScale * RenderService->CharHeight(mainFont_));
+        const size_t text_lines = formattedDialogText_.size() + formattedLinks_.size();
+        textureLines_ =
+            static_cast<size_t>(std::floor(static_cast<double>((5 + text_lines * line_height) / screenScale) / TILED_LINE_HEIGHT));
 
-    sprites_[5 + DIALOG_MAX_LINES].position.top = static_cast<float>(479-67+39 - (textureLines_ + 1) * TILED_LINE_HEIGHT);
-    sprites_[5 + DIALOG_MAX_LINES].position.bottom = static_cast<float>(479-67+39 - textureLines_ * TILED_LINE_HEIGHT);
+        if (!formattedLinks_.empty()) {
+            textureLines_ += 1;
+        }
 
-    sprites_[6 + DIALOG_MAX_LINES].position.bottom =
-        static_cast<float>(450 + (DIVIDER_HEIGHT / 2) - (formattedLinks_.size() * line_height / screenScale));
-    sprites_[6 + DIALOG_MAX_LINES].position.top = sprites_[6 + DIALOG_MAX_LINES].position.bottom - DIVIDER_HEIGHT;
-    
+        sprites_[5 + DIALOG_MAX_LINES].position.top = static_cast<float>(479-67+39 - (textureLines_ + 1) * TILED_LINE_HEIGHT);
+        sprites_[5 + DIALOG_MAX_LINES].position.bottom = static_cast<float>(479-67+39 - textureLines_ * TILED_LINE_HEIGHT);
 
-    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
+        sprites_[6 + DIALOG_MAX_LINES].position.bottom =
+            static_cast<float>(450 + (DIVIDER_HEIGHT / 2) - (formattedLinks_.size() * line_height / screenScale));
+        sprites_[6 + DIALOG_MAX_LINES].position.top = sprites_[6 + DIALOG_MAX_LINES].position.bottom - DIVIDER_HEIGHT;
+
+        updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
+    }
 
     return Entity::AttributeChanged(attributes);
 }

@@ -75,4 +75,6 @@ private:
 
     ScreenScale screenScale_{};
     ScreenScale textureScale_{};
+
+    entid_t headModel_{};
 };
