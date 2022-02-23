@@ -4,22 +4,12 @@
 #include "dx9render.h"
 #include "entity.h"
 
-struct SpriteBuffer
-{
-    int32_t indexBuffer;
-    int32_t vertexBuffer;
-};
+#include "storm/dialog/sprite_renderer.hpp"
 
 struct ScreenScale
 {
     float x = 1.f;
     float y = 1.f;
-};
-
-struct Sprite
-{
-    FRECT uv;
-    FRECT position;
 };
 
 class LegacyDialog final : public Entity
@@ -43,10 +33,7 @@ private:
     void UpdateText();
     void UpdateLinks();
 
-    SpriteBuffer CreateBack();
-
-    bool forceEmergencyClose_ = false;
-    std::string selectedLinkName_;
+    void CreateBack();
 
     std::string chName_;
     std::string dialogText_;
@@ -59,7 +46,6 @@ private:
     };
     std::vector<std::string> links_;
     std::vector<LinkEntry> formattedLinks_;
-    std::vector<Sprite> sprites_;
 
     int32_t selectedLink_ = 0;
 
@@ -71,10 +57,9 @@ private:
 
     size_t textureLines_{};
 
-    SpriteBuffer spriteBuffer_{};
+    std::unique_ptr<storm::SpriteRenderer> spriteRenderer_;
 
     ScreenScale screenScale_{};
-    ScreenScale textureScale_{};
 
     entid_t headModel_{};
 };

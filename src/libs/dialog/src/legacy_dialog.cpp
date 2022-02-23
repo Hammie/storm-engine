@@ -21,50 +21,14 @@ constexpr const float DIVIDER_HEIGHT = 14;
 
 constexpr const char* DEFAULT_DIALOG_TEXTURE = "dialog/dialog.tga";
 
-std::array<XI_TEX_VERTEX, 4> createSpriteMesh(const Sprite &sprite, ScreenScale scale, ScreenScale uvScale)
+constexpr FRECT scaleUv(FRECT uv, ScreenScale scale)
 {
     return {
-        XI_TEX_VERTEX{
-            .pos{scale.x * sprite.position.left, scale.y * sprite.position.top, 1.f},
-            .rhw{0.5f},
-            .color{COLOR_NORMAL},
-            .u{uvScale.x * sprite.uv.left},
-            .v{uvScale.y * sprite.uv.top}},
-        XI_TEX_VERTEX{
-            .pos{scale.x * sprite.position.right, scale.y * sprite.position.top, 1.f},
-            .rhw{0.5f},
-            .color{COLOR_NORMAL},
-            .u{uvScale.x * sprite.uv.right},
-            .v{uvScale.y * sprite.uv.top}},
-        XI_TEX_VERTEX{
-            .pos{scale.x * sprite.position.left, scale.y * sprite.position.bottom, 1.f},
-            .rhw{0.5f},
-            .color{COLOR_NORMAL},
-            .u{uvScale.x * sprite.uv.left},
-            .v{uvScale.y * sprite.uv.bottom}},
-        XI_TEX_VERTEX{
-            .pos{scale.x * sprite.position.right, scale.y * sprite.position.bottom, 1.f},
-            .rhw{0.5f},
-            .color{COLOR_NORMAL},
-            .u{uvScale.x * sprite.uv.right},
-            .v{uvScale.y * sprite.uv.bottom}},
+        uv.x1 * scale.x,
+        uv.y1 * scale.y,
+        uv.x2 * scale.x,
+        uv.y2 * scale.y,
     };
-}
-
-void updateVertexBuffer(VDX9RENDER &renderService, SpriteBuffer &buffer, ScreenScale &screenScale,
-                        ScreenScale &textureScale, const std::vector<Sprite> &sprites)
-{
-    auto *pV = static_cast<XI_TEX_VERTEX *>(renderService.LockVertexBuffer(buffer.vertexBuffer));
-    size_t vi = 0;
-    for (const Sprite &sprite : sprites)
-    {
-        const auto &vertices = createSpriteMesh(sprite, screenScale, textureScale);
-        pV[vi++] = vertices[0];
-        pV[vi++] = vertices[1];
-        pV[vi++] = vertices[2];
-        pV[vi++] = vertices[3];
-    }
-    renderService.UnLockVertexBuffer(buffer.vertexBuffer);
 }
 
 } // namespace
@@ -82,17 +46,14 @@ bool LegacyDialog::Init()
     RenderService = static_cast<VDX9RENDER *>(core.GetService("dx9render"));
     Assert(RenderService);
 
+    spriteRenderer_ = std::make_unique<storm::SpriteRenderer>(*RenderService);
+
     D3DVIEWPORT9 viewport;
     RenderService->GetViewport(&viewport);
     const auto screenSize = core.GetScreenSize();
 
     screenScale_.x = static_cast<float>(viewport.Width) / static_cast<float>(screenSize.width);
     screenScale_.y = static_cast<float>(viewport.Height) / static_cast<float>(screenSize.height);
-
-    textureScale_ = {
-        .x = 1.f / 1024.f,
-        .y = 1.f / 256.f,
-    };
 
     std::array<char, MAX_PATH> string_buffer{};
 
@@ -107,15 +68,15 @@ bool LegacyDialog::Init()
 
     ini.reset();
 
-    const char* texture = this->AttributesPointer->GetAttribute("texture");
-    if (texture == nullptr) {
+    const char *texture = this->AttributesPointer->GetAttribute("texture");
+    if (texture == nullptr)
+    {
         texture = DEFAULT_DIALOG_TEXTURE;
     }
     interfaceTexture_ = RenderService->TextureCreate(texture);
 
-
-    spriteBuffer_ = CreateBack();
-    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
+    CreateBack();
+    //    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
     UpdateLinks();
 
     return true;
@@ -154,16 +115,9 @@ void LegacyDialog::Realize(uint32_t delta_time)
         }
     }
 
-    RenderService->TextureSet(0, interfaceTexture_);
-    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0, sprites_.size() * 4, 0,
-                              (5 + textureLines_) * 2,
-                              "texturedialogfon");
-
+    spriteRenderer_->DrawRange(2, 7 + textureLines_);
     const bool drawDivider = !formattedLinks_.empty();
-
-    RenderService->DrawBuffer(spriteBuffer_.vertexBuffer, sizeof(XI_TEX_VERTEX), spriteBuffer_.indexBuffer, 0,
-                              sprites_.size() * 4, (5 + DIALOG_MAX_LINES) * 6, drawDivider ? 4 : 2,
-                              "texturedialogfon");
+    spriteRenderer_->DrawRange(7 + DIALOG_MAX_LINES, 7 + DIALOG_MAX_LINES + (drawDivider ? 2 : 1));
 
     // Draw head
     if (headModel_) {
@@ -215,12 +169,14 @@ void LegacyDialog::Realize(uint32_t delta_time)
 
         RenderService->SetLight(0, &oldLight);
         RenderService->LightEnable(0, oldLightEnabled);
-        RenderService->SetTransform(D3DTS_VIEW,(D3DXMATRIX*)&view);
-        RenderService->SetTransform(D3DTS_PROJECTION,(D3DXMATRIX*)&prj);
+        RenderService->SetTransform(D3DTS_VIEW, (D3DXMATRIX *)&view);
+        RenderService->SetTransform(D3DTS_PROJECTION, (D3DXMATRIX *)&prj);
         RenderService->SetViewport(&vp);
         RenderService->SetRenderState(D3DRS_LIGHTING, lightingState);
         RenderService->SetRenderState(D3DRS_ZENABLE, zenableState);
     }
+
+    spriteRenderer_->DrawRange(0, 2);
 
     // Draw text
     const auto fontScale = static_cast<float>(vp.Height) / 600.f;
@@ -232,7 +188,6 @@ void LegacyDialog::Realize(uint32_t delta_time)
                                 chName_.c_str());
     }
 
-    
     const int32_t line_height = static_cast<int32_t>(RenderService->CharHeight(mainFont_) * fontScale);
 
     int32_t line_offset = 0;
@@ -285,11 +240,13 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
     UpdateText();
     UpdateLinks();
 
-    if (storm::iEquals(attributes->GetThisName(),"texture")) {
-        RenderService->TextureRelease(interfaceTexture_);
-        interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
+    if (storm::iEquals(attributes->GetThisName(), "texture"))
+    {
+        //        RenderService->TextureRelease(interfaceTexture_);
+        //        interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
     }
-    else if (storm::iEquals(attributes->GetThisName(),"headModel")) {
+    else if (storm::iEquals(attributes->GetThisName(), "headModel"))
+    {
         EntityManager::EraseEntity(headModel_);
 
         std::string headModel = fmt::format("Heads/{}", attributes->GetThisAttr());
@@ -325,28 +282,35 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
         model->GetAnimation()->Player(0).Play();
         model->GetAnimation()->Player(0).SetAutoStop(false);
     }
-    else {
+    else
+    {
         D3DVIEWPORT9 vp;
         RenderService->GetViewport(&vp);
         const auto fontScale = static_cast<float>(vp.Height) / 600.f;
         const auto screenScale = static_cast<float>(vp.Height) / 480.f;
         const int32_t line_height = static_cast<int32_t>(fontScale * RenderService->CharHeight(mainFont_));
         const size_t text_lines = formattedDialogText_.size() + formattedLinks_.size();
-        textureLines_ =
-            static_cast<size_t>(std::floor(static_cast<double>((5 + text_lines * line_height) / screenScale) / TILED_LINE_HEIGHT));
+        textureLines_ = static_cast<size_t>(
+            std::floor(static_cast<double>((5 + text_lines * line_height) / screenScale) / TILED_LINE_HEIGHT));
 
-        if (!formattedLinks_.empty()) {
+        if (!formattedLinks_.empty())
+        {
             textureLines_ += 1;
         }
 
-        sprites_[5 + DIALOG_MAX_LINES].position.top = static_cast<float>(479-67+39 - (textureLines_ + 1) * TILED_LINE_HEIGHT);
-        sprites_[5 + DIALOG_MAX_LINES].position.bottom = static_cast<float>(479-67+39 - textureLines_ * TILED_LINE_HEIGHT);
+        constexpr const ScreenScale textureScale = {
+            .x = 1.f / 1024.f,
+            .y = 1.f / 256.f,
+        };
 
-        sprites_[6 + DIALOG_MAX_LINES].position.bottom =
-            static_cast<float>(450 + (DIVIDER_HEIGHT / 2) - (formattedLinks_.size() * line_height / screenScale));
-        sprites_[6 + DIALOG_MAX_LINES].position.top = sprites_[6 + DIALOG_MAX_LINES].position.bottom - DIVIDER_HEIGHT;
+        spriteRenderer_->UpdateSpritePosition(
+            7 + DIALOG_MAX_LINES, {-39, static_cast<float>(479 - 67 + 39 - (textureLines_ + 1) * TILED_LINE_HEIGHT),
+                                   639 + 39, static_cast<float>(479 - 67 + 39 - textureLines_ * TILED_LINE_HEIGHT)});
 
-        updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
+        float dividerOffset = 450 - formattedLinks_.size() * line_height / screenScale;
+        spriteRenderer_->UpdateSpritePosition(8 + DIALOG_MAX_LINES,
+                                              {35, static_cast<float>(dividerOffset - (DIVIDER_HEIGHT / 2)), 605,
+                                               static_cast<float>(dividerOffset + (DIVIDER_HEIGHT / 2))});
     }
 
     return Entity::AttributeChanged(attributes);
@@ -431,65 +395,72 @@ void LegacyDialog::UpdateLinks()
     }
 }
 
-SpriteBuffer LegacyDialog::CreateBack()
+void LegacyDialog::CreateBack()
 {
-    sprites_.push_back({
-        .uv = {0, 0, 208, 255},
+    constexpr const ScreenScale textureScale = {
+        .x = 1.f / 1024.f,
+        .y = 1.f / 256.f,
+    };
+
+    // Head overlay
+    spriteRenderer_->CreateSprite(storm::Sprite{
+        .position = {29, 25, 147, 37},
+        .uv = scaleUv({904, 91, 904 + 119, 91 + 12}, textureScale),
+        .texture = interfaceTexture_,
+    });
+    spriteRenderer_->CreateSprite(storm::Sprite{
+        .position = {29, 173, 146, 185},
+        .uv = scaleUv({904, 105, 904 + 119, 105 + 11}, textureScale),
+        .texture = interfaceTexture_,
+    });
+
+    // General
+    spriteRenderer_->CreateSprite(storm::Sprite{
         .position = {-39, -39, 169, 216},
+        .uv = scaleUv({0, 0, 208, 255}, textureScale),
+        .texture = interfaceTexture_,
     });
-    sprites_.push_back({
-        .uv = {208, 0, 757, 118},
+    spriteRenderer_->CreateSprite(storm::Sprite{
         .position = {169, -39, 678, 79},
+        .uv = scaleUv({208, 0, 757, 118}, textureScale),
+        .texture = interfaceTexture_,
     });
-    sprites_.push_back({
-        .uv = {209, 189, 1023, 255},
+    spriteRenderer_->CreateSprite(storm::Sprite{
         .position = {-39, 451, 678, 518},
+        .uv = scaleUv({209, 189, 1023, 255}, textureScale),
+        .texture = interfaceTexture_,
     });
     // Static vertices 2
-    sprites_.push_back({
-        .uv = {904, 91, 1023, 103},
+    spriteRenderer_->CreateSprite(storm::Sprite{
         .position = {29, 25, 147, 37},
+        .uv = scaleUv({904, 91, 1023, 103}, textureScale),
+        .texture = interfaceTexture_,
     });
-    sprites_.push_back({
-        .uv = {904, 105, 1023, 116},
+    spriteRenderer_->CreateSprite(storm::Sprite{
         .position = {29, 173, 146, 185},
+        .uv = scaleUv({904, 105, 1023, 116}, textureScale),
+        .texture = interfaceTexture_,
     });
 
     for (size_t i = 0; i < DIALOG_MAX_LINES; ++i)
     {
-        sprites_.push_back(Sprite{{209, 155, 1023, 186},
-                                 {-39, static_cast<float>(479 - 67 + 39 - (26 * (i + 1))), 639 + 39,
-                                  static_cast<float>(479 - 67 + 39 - (26 * i))}});
+        spriteRenderer_->CreateSprite(storm::Sprite{
+            .position = {-39, static_cast<float>(479 - 67 + 39 - (26 * (i + 1))), 639 + 39,
+                         static_cast<float>(479 - 67 + 39 - (26 * i))},
+            .uv = scaleUv({209, 155, 1023, 186}, textureScale),
+            .texture = interfaceTexture_,
+        });
     }
-
-    sprites_.push_back(Sprite{{209, 119, 1023, 156},
-                             {-39, static_cast<float>(479 - 67 + 39 - (26 * (DIALOG_MAX_LINES + 1))), 639 + 39,
-                              static_cast<float>(479 - 67 + 39 - (26 * DIALOG_MAX_LINES))}});
-
-    sprites_.push_back(Sprite{{209, 94, 602, 116},
-                             {35, static_cast<float>(479 - 67 + 39 - DIVIDER_HEIGHT), 605,
-                              static_cast<float>(479 - 67 + 39)}});
-
-    const size_t squareCount = sprites_.size();
-
-    const size_t indexCount = 6 * squareCount;
-    const size_t vertexCount = 4 * squareCount;
-
-    const int32_t vertexBuffer =
-        RenderService->CreateVertexBuffer(XI_TEX_FVF, vertexCount * sizeof(XI_TEX_VERTEX), D3DUSAGE_WRITEONLY);
-    const int32_t indexBuffer = RenderService->CreateIndexBuffer(indexCount * sizeof(uint16_t));
-
-    auto *pI = static_cast<uint16_t *>(RenderService->LockIndexBuffer(indexBuffer));
-    for (long n = 0; n < squareCount; n++)
-    {
-        pI[n * 6 + 0] = static_cast<uint16_t>(n * 4 + 0);
-        pI[n * 6 + 1] = static_cast<uint16_t>(n * 4 + 2);
-        pI[n * 6 + 2] = static_cast<uint16_t>(n * 4 + 1);
-        pI[n * 6 + 3] = static_cast<uint16_t>(n * 4 + 1);
-        pI[n * 6 + 4] = static_cast<uint16_t>(n * 4 + 2);
-        pI[n * 6 + 5] = static_cast<uint16_t>(n * 4 + 3);
-    }
-    RenderService->UnLockIndexBuffer(indexBuffer);
-
-    return {indexBuffer, vertexBuffer};
+    spriteRenderer_->CreateSprite(storm::Sprite{
+        .position = {-39, static_cast<float>(479 - 67 + 39 - (26 * (DIALOG_MAX_LINES + 1))), 639 + 39,
+                     static_cast<float>(479 - 67 + 39 - (26 * DIALOG_MAX_LINES))},
+        .uv = scaleUv({209, 119, 1023, 156}, textureScale),
+        .texture = interfaceTexture_,
+    });
+    // Divider
+    spriteRenderer_->CreateSprite(storm::Sprite{
+        .position = {35, static_cast<float>(479 - 67 + 39 - DIVIDER_HEIGHT), 605, static_cast<float>(479 - 67 + 39)},
+        .uv = scaleUv({209, 94, 602, 116}, textureScale),
+        .texture = interfaceTexture_,
+    });
 }
