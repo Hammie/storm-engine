@@ -76,7 +76,6 @@ bool LegacyDialog::Init()
     interfaceTexture_ = RenderService->TextureCreate(texture);
 
     CreateBack();
-    //    updateVertexBuffer(*RenderService, spriteBuffer_, screenScale_, textureScale_, sprites_);
     UpdateLinks();
 
     return true;
@@ -242,8 +241,12 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
 
     if (storm::iEquals(attributes->GetThisName(), "texture"))
     {
-        //        RenderService->TextureRelease(interfaceTexture_);
-        //        interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
+        RenderService->TextureRelease(interfaceTexture_);
+        interfaceTexture_ = RenderService->TextureCreate(attributes->GetThisAttr());
+
+        for (size_t i = 0; i < DIALOG_MAX_LINES + 9; ++i) {
+            spriteRenderer_->UpdateSpriteTexture(i, interfaceTexture_);
+        }
     }
     else if (storm::iEquals(attributes->GetThisName(), "headModel"))
     {
@@ -297,11 +300,6 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
         {
             textureLines_ += 1;
         }
-
-        constexpr const ScreenScale textureScale = {
-            .x = 1.f / 1024.f,
-            .y = 1.f / 256.f,
-        };
 
         spriteRenderer_->UpdateSpritePosition(
             7 + DIALOG_MAX_LINES, {-39, static_cast<float>(479 - 67 + 39 - (textureLines_ + 1) * TILED_LINE_HEIGHT),
