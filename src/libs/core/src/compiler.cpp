@@ -23,9 +23,15 @@
 #define SBUPDATE 4
 #define DEF_COMPILE_EXPRESSIONS
 
+
+namespace
+{
+S_DEBUG s_debug;
+}
+
 // extern char * FuncNameTable[];
 extern INTFUNCDESC IntFuncTable[];
-extern S_DEBUG * CDebug;
+extern S_DEBUG *CDebug = &s_debug;
 extern uint32_t dwNumberScriptCommandsExecuted;
 
 using std::chrono::duration_cast;
@@ -1656,10 +1662,6 @@ bool COMPILER::Compile(SEGMENT_DESC &Segment, char *pInternalCode, uint32_t pInt
                                             return false;
                                         }
                                         real_var->value->Set(Token.GetData(), aindex);
-                                        if (use_script_cache_)
-                                        {
-                                            script_cache_.variables.back().value->Set(Token.GetData(), aindex);
-                                        }
                                         aindex++;
                                         break;
                                     case UNKNOWN:
@@ -5388,7 +5390,7 @@ bool COMPILER::BC_Execute(uint32_t function_code, DATA *&pVReturnResult, const c
                     pV->Set("error");
                     break; /*return false;*/
                 }
-                pV->Set(rAP->GetThisAttr());
+                pV->Set(to_string(rAP->GetThisAttr()));
                 break;
             default:
                 SetError("invalid argument for STACK_PUSH");

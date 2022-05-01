@@ -410,10 +410,9 @@ void XINTERFACE::Realize(uint32_t)
             for (auto i = 0; i < m_nStringQuantity; i++)
                 if (m_stringes[i].bUsed)
                 {
-                    auto *tmps = tmpAttr->GetAttribute(m_stringes[i].sStringName);
                     pRenderService->ExtPrint(m_stringes[i].fontNum, m_stringes[i].dwColor, 0, m_stringes[i].eAlignment,
                                              true, m_stringes[i].fScale, dwScreenWidth, dwScreenHeight, m_stringes[i].x,
-                                             m_stringes[i].y, "%s", tmpAttr->GetAttribute(m_stringes[i].sStringName));
+                                             m_stringes[i].y, "%s", static_cast<const char*>(tmpAttr->GetAttribute(m_stringes[i].sStringName)));
                 }
     }
 
@@ -784,11 +783,11 @@ uint64_t XINTERFACE::ProcessMessage(MESSAGE &message)
         if (pA == nullptr)
             break;
         const std::string &param = message.String();
-        char *pText = pA->GetAttribute("Text");
+        const char *pText = pA->GetAttribute("Text");
         if (pText == nullptr)
             break;
         char subText[256];
-        char *pCur = pText;
+        const char *pCur = pText;
         while (true)
         {
             subText[0] = 0;
@@ -2636,7 +2635,7 @@ uint32_t XINTERFACE::AttributeChanged(ATTRIBUTES *patr)
         if (storm::iEquals(patr->GetThisName(), "pic"))
         {
             STORM_DELETE(pImList->sPicture);
-            if (patr->GetThisAttr() != nullptr)
+            if (patr->HasValue())
             {
                 const auto len = strlen(patr->GetThisAttr()) + 1;
                 if ((pImList->sPicture = new char[len]) == nullptr)
@@ -2655,7 +2654,7 @@ uint32_t XINTERFACE::AttributeChanged(ATTRIBUTES *patr)
             if (pImList->sImageListName != nullptr)
                 pPictureService->ReleaseTextureID(pImList->sImageListName);
             STORM_DELETE(pImList->sImageListName);
-            if (patr->GetThisAttr() != nullptr)
+            if (patr->HasValue())
             {
                 const auto len = strlen(patr->GetThisAttr()) + 1;
                 if ((pImList->sImageListName = new char[len]) == nullptr)
@@ -2825,7 +2824,7 @@ char *XINTERFACE::SaveFileFind(int32_t saveNum, char *buffer, size_t bufSize, in
     if (!m_pSaveFindRoot) // create save file list
     {
         // get file name for searching (whith full path)
-        char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+        const char *sSavePath = AttributesPointer->GetAttribute("SavePath");
         if (sSavePath != nullptr)
         {
             fio->_CreateDirectory(sSavePath);
@@ -2874,7 +2873,7 @@ bool XINTERFACE::NewSaveFileName(const char *fileName) const
     }
 
     char param[256];
-    char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+    const char *sSavePath = AttributesPointer->GetAttribute("SavePath");
 
     if (sSavePath == nullptr)
     {
@@ -2895,7 +2894,7 @@ void XINTERFACE::DeleteSaveFile(const char *fileName)
         return;
     }
     char param[256];
-    char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+    const char *sSavePath = AttributesPointer->GetAttribute("SavePath");
     if (sSavePath == nullptr)
     {
         sprintf(param, "%s", fileName);
@@ -3344,7 +3343,7 @@ int XINTERFACE::LoadIsExist()
     }
 
     char param[1024];
-    char *sSavePath = AttributesPointer->GetAttribute("SavePath");
+    const char *sSavePath = AttributesPointer->GetAttribute("SavePath");
     if (sSavePath != nullptr)
     {
         fio->_CreateDirectory(sSavePath);

@@ -109,7 +109,7 @@ void CXI_EDITBOX::Draw(bool bSelected, uint32_t Delta_Time)
 
     // show out string
     auto *pA = core.Entity_GetAttributeClass(g_idInterface, m_nodeName);
-    char *tmpstr = nullptr;
+    const char *tmpstr = nullptr;
     if (pA)
         tmpstr = pA->GetAttribute("strdata");
     if (tmpstr)
@@ -160,7 +160,7 @@ int CXI_EDITBOX::CommandExecute(int wActCode)
                 break;
             char param[256];
             param[0] = 0;
-            auto *const tmpstr = pA->GetAttribute("strdata");
+            const char *tmpstr = pA->GetAttribute("strdata");
             switch (m_alpha[m_bUpChrRegistrOffset + m_nCurAlphaNum])
             {
             case '*':

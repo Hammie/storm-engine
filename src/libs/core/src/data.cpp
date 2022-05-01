@@ -79,8 +79,8 @@ DATA & DATA::operator=(const DATA &data)
     pReference = data.pReference;
     if (data.AttributesClass)
     {
-        AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
-        AttributesClass->Copy(data.AttributesClass);
+        Assert(&data.AttributesClass->GetStringCodec() == pVCompiler->GetVSC());
+        AttributesClass = new ATTRIBUTES(data.AttributesClass->Copy());
     }
     else
     {
@@ -581,7 +581,7 @@ bool DATA::Get(const char *attribute_name, const char *&value)
     if (AttributesClass == nullptr)
         return false;
     // pAValue = Attributes.GetAttribute(attribute_name);
-    auto *const pAValue = AttributesClass->GetAttribute(attribute_name);
+    const char *pAValue = AttributesClass->GetAttribute(attribute_name);
     if (pAValue == nullptr)
         return false;
     value = pAValue;
@@ -1122,7 +1122,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
                 break;
             if (!AttributesClass->GetThisAttr())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(to_string(AttributesClass->GetThisAttr()));
             AttributesClass = nullptr;
             return true;
         case NUMBER:
@@ -1131,7 +1131,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
                 break;
             if (!AttributesClass->GetThisAttr())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(to_string(AttributesClass->GetThisAttr()));
             AttributesClass = nullptr;
             Data_type = VAR_INTEGER;
             lValue = 0;
@@ -1143,7 +1143,7 @@ bool DATA::Convert(S_TOKEN_TYPE type)
                 break;
             if (!AttributesClass->GetThisAttr())
                 break;
-            Set(AttributesClass->GetThisAttr());
+            Set(to_string(AttributesClass->GetThisAttr()));
             AttributesClass = nullptr;
             Data_type = VAR_FLOAT;
             fValue = 0.0f;
@@ -1676,7 +1676,7 @@ bool DATA::Plus(DATA *pV)
         case VAR_AREFERENCE:
             if (!pV->AttributesClass || !pV->AttributesClass->GetThisAttr())
                 break;
-            Set(sValue + pV->AttributesClass->GetThisAttr());
+            Set(sValue + to_string(pV->AttributesClass->GetThisAttr()));
             break;
         case VAR_INTEGER:
             Set(sValue + std::to_string(pV->lValue));
@@ -2088,8 +2088,22 @@ bool DATA::Copy(DATA *pV)
                 return false;
             }
             if (pVV->AttributesClass == nullptr)
-                pVV->AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
-            pVV->AttributesClass->Copy(pV->AttributesClass);
+            {
+                if (pV->AttributesClass != nullptr)
+                {
+                    Assert(&pV->AttributesClass->GetStringCodec() == pVCompiler->GetVSC());
+                    pVV->AttributesClass = new ATTRIBUTES(pV->AttributesClass->Copy());
+                }
+                else
+                {
+                    pVV->AttributesClass = new ATTRIBUTES(*pVCompiler->GetVSC());
+                }
+            }
+            else if (pV->AttributesClass != nullptr) {
+                Assert(&pV->AttributesClass->GetStringCodec() == pVCompiler->GetVSC());
+                *pVV->AttributesClass = pV->AttributesClass->Copy();
+            }
+
         }
         else
         {
@@ -2099,9 +2113,19 @@ bool DATA::Copy(DATA *pV)
             }
             else
             {
-                if (AttributesClass == nullptr)
-                    AttributesClass = new ATTRIBUTES(pVCompiler->GetVSC());
-                AttributesClass->Copy(pV->AttributesClass);
+                if (AttributesClass == nullptr) {
+                    if (pV->AttributesClass != nullptr) {
+                        Assert(&pV->AttributesClass->GetStringCodec() == pVCompiler->GetVSC());
+                        AttributesClass = new ATTRIBUTES(pV->AttributesClass->Copy());
+                    }
+                    else {
+                        AttributesClass = new ATTRIBUTES(*pVCompiler->GetVSC());
+                    }
+                }
+                else if (pV->AttributesClass != nullptr) {
+                    Assert(&pV->AttributesClass->GetStringCodec() == pVCompiler->GetVSC());
+                    *AttributesClass = pV->AttributesClass->Copy();
+                }
             }
         }
         break;

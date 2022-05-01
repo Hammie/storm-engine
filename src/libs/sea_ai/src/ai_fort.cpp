@@ -184,11 +184,11 @@ bool AIFort::AddFort(ATTRIBUTES *pIslandAP, ATTRIBUTES *pFortLabelAP, ATTRIBUTES
     auto *const pModelsDirAP = pIslandAP->FindAClass(pIslandAP, "filespath.models");
     Assert(pModelsDirAP);
 
-    auto *const pModelName = pModelAP->GetThisAttr();
+    const char *pModelName = pModelAP->GetThisAttr();
     Assert(pModelName);
-    auto *const pLocatorsName = pLocatorsAP->GetThisAttr();
+    const char *pLocatorsName = pLocatorsAP->GetThisAttr();
     Assert(pLocatorsName);
-    auto *const pModelsDir = pModelsDirAP->GetThisAttr();
+    const char *pModelsDir = pModelsDirAP->GetThisAttr();
     Assert(pModelsDir);
 
     auto *pFort = new AI_FORT(pFortLabelAP);
@@ -323,7 +323,7 @@ bool AIFort::Mount(ATTRIBUTES *pAttribute)
     return true;
 }
 
-bool AIFort::ScanFortForCannons(AI_FORT *pFort, char *pModelsDir, char *pLocatorsName) const
+bool AIFort::ScanFortForCannons(AI_FORT *pFort, const char *pModelsDir, const char *pLocatorsName) const
 {
     entid_t model_id;
     GEOS::LABEL label;

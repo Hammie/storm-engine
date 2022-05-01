@@ -560,7 +560,7 @@ void InterfaceBackScene::CreateMenuList(int32_t nStartIndex, ATTRIBUTES *pAMenu)
             continue;
         if (!FindLocator(pA->GetAttribute("locname"), &mtx, nullptr, nullptr))
         {
-            core.Trace("Warning! Interface Back scene: Can`t find locator %s", pA->GetAttribute("locname"));
+            core.Trace("Warning! Interface Back scene: Can`t find locator %s", static_cast<const char*>(pA->GetAttribute("locname")));
         }
         auto *pMD = new MenuDescr;
         Assert(pMD);
@@ -697,7 +697,7 @@ void InterfaceBackScene::InitLight(ATTRIBUTES *pAParam)
     pLight->vLightPos = locMtx.Pos();
 
     // load model
-    char *pcFonarModel = pAParam->GetAttribute("model");
+    const char *pcFonarModel = pAParam->GetAttribute("model");
     if (pcFonarModel)
     {
         auto pGeo = static_cast<VGEOMETRY *>(core.GetService("Geometry"));

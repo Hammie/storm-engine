@@ -2,8 +2,7 @@
 #include "shared/messages.h"
 
 std::vector<AIGroup *> AIGroup::AIGroups;
-float AIGroup::fDistanceBetweenGroupShips = 300.0f;
-float AIGroup::fDistanceBetweenGroupLines = 250.0f;
+float AIGroup::fDistanceBetweenGroupShips = 250.0f;
 
 AIGroup::AIGroup(const char *pGroupName)
 {
@@ -11,9 +10,7 @@ AIGroup::AIGroup(const char *pGroupName)
 
     bFirstExecute = true;
     pACommander = nullptr;
-
-    iWarShipsNum = 0;
-    iTradeShipsNum = 0;
+    
     sGroupName = pGroupName;
 
     dtCheckTask.Setup(FRAND(4.0f), 2.0f, 4.0f);
@@ -32,37 +29,39 @@ void AIGroup::AddShip(entid_t eidShip, ATTRIBUTES *pACharacter, ATTRIBUTES *pASh
     AIShip *pShip = nullptr;
     if (const auto *pAMode = pACharacter->FindAClass(pACharacter, "Ship.Mode"))
     {
-        if (std::string("trade") == pAMode->GetThisAttr())
+        if (std::string("war") == to_string(pAMode->GetThisAttr()))
+        {
+            pShip = new AIShipWar();
+        }
+        else if (std::string("trade") == to_string(pAMode->GetThisAttr()))
         {
             pShip = new AIShipTrade();
-            iTradeShipsNum++;
         }
-        else if (std::string("boat") == pAMode->GetThisAttr())
+        else if (std::string("boat") == to_string(pAMode->GetThisAttr()))
         {
             pShip = new AIShipBoat();
-            iTradeShipsNum++;
         }
+    }
+    if (!pShip)
+    {
+        pShip = new AIShipWar();
     }
 
     CVECTOR vShipPos;
 
-    if (pShip == nullptr)
+    if (const char *event = GetCommanderACharacter()->GetAttribute("GroupShipPos_event"))
     {
-        pShip = new AIShipWar();
-        iWarShipsNum++;
-
-        // war
-        const CVECTOR vTmpPos = ((iWarShipsNum - 1) * AIGroup::fDistanceBetweenGroupShips) *
-                                CVECTOR(sinf(vInitGroupPos.y), 0.0f, cosf(vInitGroupPos.y));
-        vShipPos = CVECTOR(vInitGroupPos.x, vInitGroupPos.y, vInitGroupPos.z) - vTmpPos;
+        const auto result = core.Event(event, "lfffa", static_cast<uint32_t>(aGroupShips.size()), vInitGroupPos.x,
+                                       vInitGroupPos.y, vInitGroupPos.z, pACharacter);
+        result->Get(vShipPos.x, 0);
+        result->Get(vShipPos.y, 1);
+        result->Get(vShipPos.z, 2);
     }
     else
     {
-        // trade
-        const CVECTOR vTmpPos = ((iTradeShipsNum - 1) * AIGroup::fDistanceBetweenGroupShips) *
-                                CVECTOR(sinf(vInitGroupPos.y), 0.0f, cosf(vInitGroupPos.y));
-        vShipPos = CVECTOR(vInitGroupPos.x, vInitGroupPos.y, vInitGroupPos.z) - vTmpPos -
-                   CVECTOR(0.0f, 0.0f, AIGroup::fDistanceBetweenGroupLines);
+        vShipPos = CVECTOR(vInitGroupPos.x, vInitGroupPos.y, vInitGroupPos.z) -
+                   (aGroupShips.size() * fDistanceBetweenGroupShips) *
+                       CVECTOR(sinf(vInitGroupPos.y), 0.0f, cosf(vInitGroupPos.y));
     }
 
     pShip->CreateShip(eidShip, pACharacter, pAShip, &vShipPos);
@@ -70,11 +69,8 @@ void AIGroup::AddShip(entid_t eidShip, ATTRIBUTES *pACharacter, ATTRIBUTES *pASh
 
     AIShip::AIShips.push_back(pShip); // add to global array
     aGroupShips.push_back(pShip);     // add to local group array
-
-    // pACharacter->Dump(pACharacter, 0);
+    
     Helper.AddCharacter(pACharacter, GetCommanderACharacter());
-
-    // pShip->CheckStartPosition();
 }
 
 bool AIGroup::isMainGroup()
@@ -370,7 +366,7 @@ void AIGroup::ShipChangeGroup(ATTRIBUTES *pACharacter, const char *pGroupName)
     if (!pGOld)
     {
         core.Trace("AIGroup::ShipChangeGroup: Can't find group with character id = %s",
-                   pACharacter->GetAttribute("id"));
+                   static_cast<const char*>(pACharacter->GetAttribute("id")));
         return;
     }
     AIGroup *pGNew = FindOrCreateGroup(pGroupName);
