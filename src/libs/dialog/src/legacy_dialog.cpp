@@ -252,7 +252,7 @@ uint32_t LegacyDialog::AttributeChanged(ATTRIBUTES *attributes)
     {
         EntityManager::EraseEntity(headModel_);
 
-        std::string headModel = fmt::format("Heads/{}", attributes->GetThisAttr());
+        std::string headModel = fmt::format("Heads/{}", attributes->GetValue());
 
         headModel_ = EntityManager::CreateEntity("MODELR");
 
@@ -378,7 +378,7 @@ void LegacyDialog::UpdateLinks()
         const size_t number_of_links = links_attr->GetAttributesNum();
         for (size_t i = 0; i < number_of_links; ++i)
         {
-            const std::string_view link_text = links_attr->GetAttribute(i);
+            const std::string_view link_text = links_attr->GetAttributeClass(i)->GetValue();
             links_.emplace_back(link_text);
 
             std::vector<std::string> link_texts;

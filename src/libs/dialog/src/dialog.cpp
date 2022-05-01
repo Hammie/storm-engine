@@ -203,7 +203,8 @@ void DIALOG::DlgLinkDescribe::ChangeText(ATTRIBUTES *pALinks)
                 nEditVarIndex = pA->GetAttributeAsDword("edit", 0);
                 nEditCharIndex = 0;
             }
-            AddToStringArrayLimitedByWidth(pA->GetThisAttr(), nFontID, fScale, nWindowWidth, asText, RenderService, nullptr, 100);
+            AddToStringArrayLimitedByWidth(pA->GetValue(), nFontID, fScale,
+                                           nWindowWidth, asText, RenderService, nullptr, 100);
             anLineEndIndex.push_back(asText.size());
         }
     }
