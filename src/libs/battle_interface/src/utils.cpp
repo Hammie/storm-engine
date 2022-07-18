@@ -56,7 +56,7 @@ const char *BIUtils::GetStringFromAttr(ATTRIBUTES *pA, const char *name, const c
 {
     if (pA == nullptr || name == nullptr)
         return (char *)defVal;
-    const char* aVal = pA->GetAttribute(name);
+    const char *aVal = pA->GetAttribute(name);
     if (aVal == nullptr)
         return (char *)defVal;
     return aVal;
@@ -436,7 +436,10 @@ void BILinesInfo::Init(VDX9RENDER *rs, ATTRIBUTES *pA)
 
 void BILinesInfo::Draw()
 {
-    pRS->DrawLines2D(&lines[0], lines.size() / 2, "Line");
+    if (!lines.empty())
+    {
+        pRS->DrawLines2D(&lines[0], lines.size() / 2, "Line");
+    }
 }
 
 BIImagesInfo::BIImagesInfo()
