@@ -858,11 +858,11 @@ void FLAG::SetAdd(int flagNum)
             if (flist[fn]->isShip) // ship
             {
                 pvdat = core.Event("GetRiggingData", "sllla", "GetShipFlagTexNum", flist[fn]->triangle,
-                                       gdata[flist[fn]->HostGroup].nation, flist[fn]->isSpecialFlag,
-                                       gdata[flist[fn]->HostGroup].char_attributes);
-                }
-                else
-                {
+                                   gdata[flist[fn]->HostGroup].nation, flist[fn]->isSpecialFlag,
+                                   gdata[flist[fn]->HostGroup].char_attributes);
+            }
+            else
+            {
                 pvdat = core.Event("GetRiggingData", "slll", "GetTownFlagTexNum", flist[fn]->triangle,
                                    gdata[flist[fn]->HostGroup].nation, flist[fn]->isSpecialFlag);
             }
@@ -896,28 +896,28 @@ void FLAG::SetAdd(int flagNum)
                 flist[fn]->texNumC = curTexNumC;
                 flist[fn]->texNumR = curTexNumR;
 
-            flist[fn]->vectQuant = (int)(len / FLAGVECTORLEN); // number of flag segments
-            if (flist[fn]->vectQuant < MinSegmentQuantity)
-                flist[fn]->vectQuant = MinSegmentQuantity;
-            // compute flag increment
-            flist[fn]->dv = (empos - bmpos) / static_cast<float>(flist[fn]->vectQuant);
-            if (flist[fn]->triangle)
-                flist[fn]->ddhv = (p2 - p0 - empos + bmpos) / static_cast<float>(flist[fn]->vectQuant);
-            else
-                flist[fn]->ddhv = (p2 - p0 - empos + bmpos) / static_cast<float>(flist[fn]->vectQuant + 1);
+                flist[fn]->vectQuant = (int)(len / FLAGVECTORLEN); // number of flag segments
+                if (flist[fn]->vectQuant < MinSegmentQuantity)
+                    flist[fn]->vectQuant = MinSegmentQuantity;
+                // compute flag increment
+                flist[fn]->dv = (empos - bmpos) / static_cast<float>(flist[fn]->vectQuant);
+                if (flist[fn]->triangle)
+                    flist[fn]->ddhv = (p2 - p0 - empos + bmpos) / static_cast<float>(flist[fn]->vectQuant);
+                else
+                    flist[fn]->ddhv = (p2 - p0 - empos + bmpos) / static_cast<float>(flist[fn]->vectQuant + 1);
 
-            flist[fn]->sv = nVert;
-            flist[fn]->st = nIndx;
-            flist[fn]->vectQuant; // TODO: check this ~!~
-            if (flist[fn]->triangle)
-            {
-                nVert += (flist[fn]->nv = flist[fn]->vectQuant * 2 + 3);
-                nIndx += (flist[fn]->nt = flist[fn]->vectQuant * 2 + 1) * 3;
-            }
-            else
-            {
-                nVert += (flist[fn]->nv = flist[fn]->vectQuant * 2 + 2);
-                nIndx += (flist[fn]->nt = flist[fn]->vectQuant * 2) * 3;
+                flist[fn]->sv = nVert;
+                flist[fn]->st = nIndx;
+                flist[fn]->vectQuant; // TODO: check this ~!~
+                if (flist[fn]->triangle)
+                {
+                    nVert += (flist[fn]->nv = flist[fn]->vectQuant * 2 + 3);
+                    nIndx += (flist[fn]->nt = flist[fn]->vectQuant * 2 + 1) * 3;
+                }
+                else
+                {
+                    nVert += (flist[fn]->nv = flist[fn]->vectQuant * 2 + 2);
+                    nIndx += (flist[fn]->nt = flist[fn]->vectQuant * 2) * 3;
                 }
             }
         }
