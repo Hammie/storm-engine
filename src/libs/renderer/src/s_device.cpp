@@ -3403,8 +3403,9 @@ void DX9RENDER::DrawRects(RS_RECT *pRSR, uint32_t dwRectsNum, const char *cBlock
 
     bool bDraw = true;
 
-    static CMatrix camMtx, IMatrix;
+    static CMatrix camMtx, oldWorldMatrix, IMatrix;
     d3d9->GetTransform(D3DTS_VIEW, camMtx);
+    d3d9->GetTransform(D3DTS_WORLD, oldWorldMatrix);
 
     fScaleY *= GetHeightDeformator();
 
@@ -3511,6 +3512,7 @@ void DX9RENDER::DrawRects(RS_RECT *pRSR, uint32_t dwRectsNum, const char *cBlock
     }
 
     d3d9->SetTransform(D3DTS_VIEW, camMtx);
+    d3d9->SetTransform(D3DTS_WORLD, oldWorldMatrix);
 }
 
 void DX9RENDER::DrawSprites(RS_SPRITE *pRSS, uint32_t dwSpritesNum, const char *cBlockName)
